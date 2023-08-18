@@ -1,5 +1,5 @@
 [package]
-name = "AMQP1_0"
+name = "amqp1_0"
 version = "0.1.0"
 edition = "2021"
 
