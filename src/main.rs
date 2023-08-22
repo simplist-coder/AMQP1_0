@@ -9,6 +9,9 @@ mod link;
 mod performative;
 mod session;
 mod types;
+mod terminus;
+mod client;
+mod broker;
 
 #[tokio::main]
 async fn main() -> Result<()> {
