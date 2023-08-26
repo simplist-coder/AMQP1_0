@@ -1,7 +1,4 @@
-
-
-
 pub enum Terminus {
-	Source,
-	Target
+    Source,
+    Target,
 }

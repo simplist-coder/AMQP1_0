@@ -1,3 +1,5 @@
+
+#[derive(Debug, PartialEq)]
 pub enum Performative {
     Open,
     Begin,

@@ -1,4 +1,7 @@
-use thiserror;
+use thiserror::Error;
 
-#[derive(thiserror::Error, Debug)]
-pub enum AppError {}
+#[derive(Error, Debug)]
+pub enum AppError {
+    #[error("Malformed Frame: {0}")]
+    MalformedFrame(String),
+}

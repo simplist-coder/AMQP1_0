@@ -1,6 +1,1 @@
-
-
-
-pub struct Broker{
-	
-}
+pub struct Broker {}

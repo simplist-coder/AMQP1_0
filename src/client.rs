@@ -1,5 +1,1 @@
-
-
-pub struct Client {
-	
-}
+pub struct Client {}

@@ -2,16 +2,16 @@ use anyhow::Result;
 use std::net::SocketAddr;
 use tokio::net::{TcpListener, TcpStream};
 
+mod broker;
+mod client;
 mod connection;
 mod error;
 mod frame;
 mod link;
 mod performative;
 mod session;
-mod types;
 mod terminus;
-mod client;
-mod broker;
+mod types;
 
 #[tokio::main]
 async fn main() -> Result<()> {
