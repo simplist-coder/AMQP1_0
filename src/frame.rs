@@ -36,8 +36,9 @@ impl TryFrom<&[u8]> for Frame<'_> {
 
     fn try_from(value: &[u8]) -> Result<Self, Self::Error> {
         let header = Header::try_from(&value[0..7])?;
-        let extended_header = ExtendedHeader::try_from(&value[8..12])?;
-        let body = Body::try_from(&value[13..])?;
+        let body_start: usize = (4 * header.doff).into();
+        let extended_header = ExtendedHeader::try_from(&value[8..body_start - 1])?;
+        let body = Body::try_from(&value[body_start..])?;
         Ok(Frame {
             header,
             extended_header,
