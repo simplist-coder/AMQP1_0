@@ -81,39 +81,35 @@ mod tests {
 
     use super::*;
 
-    fn create_header_bytes(size: u32, doff: u8, frame_type: u8) -> Vec<u8> {
-        let mut res = vec![];
-        res
-    }
-
     #[test]
     fn header_should_deserialize_size() {
-        let data = create_header_bytes(20, 0, 0);
-        let header = Header::try_from(data.as_slice());
+        let data: &[u8] = &[];
+        let header = Header::try_from(data);
         assert!(header.is_ok());
         assert_eq!(header.unwrap().size, 20);
     }
 
     #[test]
     fn header_should_deserialize_doff() {
-        let data = create_header_bytes(20, 5, 0);
-        let header = Header::try_from(data.as_slice());
+        let data: &[u8] = &[];
+        let header = Header::try_from(data);
         assert!(header.is_ok());
         assert_eq!(header.unwrap().doff, 5);
     }
 
     #[test]
     fn header_should_deserialize_frame_type() {
-        let data = create_header_bytes(20, 5, 0);
-        let header = Header::try_from(data.as_slice());
+        let data: &[u8] = &[];
+        let header = Header::try_from(data);
         assert!(header.is_ok());
         assert_eq!(header.unwrap().frame_type, FrameType::Amqp);
     }
 
     #[test]
     fn header_deserialization_should_fail_on_malformed_header() {
-        let data = create_header_bytes(1, 0, 0);
-        let header = Header::try_from(data.as_slice());
+        let data: &[u8] = &[];
+
+        let header = Header::try_from(data);
         assert!(header.is_err());
         assert_eq!(
             header.err().unwrap(),
@@ -123,8 +119,9 @@ mod tests {
 
     #[test]
     fn frame_is_malformed_when_size_is_smaller_than_required_frame_header_size() {
-        let data = create_header_bytes(7, 0, 0);
-        let frame = Frame::try_from(data.as_slice());
+        let data: &[u8] = &[];
+
+        let frame = Frame::try_from(data);
         assert!(frame.is_err());
         assert_eq!(
             frame.err().unwrap(),
@@ -134,8 +131,8 @@ mod tests {
 
     #[test]
     fn frame_is_malformed_if_doff_is_smaller_than_2() {
-        let data = create_header_bytes(20, 1, 0);
-        let frame = Frame::try_from(data.as_slice());
+        let data: &[u8] = &[];
+        let frame = Frame::try_from(data);
         assert!(frame.is_err());
         assert_eq!(
             frame.err().unwrap(),
