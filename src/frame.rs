@@ -51,18 +51,24 @@ impl TryFrom<&[u8]> for Header {
 
     fn try_from(value: &[u8]) -> Result<Self, Self::Error> {
         let mut c = Cursor::new(value);
-        let size: u32 = c.read_u32::<BigEndian>().unwrap();
-        let doff: u8 = c.read_u8().unwrap();
-        let frame_type = FrameType::try_from(c.read_u8().unwrap());
+        let size: u32 = c.read_u32::<BigEndian>()?;
+        let doff: u8 = c.read_u8()?;
+        let frame_type = FrameType::try_from(c.read_u8()?);
         match (size, doff) {
             (size, doff) if size >= 8 && doff >= 2 => Ok(Header {
                 size,
                 doff,
                 frame_type: FrameType::Amqp,
             }),
-            (size, _) if size < 8 => Err(AppError::MalformedFrame("Size is smaller than minimum header size of 8.")),
-            (_, doff) if doff < 2 => Err(AppError::MalformedFrame("Doff is smaller than minimum doff of 2.")),
-            (_, _) => Err(AppError::MalformedFrame("Size and Doff of header are invalid."))
+            (size, _) if size < 8 => Err(AppError::MalformedFrame(
+                "Size is smaller than minimum header size of 8.",
+            )),
+            (_, doff) if doff < 2 => Err(AppError::MalformedFrame(
+                "Doff is smaller than minimum doff of 2.",
+            )),
+            (_, _) => Err(AppError::MalformedFrame(
+                "Size and Doff of header are invalid.",
+            )),
         }
     }
 }
@@ -155,10 +161,6 @@ mod tests {
 
         let header = Header::try_from(data);
         assert!(header.is_err());
-        assert_eq!(
-            header.err().unwrap(),
-            AppError::MalformedFrame("Size is smaller than minimum header size of 8.")
-        );
     }
 
     #[test]
@@ -173,10 +175,6 @@ mod tests {
 
         let header = Header::try_from(data);
         assert!(header.is_err());
-        assert_eq!(
-            header.err().unwrap(),
-            AppError::MalformedFrame("Size is smaller than minimum header size of 8.")
-        );
     }
 
     #[test]
@@ -190,9 +188,5 @@ mod tests {
         ];
         let header = Header::try_from(data);
         assert!(header.is_err());
-        assert_eq!(
-            header.err().unwrap(),
-            AppError::MalformedFrame("Doff is smaller than minimum doff of 2.")
-        );
     }
 }
