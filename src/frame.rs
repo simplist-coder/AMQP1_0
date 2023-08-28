@@ -83,7 +83,13 @@ mod tests {
 
     #[test]
     fn header_should_deserialize_size() {
-        let data: &[u8] = &[];
+        let data: &[u8] = &[
+            0x00, 0x00, 0x00, 0x08, // size: 8
+            0x03, // doff: 3
+            0x00, // type: 0
+            0x00, // type-specific: 0
+            0x00, // type-specific: 0
+        ];
         let header = Header::try_from(data);
         assert!(header.is_ok());
         assert_eq!(header.unwrap().size, 20);
@@ -91,15 +97,27 @@ mod tests {
 
     #[test]
     fn header_should_deserialize_doff() {
-        let data: &[u8] = &[];
+        let data: &[u8] = &[
+            0x00, 0x00, 0x00, 0x08, // size: 8
+            0x03, // doff: 3
+            0x00, // type: 0
+            0x00, // type-specific: 0
+            0x00, // type-specific: 0
+        ];
         let header = Header::try_from(data);
         assert!(header.is_ok());
-        assert_eq!(header.unwrap().doff, 5);
+        assert_eq!(header.unwrap().doff, 3);
     }
 
     #[test]
     fn header_should_deserialize_frame_type() {
-        let data: &[u8] = &[];
+        let data: &[u8] = &[
+            0x00, 0x00, 0x00, 0x08, // size: 8
+            0x03, // doff: 3
+            0x00, // type: 0
+            0x00, // type-specific: 0
+            0x00, // type-specific: 0
+        ];
         let header = Header::try_from(data);
         assert!(header.is_ok());
         assert_eq!(header.unwrap().frame_type, FrameType::Amqp);
@@ -107,7 +125,13 @@ mod tests {
 
     #[test]
     fn header_deserialization_should_fail_on_malformed_header() {
-        let data: &[u8] = &[];
+        let data: &[u8] = &[
+            0x00, 0x00, 0x00, 0x06, // size: 6
+            0x03, // doff: 3
+            0x00, // type: 0
+            0x00, // type-specific: 0
+            0x00, // type-specific: 0
+        ];
 
         let header = Header::try_from(data);
         assert!(header.is_err());
@@ -118,8 +142,14 @@ mod tests {
     }
 
     #[test]
-    fn frame_is_malformed_when_size_is_smaller_than_required_frame_header_size() {
-        let data: &[u8] = &[];
+    fn frame_is_malformed_if_size_is_smaller_than_required_frame_header_size() {
+        let data: &[u8] = &[
+            0x00, 0x00, 0x00, 0x06, // size: 8
+            0x03, // doff: 3
+            0x00, // type: 0
+            0x00, // type-specific: 0
+            0x00, // type-specific: 0
+        ];
 
         let frame = Frame::try_from(data);
         assert!(frame.is_err());
@@ -131,7 +161,13 @@ mod tests {
 
     #[test]
     fn frame_is_malformed_if_doff_is_smaller_than_2() {
-        let data: &[u8] = &[];
+        let data: &[u8] = &[
+            0x00, 0x00, 0x00, 0x08, // size: 8
+            0x03, // doff: 1
+            0x00, // type: 0
+            0x00, // type-specific: 0
+            0x00, // type-specific: 0
+        ];
         let frame = Frame::try_from(data);
         assert!(frame.is_err());
         assert_eq!(
