@@ -1,4 +1,6 @@
 use crate::{error::AppError, performative::Performative};
+use byteorder::{BigEndian, ReadBytesExt};
+use std::io::Cursor;
 
 #[derive(Debug, PartialEq)]
 pub struct Frame<'a> {
@@ -26,6 +28,7 @@ struct Body<'a> {
 #[derive(Debug, PartialEq)]
 enum FrameType {
     Amqp,
+    Sasl,
 }
 
 impl TryFrom<&[u8]> for Frame<'_> {
@@ -47,7 +50,20 @@ impl TryFrom<&[u8]> for Header {
     type Error = AppError;
 
     fn try_from(value: &[u8]) -> Result<Self, Self::Error> {
-        todo!()
+        let mut c = Cursor::new(value);
+        let size: u32 = c.read_u32::<BigEndian>().unwrap();
+        let doff: u8 = c.read_u8().unwrap();
+        let frame_type = FrameType::try_from(c.read_u8().unwrap());
+        match (size, doff) {
+            (size, doff) if size >= 8 && doff >= 2 => Ok(Header {
+                size,
+                doff,
+                frame_type: FrameType::Amqp,
+            }),
+            (size, _) if size < 8 => Err(AppError::MalformedFrame("Size is smaller than minimum header size of 8.")),
+            (_, doff) if doff < 2 => Err(AppError::MalformedFrame("Doff is smaller than minimum doff of 2.")),
+            (_, _) => Err(AppError::MalformedFrame("Size and Doff of header are invalid."))
+        }
     }
 }
 
@@ -67,11 +83,15 @@ impl TryFrom<&[u8]> for Body<'_> {
     }
 }
 
-impl TryFrom<&[u8]> for FrameType {
+impl TryFrom<u8> for FrameType {
     type Error = AppError;
 
-    fn try_from(value: &[u8]) -> Result<Self, Self::Error> {
-        todo!()
+    fn try_from(code: u8) -> Result<Self, Self::Error> {
+        match code {
+            0x00 => Ok(FrameType::Amqp),
+            0x01 => Ok(FrameType::Sasl),
+            _ => Err(AppError::MalformedFrame("Invalid Frame Type.")),
+        }
     }
 }
 
@@ -92,7 +112,7 @@ mod tests {
         ];
         let header = Header::try_from(data);
         assert!(header.is_ok());
-        assert_eq!(header.unwrap().size, 20);
+        assert_eq!(header.unwrap().size, 8);
     }
 
     #[test]
@@ -137,25 +157,25 @@ mod tests {
         assert!(header.is_err());
         assert_eq!(
             header.err().unwrap(),
-            AppError::MalformedFrame("".to_string())
+            AppError::MalformedFrame("Size is smaller than minimum header size of 8.")
         );
     }
 
     #[test]
     fn frame_is_malformed_if_size_is_smaller_than_required_frame_header_size() {
         let data: &[u8] = &[
-            0x00, 0x00, 0x00, 0x06, // size: 8
+            0x00, 0x00, 0x00, 0x06, // size: 6
             0x03, // doff: 3
             0x00, // type: 0
             0x00, // type-specific: 0
             0x00, // type-specific: 0
         ];
 
-        let frame = Frame::try_from(data);
-        assert!(frame.is_err());
+        let header = Header::try_from(data);
+        assert!(header.is_err());
         assert_eq!(
-            frame.err().unwrap(),
-            AppError::MalformedFrame("".to_string())
+            header.err().unwrap(),
+            AppError::MalformedFrame("Size is smaller than minimum header size of 8.")
         );
     }
 
@@ -163,16 +183,16 @@ mod tests {
     fn frame_is_malformed_if_doff_is_smaller_than_2() {
         let data: &[u8] = &[
             0x00, 0x00, 0x00, 0x08, // size: 8
-            0x03, // doff: 1
+            0x01, // doff: 1
             0x00, // type: 0
             0x00, // type-specific: 0
             0x00, // type-specific: 0
         ];
-        let frame = Frame::try_from(data);
-        assert!(frame.is_err());
+        let header = Header::try_from(data);
+        assert!(header.is_err());
         assert_eq!(
-            frame.err().unwrap(),
-            AppError::MalformedFrame("".to_string())
+            header.err().unwrap(),
+            AppError::MalformedFrame("Doff is smaller than minimum doff of 2.")
         );
     }
 }
