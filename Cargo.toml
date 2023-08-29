@@ -1,15 +1,6 @@
-[package]
-name = "amqp1_0"
-version = "0.1.0"
-edition = "2021"
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
-[dependencies]
-anyhow = "1.0.75"
-async-trait = "0.1.73"
-byteorder = "1.4.3"
-bytes = "1.4.0"
-thiserror = "1.0.47"
-tokio = {version = "1", features=["full"]}
-tracing = "0.1.37"
+[workspace]
+members = [
+  "amqp-lib",
+  "client",
+  "server"
+]
