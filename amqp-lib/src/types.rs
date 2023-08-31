@@ -23,3 +23,70 @@ pub enum PrimitiveType {
     Map,
     Array,
 }
+
+impl From<bool> for PrimitiveType {
+    fn from(value: bool) -> Self {
+        PrimitiveType::Boolean(value)
+    }
+}
+
+impl From<u8> for PrimitiveType {
+    fn from(value: u8) -> Self {
+        PrimitiveType::Ubyte(value)
+    }
+}
+
+impl From<u16> for PrimitiveType {
+    fn from(value: u16) -> Self {
+        PrimitiveType::Ushort(value)
+    }
+}
+
+impl From<u32> for PrimitiveType {
+    fn from(value: u32) -> Self {
+        PrimitiveType::Uint(value)
+    }
+}
+
+impl From<u64> for PrimitiveType {
+    fn from(value: u64) -> Self {
+        PrimitiveType::Ulong(value)
+    }
+}
+
+impl From<i8> for PrimitiveType {
+    fn from(value: i8) -> Self {
+        PrimitiveType::Byte(value)
+    }
+}
+
+impl From<i16> for PrimitiveType {
+    fn from(value: i16) -> Self {
+        PrimitiveType::Short(value)
+    }
+}
+
+impl From<i32> for PrimitiveType {
+    fn from(value: i32) -> Self {
+        PrimitiveType::Int(value)
+    }
+}
+
+impl From<i64> for PrimitiveType {
+    fn from(value: i64) -> Self {
+        PrimitiveType::Long(value)
+    }
+}
+
+impl From<f32> for PrimitiveType {
+    fn from(value: f32) -> Self {
+        PrimitiveType::Float(value)
+    }
+}
+
+impl From<f64> for PrimitiveType {
+    fn from(value: f64) -> Self {
+        PrimitiveType::Double(value)
+    }
+}
+
