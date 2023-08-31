@@ -2,14 +2,11 @@ use crate::{error::AppError, performative::Performative};
 use byteorder::{BigEndian, ReadBytesExt};
 use std::io::Cursor;
 
-
 #[derive(Debug, PartialEq)]
 pub enum Frame<'a> {
     Empty(Header),
-    Content(Content<'a>)
+    Content(Content<'a>),
 }
-
-
 
 #[derive(Debug, PartialEq)]
 pub struct Content<'a> {
@@ -18,13 +15,12 @@ pub struct Content<'a> {
     body: Option<Body<'a>>,
 }
 
-
 #[derive(Debug, PartialEq)]
 pub struct Header {
     size: u32,
     doff: u8,
     frame_type: FrameType,
-    extended_header: Option<ExtendedHeader>
+    extended_header: Option<ExtendedHeader>,
 }
 
 #[derive(Debug, PartialEq)]
@@ -71,7 +67,7 @@ impl TryFrom<&[u8]> for Header {
                 size,
                 doff,
                 frame_type: FrameType::Amqp,
-                extended_header: None
+                extended_header: None,
             }),
             (size, _) if size < 8 => Err(AppError::MalformedFrame(
                 "Size is smaller than minimum header size of 8.",
