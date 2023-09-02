@@ -1,5 +1,3 @@
-
-
 pub trait Encode {
     fn constructor(&self) -> Constructor;
 }
@@ -36,43 +34,39 @@ pub enum AmqpType {
     List(List),
     Map(Map),
     Array(Array),
-    Described(Described)
-
-    // Decimal128(), Not supported yet
+    Described(Described), // Decimal128(), Not supported yet
 }
 
 impl Encode for AmqpType {
-
     fn constructor(&self) -> Constructor {
         match self {
-            Self::Null=> Constructor(0x40),
-            Self::Boolean(b)=> Constructor(0x56),
-            Self::Ubyte(_)=> Constructor(0x50),
-            Self::Ushort(_)=> Constructor(0x40),
-            Self::Uint(_)=> Constructor(0x40),
-            Self::Ulong(_)=> Constructor(0x40),
-            Self::Byte(_)=> Constructor(0x40),
-            Self::Short(_)=> Constructor(0x40),
-            Self::Int(_)=> Constructor(0x40),
-            Self::Long(_)=> Constructor(0x40),
-            Self::Float(_)=> Constructor(0x40),
-            Self::Double(_)=> Constructor(0x40),
-            Self::Decimal32(_)=> Constructor(0x40),
-            Self::Decimal64(_)=> Constructor(0x40),
-            Self::Char(_)=> Constructor(0x40),
-            Self::Timestamp(_)=> Constructor(0x40),
-            Self::Uuid(_)=> Constructor(0x40),
-            Self::Binary(_)=> Constructor(0x40),
-            Self::String(_)=> Constructor(0x40),
-            Self::Symbol(_)=> Constructor(0x40),
-            Self::List(_)=> Constructor(0x40),
-            Self::Map(_)=> Constructor(0x40),
-            Self::Array(_)=> Constructor(0x40),
-            Self::Described(_) => Constructor(0x40)
+            Self::Null => Constructor(0x40),
+            Self::Boolean(b) => Constructor(0x56),
+            Self::Ubyte(_) => Constructor(0x50),
+            Self::Ushort(_) => Constructor(0x40),
+            Self::Uint(_) => Constructor(0x40),
+            Self::Ulong(_) => Constructor(0x40),
+            Self::Byte(_) => Constructor(0x40),
+            Self::Short(_) => Constructor(0x40),
+            Self::Int(_) => Constructor(0x40),
+            Self::Long(_) => Constructor(0x40),
+            Self::Float(_) => Constructor(0x40),
+            Self::Double(_) => Constructor(0x40),
+            Self::Decimal32(_) => Constructor(0x40),
+            Self::Decimal64(_) => Constructor(0x40),
+            Self::Char(_) => Constructor(0x40),
+            Self::Timestamp(_) => Constructor(0x40),
+            Self::Uuid(_) => Constructor(0x40),
+            Self::Binary(_) => Constructor(0x40),
+            Self::String(_) => Constructor(0x40),
+            Self::Symbol(_) => Constructor(0x40),
+            Self::List(_) => Constructor(0x40),
+            Self::Map(_) => Constructor(0x40),
+            Self::Array(_) => Constructor(0x40),
+            Self::Described(_) => Constructor(0x40),
         }
     }
 }
-
 
 impl From<bool> for AmqpType {
     fn from(value: bool) -> Self {
@@ -193,6 +187,3 @@ impl From<Array> for AmqpType {
         AmqpType::Array(value)
     }
 }
-
-
-
