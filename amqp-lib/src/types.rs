@@ -1,6 +1,6 @@
 
 
-pub trait Constructable {
+pub trait Encode {
     fn constructor(&self) -> Constructor;
 }
 pub struct Timestamp(u64);
@@ -10,8 +10,9 @@ pub struct List();
 pub struct Map();
 pub struct Array();
 pub struct Uuid();
+pub struct Described();
 pub struct Constructor(u8);
-pub enum PrimitiveType {
+pub enum AmqpType {
     Null,
     Boolean(bool),
     Ubyte(u8),
@@ -35,11 +36,12 @@ pub enum PrimitiveType {
     List(List),
     Map(Map),
     Array(Array),
+    Described(Described)
 
     // Decimal128(), Not supported yet
 }
 
-impl Constructable for PrimitiveType {
+impl Encode for AmqpType {
 
     fn constructor(&self) -> Constructor {
         match self {
@@ -66,127 +68,131 @@ impl Constructable for PrimitiveType {
             Self::List(_)=> Constructor(0x40),
             Self::Map(_)=> Constructor(0x40),
             Self::Array(_)=> Constructor(0x40),
+            Self::Described(_) => Constructor(0x40)
         }
     }
 }
 
 
-impl From<bool> for PrimitiveType {
+impl From<bool> for AmqpType {
     fn from(value: bool) -> Self {
-        PrimitiveType::Boolean(value)
+        AmqpType::Boolean(value)
     }
 }
 
-impl From<u8> for PrimitiveType {
+impl From<u8> for AmqpType {
     fn from(value: u8) -> Self {
-        PrimitiveType::Ubyte(value)
+        AmqpType::Ubyte(value)
     }
 }
 
-impl From<u16> for PrimitiveType {
+impl From<u16> for AmqpType {
     fn from(value: u16) -> Self {
-        PrimitiveType::Ushort(value)
+        AmqpType::Ushort(value)
     }
 }
 
-impl From<u32> for PrimitiveType {
+impl From<u32> for AmqpType {
     fn from(value: u32) -> Self {
-        PrimitiveType::Uint(value)
+        AmqpType::Uint(value)
     }
 }
 
-impl From<u64> for PrimitiveType {
+impl From<u64> for AmqpType {
     fn from(value: u64) -> Self {
-        PrimitiveType::Ulong(value)
+        AmqpType::Ulong(value)
     }
 }
 
-impl From<i8> for PrimitiveType {
+impl From<i8> for AmqpType {
     fn from(value: i8) -> Self {
-        PrimitiveType::Byte(value)
+        AmqpType::Byte(value)
     }
 }
 
-impl From<i16> for PrimitiveType {
+impl From<i16> for AmqpType {
     fn from(value: i16) -> Self {
-        PrimitiveType::Short(value)
+        AmqpType::Short(value)
     }
 }
 
-impl From<i32> for PrimitiveType {
+impl From<i32> for AmqpType {
     fn from(value: i32) -> Self {
-        PrimitiveType::Int(value)
+        AmqpType::Int(value)
     }
 }
 
-impl From<i64> for PrimitiveType {
+impl From<i64> for AmqpType {
     fn from(value: i64) -> Self {
-        PrimitiveType::Long(value)
+        AmqpType::Long(value)
     }
 }
 
-impl From<f32> for PrimitiveType {
+impl From<f32> for AmqpType {
     fn from(value: f32) -> Self {
-        PrimitiveType::Float(value)
+        AmqpType::Float(value)
     }
 }
 
-impl From<f64> for PrimitiveType {
+impl From<f64> for AmqpType {
     fn from(value: f64) -> Self {
-        PrimitiveType::Double(value)
+        AmqpType::Double(value)
     }
 }
 
-impl From<char> for PrimitiveType {
+impl From<char> for AmqpType {
     fn from(value: char) -> Self {
-        PrimitiveType::Char(value)
+        AmqpType::Char(value)
     }
 }
 
-impl From<Timestamp> for PrimitiveType {
+impl From<Timestamp> for AmqpType {
     fn from(value: Timestamp) -> Self {
-        PrimitiveType::Timestamp(value)
+        AmqpType::Timestamp(value)
     }
 }
 
-impl From<Uuid> for PrimitiveType {
+impl From<Uuid> for AmqpType {
     fn from(value: Uuid) -> Self {
-        PrimitiveType::Uuid(value)
+        AmqpType::Uuid(value)
     }
 }
 
-impl From<Binary> for PrimitiveType {
+impl From<Binary> for AmqpType {
     fn from(value: Binary) -> Self {
-        PrimitiveType::Binary(value)
+        AmqpType::Binary(value)
     }
 }
 
-impl From<String> for PrimitiveType {
+impl From<String> for AmqpType {
     fn from(value: String) -> Self {
-        PrimitiveType::String(value)
+        AmqpType::String(value)
     }
 }
 
-impl From<Symbol> for PrimitiveType {
+impl From<Symbol> for AmqpType {
     fn from(value: Symbol) -> Self {
-        PrimitiveType::Symbol(value)
+        AmqpType::Symbol(value)
     }
 }
 
-impl From<List> for PrimitiveType {
+impl From<List> for AmqpType {
     fn from(value: List) -> Self {
-        PrimitiveType::List(value)
+        AmqpType::List(value)
     }
 }
 
-impl From<Map> for PrimitiveType {
+impl From<Map> for AmqpType {
     fn from(value: Map) -> Self {
-        PrimitiveType::Map(value)
+        AmqpType::Map(value)
     }
 }
 
-impl From<Array> for PrimitiveType {
+impl From<Array> for AmqpType {
     fn from(value: Array) -> Self {
-        PrimitiveType::Array(value)
+        AmqpType::Array(value)
     }
 }
+
+
+
