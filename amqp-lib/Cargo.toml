@@ -3,6 +3,11 @@ name = "amqp-lib"
 version = "0.1.0"
 edition = "2021"
 
+
+[features]
+default = ["zero-length-encoding"]
+zero-length-encoding = []
+
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]

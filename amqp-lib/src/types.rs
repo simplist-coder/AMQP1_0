@@ -187,3 +187,173 @@ impl From<Array> for AmqpType {
         AmqpType::Array(value)
     }
 }
+
+#[cfg(test)]
+mod tests {
+
+    use super::*;
+
+    #[test]
+    fn amqp_type_can_construct_null() {
+        let val = AmqpType::Null;
+        assert_eq!(val.constructor().0, 0x40);
+    }
+
+    #[test]
+    fn amqp_type_can_construct_bool() {
+        let val = AmqpType::Boolean(true);
+        assert_eq!(val.constructor().0, 0x56);
+    }
+
+    #[test]
+    #[cfg(feature = "zero-length-bools")]
+    fn amqp_type_constructs_bool_false_as_zero_length() {
+        let val = AmqpType::Boolean(false);
+        assert_eq!(val.constructor().0, 0x42);
+    }
+
+    #[test]
+    #[cfg(feature = "zero-length-bools")]
+    fn amqp_type_contructs_bool_true_as_zero_length() {
+        let val = AmqpType::Boolean(true);
+        assert_eq!(val.constructor().0, 0x41)
+    }
+
+    #[test]
+    fn amqp_type_can_construct_ubyte() {
+        let val = AmqpType::Ubyte(8);
+        assert_eq!(val.constructor().0, 0x50);
+    }
+
+    #[test]
+    fn amqp_type_can_construct_ushort() {
+        let val = AmqpType::Ushort(16);
+        assert_eq!(val.constructor().0, 0x60);
+    }
+
+    #[test]
+    fn amqp_type_can_construct_uint() {
+        let val = AmqpType::Uint(32);
+        assert_eq!(val.constructor().0, 0x70);
+    }
+
+    #[test]
+    fn amqp_type_encodes_uint_value_0_as_zero_length() {
+        let val = AmqpType::Uint(0);
+        assert_eq!(val.constructor().0, 0x43);
+    }
+
+    #[test]
+    fn amqp_type_can_construct_ulong() {
+        let val = AmqpType::Ulong(64);
+        assert_eq!(val.constructor().0, 0x80);
+    }
+
+    #[test]
+    fn amqp_type_encodes_ulong_value_0_as_zero_length() {
+        let val = AmqpType::Ulong(0);
+        assert_eq!(val.constructor().0, 0x44);
+    }
+
+    #[test]
+    fn amqp_type_can_construct_byte() {
+        let val = AmqpType::Byte(8);
+        assert_eq!(val.constructor().0, 0x51);
+    }
+
+    #[test]
+    fn amqp_type_can_construct_short() {
+        let val = AmqpType::Short(8);
+        assert_eq!(val.constructor().0, 0x61);
+    }
+
+    #[test]
+    fn amqp_type_can_construct_int() {
+        let val = AmqpType::Int(32);
+        assert_eq!(val.constructor().0, 0x71);
+    }
+
+    #[test]
+    fn amqp_type_can_construct_long() {
+        let val = AmqpType::Long(64);
+        assert_eq!(val.constructor().0, 0x81);
+    }
+
+    #[test]
+    fn amqp_type_can_construct_float() {
+        let val = AmqpType::Float(32.0);
+        assert_eq!(val.constructor().0, 0x72);
+    }
+
+    #[test]
+    fn amqp_type_can_construct_double() {
+        let val = AmqpType::Double(64.0);
+        assert_eq!(val.constructor().0, 0x82);
+    }
+
+    #[test]
+    fn amqp_type_can_construct_decimal_32() {
+        let val = AmqpType::Decimal32(32.0);
+        assert_eq!(val.constructor().0, 0x74);
+    }
+
+    #[test]
+    fn amqp_type_can_construct_decimal_64() {
+        let val = AmqpType::Decimal64(64.0);
+        assert_eq!(val.constructor().0, 0x84);
+    }
+
+    #[test]
+    fn amqp_type_can_construct_char() {
+        let val = AmqpType::Char('a');
+        assert_eq!(val.constructor().0, 0x73);
+    }
+
+    #[test]
+    fn amqp_type_can_construct_timestamp() {
+        let val = AmqpType::Timestamp(Timestamp(1));
+        assert_eq!(val.constructor().0, 0x83);
+    }
+
+    #[test]
+    fn amqp_type_can_construct_uuid() {
+        let val = AmqpType::Uuid(Uuid());
+        assert_eq!(val.constructor().0, 0x98);
+    }
+
+    #[test]
+    fn amqp_type_can_construct_binary() {
+        let val = AmqpType::Binary(Binary());
+        assert_eq!(val.constructor().0, 0xa0);
+    }
+
+    #[test]
+    fn amqp_type_can_construct_string() {
+        let val = AmqpType::String("hello".to_string());
+        assert_eq!(val.constructor().0, 0xa1);
+    }
+
+    #[test]
+    fn amqp_type_can_construct_symbol() {
+        let val = AmqpType::Symbol(Symbol());
+        assert_eq!(val.constructor().0, 0xa3);
+    }
+
+    #[test]
+    fn amqp_type_can_construct_list() {
+        let val = AmqpType::List(List());
+        assert_eq!(val.constructor().0, 0x45);
+    }
+
+    #[test]
+    fn amqp_type_can_construct_map() {
+        let val = AmqpType::Map(Map());
+        assert_eq!(val.constructor().0, 0xc1);
+    }
+
+    #[test]
+    fn amqp_type_can_construct_array() {
+        let val = AmqpType::Array(Array());
+        assert_eq!(val.constructor().0, 0xe0);
+    }
+}
