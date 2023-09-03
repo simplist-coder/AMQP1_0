@@ -127,7 +127,7 @@ impl Encode for i64 {
 impl Encode for String {
     fn constructor(&self) -> Constructor {
         match self.len() {
-            x if x >= 0 && x <= 255 => Constructor(0xa1),
+            x if x >= 0 as usize && x <= 255 as usize => Constructor(0xa1),
             _ => Constructor(0xb1)
         }
     }
@@ -347,7 +347,7 @@ mod tests {
 
     #[test]
     fn amqp_type_encodes_uint_values_smaller_than_256_as_smalluint() {
-        let val = AmqpType::Uint(60);
+        let val = AmqpType::Uint(255);
         assert_eq!(val.constructor().0, 0x52);
     }
     #[test]
@@ -358,7 +358,7 @@ mod tests {
 
     #[test]
     fn amqp_type_encodes_ulong_smaller_than_256_as_smallulong() {
-        let val = AmqpType::Ulong(64);
+        let val = AmqpType::Ulong(255);
         assert_eq!(val.constructor().0, 0x53);
     }
 
@@ -387,9 +387,11 @@ mod tests {
     }
 
     #[test]
-    fn amqp_encodes_ints_smaller_than_256_as_smallint() {
-        let val = AmqpType::Int(32);
-        assert_eq!(val.constructor().0, 0x54);
+    fn amqp_encodes_ints_between_neg_128_and_127_as_smallint() {
+        let lower = AmqpType::Int(-128);
+        let higher = AmqpType::Int(127);
+        assert_eq!(lower.constructor().0, 0x54);
+        assert_eq!(higher.constructor().0, 0x54);
     }
     #[test]
     fn amqp_type_can_construct_long() {
@@ -398,9 +400,11 @@ mod tests {
     }
 
     #[test]
-    fn amqp_encodes_longs_smaller_than_256_as_smalllong() {
-        let val = AmqpType::Long(32);
-        assert_eq!(val.constructor().0, 0x55);
+    fn amqp_encodes_longs_between_neg_128_and_127_as_smalllong() {
+        let lower = AmqpType::Long(-128);
+        let higher = AmqpType::Long(127);
+        assert_eq!(lower.constructor().0, 0x55);
+        assert_eq!(higher.constructor().0, 0x55);
     }
 
     #[test]
