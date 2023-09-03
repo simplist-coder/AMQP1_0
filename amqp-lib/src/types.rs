@@ -1,4 +1,4 @@
-pub trait Encode {
+trait Encode {
     fn constructor(&self) -> Constructor;
 }
 pub struct Timestamp(u64);
@@ -41,30 +41,131 @@ impl Encode for AmqpType {
     fn constructor(&self) -> Constructor {
         match self {
             Self::Null => Constructor(0x40),
-            Self::Boolean(b) => Constructor(0x56),
+            Self::Boolean(b) => b.constructor(),
             Self::Ubyte(_) => Constructor(0x50),
-            Self::Ushort(_) => Constructor(0x40),
-            Self::Uint(_) => Constructor(0x40),
-            Self::Ulong(_) => Constructor(0x40),
-            Self::Byte(_) => Constructor(0x40),
-            Self::Short(_) => Constructor(0x40),
-            Self::Int(_) => Constructor(0x40),
-            Self::Long(_) => Constructor(0x40),
-            Self::Float(_) => Constructor(0x40),
-            Self::Double(_) => Constructor(0x40),
-            Self::Decimal32(_) => Constructor(0x40),
-            Self::Decimal64(_) => Constructor(0x40),
-            Self::Char(_) => Constructor(0x40),
-            Self::Timestamp(_) => Constructor(0x40),
-            Self::Uuid(_) => Constructor(0x40),
-            Self::Binary(_) => Constructor(0x40),
-            Self::String(_) => Constructor(0x40),
-            Self::Symbol(_) => Constructor(0x40),
-            Self::List(_) => Constructor(0x40),
-            Self::Map(_) => Constructor(0x40),
-            Self::Array(_) => Constructor(0x40),
-            Self::Described(_) => Constructor(0x40),
+            Self::Ushort(_) => Constructor(0x60),
+            Self::Uint(val) => val.constructor(),
+            Self::Ulong(val) => val.constructor(),
+            Self::Byte(_) => Constructor(0x51),
+            Self::Short(_) => Constructor(0x61),
+            Self::Int(val) => val.constructor(),
+            Self::Long(val) => val.constructor(),
+            Self::Float(_) => Constructor(0x72),
+            Self::Double(_) => Constructor(0x82),
+            Self::Decimal32(_) => Constructor(0x74),
+            Self::Decimal64(_) => Constructor(0x84),
+            Self::Char(_) => Constructor(0x73),
+            Self::Timestamp(_) => Constructor(0x83),
+            Self::Uuid(_) => Constructor(0x98),
+            Self::Binary(val) => val.constructor(),
+            Self::String(val) => val.constructor(),
+            Self::Symbol(val) => val.constructor(),
+            Self::List(val) => val.constructor(),
+            Self::Map(val) => val.constructor(),
+            Self::Array(val) => val.constructor(),
+            Self::Described(val) => val.constructor(),
         }
+    }
+}
+
+impl Encode for bool {
+
+    #[cfg(feature = "zero-length-bools")]
+    fn constructor(&self) -> Constructor {
+        match self {
+            true => Constructor(0x41),
+            false => Constructor(0x42)
+        }
+    }
+
+    
+    #[cfg(not(feature = "zero-length-bools"))]
+    fn constructor(&self) -> Constructor {
+        Constructor(0x56)
+    }
+}
+
+impl Encode for u32 {
+    fn constructor(&self) -> Constructor {
+        match self {
+            0 => Constructor(0x43),
+            x if x > &0 && x<= &255 => Constructor(0x52),
+            _ => Constructor(0x70)
+        }
+    }
+}
+
+impl  Encode for u64 {
+    fn constructor(&self) -> Constructor {
+        match self {
+            0 => Constructor(0x44),
+            x if x > &&0 && x <= &255 => Constructor(0x53),
+            _ => Constructor(0x80)
+        }
+    }
+}
+
+impl Encode for i32 {
+    fn constructor(&self) -> Constructor {
+        match self {
+            x if x >= &-128 && x <= &127 => Constructor(0x54),
+            _ => Constructor(0x71)
+        }
+    }
+}
+
+impl Encode for i64 {
+    fn constructor(&self) -> Constructor {
+        match self {
+            x if x >= &-128 && x <= &127 => Constructor(0x55),
+            _ => Constructor(0x81)
+        }
+        
+    }
+}
+
+impl Encode for String {
+    fn constructor(&self) -> Constructor {
+        match self.len() {
+            x if x >= 0 && x <= 255 => Constructor(0xa1),
+            _ => Constructor(0xb1)
+        }
+    }
+}
+
+impl Encode for Binary {
+    fn constructor(&self) -> Constructor {
+        todo!()
+    }
+}
+
+impl Encode for Symbol {
+    fn constructor(&self) -> Constructor {
+        todo!()
+    }
+}
+
+impl Encode for List {
+    fn constructor(&self) -> Constructor {
+        todo!()
+    }
+}
+
+impl Encode for Map {
+    fn constructor(&self) -> Constructor {
+        todo!()
+    }
+}
+
+impl Encode for Array {
+    fn constructor(&self) -> Constructor {
+        todo!()
+    }
+}
+
+impl Encode for Described {
+    fn constructor(&self) -> Constructor {
+        todo!()
     }
 }
 
@@ -200,6 +301,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(not(feature = "zero-length-bools"))]
     fn amqp_type_can_construct_bool() {
         let val = AmqpType::Boolean(true);
         assert_eq!(val.constructor().0, 0x56);
