@@ -61,7 +61,7 @@ impl TryFrom<&[u8]> for Header {
         let mut c = Cursor::new(value);
         let size: u32 = c.read_u32::<BigEndian>()?;
         let doff: u8 = c.read_u8()?;
-        let frame_type = FrameType::try_from(c.read_u8()?);
+        let _frame_type = FrameType::try_from(c.read_u8()?);
         match (size, doff) {
             (size, doff) if size >= 8 && doff >= 2 => Ok(Header {
                 size,
@@ -85,7 +85,7 @@ impl TryFrom<&[u8]> for Header {
 impl TryFrom<&[u8]> for ExtendedHeader {
     type Error = AppError;
 
-    fn try_from(value: &[u8]) -> Result<Self, Self::Error> {
+    fn try_from(_value: &[u8]) -> Result<Self, Self::Error> {
         todo!()
     }
 }
@@ -93,7 +93,7 @@ impl TryFrom<&[u8]> for ExtendedHeader {
 impl TryFrom<&[u8]> for Body<'_> {
     type Error = AppError;
 
-    fn try_from(value: &[u8]) -> Result<Self, Self::Error> {
+    fn try_from(_value: &[u8]) -> Result<Self, Self::Error> {
         todo!()
     }
 }
