@@ -17,3 +17,4 @@ bytes = "1.4.0"
 thiserror = "1.0.47"
 tokio = {version = "1", features=["full"]}
 tracing = "0.1.37"
+uuid = "1.4.1"

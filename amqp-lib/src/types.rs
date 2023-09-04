@@ -2,15 +2,15 @@ trait Encode {
     fn constructor(&self) -> Constructor;
 }
 pub struct Timestamp(u64);
-pub struct Binary();
-pub struct Symbol();
+pub struct Binary(Vec<u8>);
+pub struct Symbol(String);
 pub struct List();
 pub struct Map();
-pub struct Array();
-pub struct Uuid();
+pub struct Array<T>(Vec<T>);
+pub struct Uuid(uuid::Uuid);
 pub struct Described();
 pub struct Constructor(u8);
-pub enum AmqpType {
+pub enum AmqpType<T> {
     Null,
     Boolean(bool),
     Ubyte(u8),
@@ -33,11 +33,11 @@ pub enum AmqpType {
     Symbol(Symbol),
     List(List),
     Map(Map),
-    Array(Array),
+    Array(Array<T>),
     Described(Described), // Decimal128(), Not supported yet
 }
 
-impl Encode for AmqpType {
+impl<T> Encode for AmqpType<T> {
     fn constructor(&self) -> Constructor {
         match self {
             Self::Null => Constructor(0x40),
@@ -157,7 +157,7 @@ impl Encode for Map {
     }
 }
 
-impl Encode for Array {
+impl<T> Encode for Array<T> {
     fn constructor(&self) -> Constructor {
         todo!()
     }
@@ -169,122 +169,122 @@ impl Encode for Described {
     }
 }
 
-impl From<bool> for AmqpType {
+impl<T> From<bool> for AmqpType<T> {
     fn from(value: bool) -> Self {
         AmqpType::Boolean(value)
     }
 }
 
-impl From<u8> for AmqpType {
+impl<T> From<u8> for AmqpType<T> {
     fn from(value: u8) -> Self {
         AmqpType::Ubyte(value)
     }
 }
 
-impl From<u16> for AmqpType {
+impl<T> From<u16> for AmqpType<T> {
     fn from(value: u16) -> Self {
         AmqpType::Ushort(value)
     }
 }
 
-impl From<u32> for AmqpType {
+impl<T> From<u32> for AmqpType<T> {
     fn from(value: u32) -> Self {
         AmqpType::Uint(value)
     }
 }
 
-impl From<u64> for AmqpType {
+impl<T> From<u64> for AmqpType<T> {
     fn from(value: u64) -> Self {
         AmqpType::Ulong(value)
     }
 }
 
-impl From<i8> for AmqpType {
+impl<T> From<i8> for AmqpType<T> {
     fn from(value: i8) -> Self {
         AmqpType::Byte(value)
     }
 }
 
-impl From<i16> for AmqpType {
+impl<T> From<i16> for AmqpType<T> {
     fn from(value: i16) -> Self {
         AmqpType::Short(value)
     }
 }
 
-impl From<i32> for AmqpType {
+impl<T> From<i32> for AmqpType<T> {
     fn from(value: i32) -> Self {
         AmqpType::Int(value)
     }
 }
 
-impl From<i64> for AmqpType {
+impl<T> From<i64> for AmqpType<T> {
     fn from(value: i64) -> Self {
         AmqpType::Long(value)
     }
 }
 
-impl From<f32> for AmqpType {
+impl<T> From<f32> for AmqpType<T> {
     fn from(value: f32) -> Self {
         AmqpType::Float(value)
     }
 }
 
-impl From<f64> for AmqpType {
+impl<T> From<f64> for AmqpType<T> {
     fn from(value: f64) -> Self {
         AmqpType::Double(value)
     }
 }
 
-impl From<char> for AmqpType {
+impl<T> From<char> for AmqpType<T> {
     fn from(value: char) -> Self {
         AmqpType::Char(value)
     }
 }
 
-impl From<Timestamp> for AmqpType {
+impl<T> From<Timestamp> for AmqpType<T> {
     fn from(value: Timestamp) -> Self {
         AmqpType::Timestamp(value)
     }
 }
 
-impl From<Uuid> for AmqpType {
+impl<T> From<Uuid> for AmqpType<T> {
     fn from(value: Uuid) -> Self {
         AmqpType::Uuid(value)
     }
 }
 
-impl From<Binary> for AmqpType {
+impl<T> From<Binary> for AmqpType<T> {
     fn from(value: Binary) -> Self {
         AmqpType::Binary(value)
     }
 }
 
-impl From<String> for AmqpType {
+impl<T> From<String> for AmqpType<T> {
     fn from(value: String) -> Self {
         AmqpType::String(value)
     }
 }
 
-impl From<Symbol> for AmqpType {
+impl<T> From<Symbol> for AmqpType<T> {
     fn from(value: Symbol) -> Self {
         AmqpType::Symbol(value)
     }
 }
 
-impl From<List> for AmqpType {
+impl<T> From<List> for AmqpType<T> {
     fn from(value: List) -> Self {
         AmqpType::List(value)
     }
 }
 
-impl From<Map> for AmqpType {
+impl<T> From<Map> for AmqpType<T> {
     fn from(value: Map) -> Self {
         AmqpType::Map(value)
     }
 }
 
-impl From<Array> for AmqpType {
-    fn from(value: Array) -> Self {
+impl<T> From<Array<T>> for AmqpType<T> {
+    fn from(value: Array<T>) -> Self {
         AmqpType::Array(value)
     }
 }
