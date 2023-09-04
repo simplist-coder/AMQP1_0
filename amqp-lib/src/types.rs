@@ -1,8 +1,12 @@
 use bigdecimal::BigDecimal;
+
+use crate::error::AppError;
 trait Encode {
     fn constructor(&self) -> Constructor;
     fn encode(&self) -> Vec<u8>;
 }
+
+trait Decode<'a>: From<&'a [u8]> + Encode {}
 pub struct Timestamp(u64);
 pub struct Binary(Vec<u8>);
 pub struct Symbol(String);
