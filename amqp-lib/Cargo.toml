@@ -12,6 +12,7 @@ zero-length-encoding = []
 
 [dependencies]
 async-trait = "0.1.73"
+bigdecimal = "0.4.1"
 byteorder = "1.4.3"
 bytes = "1.4.0"
 thiserror = "1.0.47"

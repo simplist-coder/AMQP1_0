@@ -1,5 +1,7 @@
+use bigdecimal::BigDecimal;
 trait Encode {
     fn constructor(&self) -> Constructor;
+    fn encode(&self) -> Vec<u8>;
 }
 pub struct Timestamp(u64);
 pub struct Binary(Vec<u8>);
@@ -10,6 +12,9 @@ pub struct Array();
 pub struct Uuid(uuid::Uuid);
 pub struct Described();
 pub struct Constructor(u8);
+pub struct Decimal32(BigDecimal);
+pub struct Decimal64(BigDecimal);
+pub struct Decimal128(BigDecimal);
 pub enum AmqpType {
     Null,
     Boolean(bool),
@@ -23,8 +28,9 @@ pub enum AmqpType {
     Long(i64),
     Float(f32),
     Double(f64),
-    Decimal32(f32),
-    Decimal64(f64),
+    Decimal32(Decimal32),
+    Decimal64(Decimal64),
+    Decimal128(Decimal128),
     Char(char),
     Timestamp(Timestamp),
     Uuid(Uuid),
@@ -34,29 +40,29 @@ pub enum AmqpType {
     // List(List),
     // Map(Map),
     // Array(Array<T>),
-    // Decimal128(), Not supported yet
 }
 
 impl Encode for AmqpType {
     fn constructor(&self) -> Constructor {
         match self {
             Self::Null => Constructor(0x40),
-            Self::Boolean(b) => b.constructor(),
-            Self::Ubyte(_) => Constructor(0x50),
-            Self::Ushort(_) => Constructor(0x60),
+            Self::Boolean(val) => val.constructor(),
+            Self::Ubyte(val) => val.constructor(),
+            Self::Ushort(val) => val.constructor(),
             Self::Uint(val) => val.constructor(),
             Self::Ulong(val) => val.constructor(),
-            Self::Byte(_) => Constructor(0x51),
-            Self::Short(_) => Constructor(0x61),
+            Self::Byte(val) => val.constructor(),
+            Self::Short(val) => val.constructor(),
             Self::Int(val) => val.constructor(),
             Self::Long(val) => val.constructor(),
-            Self::Float(_) => Constructor(0x72),
-            Self::Double(_) => Constructor(0x82),
-            Self::Decimal32(_) => Constructor(0x74),
-            Self::Decimal64(_) => Constructor(0x84),
-            Self::Char(_) => Constructor(0x73),
-            Self::Timestamp(_) => Constructor(0x83),
-            Self::Uuid(_) => Constructor(0x98),
+            Self::Float(val) => val.constructor(),
+            Self::Double(val) => val.constructor(),
+            Self::Decimal32(val) => val.constructor(),
+            Self::Decimal64(val) => val.constructor(),
+            Self::Decimal128(val) => val.constructor(),
+            Self::Char(val) => val.constructor(),
+            Self::Timestamp(val) => val.constructor(),
+            Self::Uuid(val) => val.constructor(),
             Self::Binary(val) => val.constructor(),
             Self::String(val) => val.constructor(),
             Self::Symbol(val) => val.constructor(),
@@ -65,42 +71,167 @@ impl Encode for AmqpType {
             // Self::Array(val) => val.constructor(),
         }
     }
+
+    fn encode(&self) -> Vec<u8> {
+        match self {
+            Self::Null => todo!(),
+            Self::Boolean(val) => val.encode(),
+            Self::Ubyte(val) => val.encode(),
+            Self::Ushort(val) => val.encode(),
+            Self::Uint(val) => val.encode(),
+            Self::Ulong(val) => val.encode(),
+            Self::Byte(val) => val.encode(),
+            Self::Short(val) => val.encode(),
+            Self::Int(val) => val.encode(),
+            Self::Long(val) => val.encode(),
+            Self::Float(val) => val.encode(),
+            Self::Double(val) => val.encode(),
+            Self::Decimal32(val) => val.encode(),
+            Self::Decimal64(val) => val.encode(),
+            Self::Decimal128(val) => val.encode(),
+            Self::Char(val) => val.encode(),
+            Self::Timestamp(val) => val.encode(),
+            Self::Uuid(val) => val.encode(),
+            Self::Binary(val) => val.encode(),
+            Self::String(val) => val.encode(),
+            Self::Symbol(val) => val.encode(),
+        }
+    }
 }
 
 impl Encode for bool {
-
     #[cfg(feature = "zero-length-bools")]
     fn constructor(&self) -> Constructor {
         match self {
             true => Constructor(0x41),
-            false => Constructor(0x42)
+            false => Constructor(0x42),
         }
     }
 
-    
     #[cfg(not(feature = "zero-length-bools"))]
     fn constructor(&self) -> Constructor {
         Constructor(0x56)
     }
+
+    fn encode(&self) -> Vec<u8> {
+        todo!()
+    }
 }
 
+impl Encode for u8 {
+    fn constructor(&self) -> Constructor {
+        Constructor(0x50)
+    }
+
+    fn encode(&self) -> Vec<u8> {
+        todo!()
+    }
+}
+
+impl Encode for u16 {
+    fn constructor(&self) -> Constructor {
+        Constructor(0x60)
+    }
+
+    fn encode(&self) -> Vec<u8> {
+        todo!()
+    }
+}
+
+impl Encode for i8 {
+    fn constructor(&self) -> Constructor {
+        Constructor(0x51)
+    }
+
+    fn encode(&self) -> Vec<u8> {
+        todo!()
+    }
+}
+
+impl Encode for i16 {
+    fn constructor(&self) -> Constructor {
+        Constructor(0x61)
+    }
+
+    fn encode(&self) -> Vec<u8> {
+        todo!()
+    }
+}
+
+impl Encode for f32 {
+    fn constructor(&self) -> Constructor {
+        Constructor(0x72)
+    }
+
+    fn encode(&self) -> Vec<u8> {
+        todo!()
+    }
+}
+
+impl Encode for f64 {
+    fn constructor(&self) -> Constructor {
+        Constructor(0x82)
+    }
+
+    fn encode(&self) -> Vec<u8> {
+        todo!()
+    }
+}
+
+impl Encode for char {
+    fn constructor(&self) -> Constructor {
+        Constructor(0x73)
+    }
+
+    fn encode(&self) -> Vec<u8> {
+        todo!()
+    }
+}
+
+impl Encode for Timestamp {
+    fn constructor(&self) -> Constructor {
+        Constructor(0x83)
+    }
+
+    fn encode(&self) -> Vec<u8> {
+        todo!()
+    }
+}
+
+impl Encode for Uuid {
+    fn constructor(&self) -> Constructor {
+        Constructor(0x98)
+    }
+
+    fn encode(&self) -> Vec<u8> {
+        todo!()
+    }
+}
 impl Encode for u32 {
     fn constructor(&self) -> Constructor {
         match self {
             0 => Constructor(0x43),
-            x if x > &0 && x<= &255 => Constructor(0x52),
-            _ => Constructor(0x70)
+            x if x > &0 && x <= &255 => Constructor(0x52),
+            _ => Constructor(0x70),
         }
+    }
+
+    fn encode(&self) -> Vec<u8> {
+        todo!()
     }
 }
 
-impl  Encode for u64 {
+impl Encode for u64 {
     fn constructor(&self) -> Constructor {
         match self {
             0 => Constructor(0x44),
             x if x > &&0 && x <= &255 => Constructor(0x53),
-            _ => Constructor(0x80)
+            _ => Constructor(0x80),
         }
+    }
+
+    fn encode(&self) -> Vec<u8> {
+        todo!()
     }
 }
 
@@ -108,8 +239,12 @@ impl Encode for i32 {
     fn constructor(&self) -> Constructor {
         match self {
             x if x >= &-128 && x <= &127 => Constructor(0x54),
-            _ => Constructor(0x71)
+            _ => Constructor(0x71),
         }
+    }
+
+    fn encode(&self) -> Vec<u8> {
+        todo!()
     }
 }
 
@@ -117,9 +252,12 @@ impl Encode for i64 {
     fn constructor(&self) -> Constructor {
         match self {
             x if x >= &-128 && x <= &127 => Constructor(0x55),
-            _ => Constructor(0x81)
+            _ => Constructor(0x81),
         }
-        
+    }
+
+    fn encode(&self) -> Vec<u8> {
+        todo!()
     }
 }
 
@@ -127,13 +265,21 @@ impl Encode for String {
     fn constructor(&self) -> Constructor {
         match self.len() {
             x if x >= 0 as usize && x <= 255 as usize => Constructor(0xa1),
-            _ => Constructor(0xb1)
+            _ => Constructor(0xb1),
         }
+    }
+
+    fn encode(&self) -> Vec<u8> {
+        todo!()
     }
 }
 
 impl Encode for Binary {
     fn constructor(&self) -> Constructor {
+        todo!()
+    }
+
+    fn encode(&self) -> Vec<u8> {
         todo!()
     }
 }
@@ -142,10 +288,18 @@ impl Encode for Symbol {
     fn constructor(&self) -> Constructor {
         todo!()
     }
+
+    fn encode(&self) -> Vec<u8> {
+        todo!()
+    }
 }
 
 impl Encode for List {
     fn constructor(&self) -> Constructor {
+        todo!()
+    }
+
+    fn encode(&self) -> Vec<u8> {
         todo!()
     }
 }
@@ -154,16 +308,58 @@ impl Encode for Map {
     fn constructor(&self) -> Constructor {
         todo!()
     }
+
+    fn encode(&self) -> Vec<u8> {
+        todo!()
+    }
 }
 
 impl Encode for Array {
     fn constructor(&self) -> Constructor {
         todo!()
     }
+
+    fn encode(&self) -> Vec<u8> {
+        todo!()
+    }
 }
 
 impl Encode for Described {
     fn constructor(&self) -> Constructor {
+        todo!()
+    }
+
+    fn encode(&self) -> Vec<u8> {
+        todo!()
+    }
+}
+
+impl Encode for Decimal32 {
+    fn constructor(&self) -> Constructor {
+        Constructor(0x74)
+    }
+
+    fn encode(&self) -> Vec<u8> {
+        todo!()
+    }
+}
+
+impl Encode for Decimal64 {
+    fn constructor(&self) -> Constructor {
+        Constructor(0x84)
+    }
+
+    fn encode(&self) -> Vec<u8> {
+        todo!()
+    }
+}
+
+impl Encode for Decimal128 {
+    fn constructor(&self) -> Constructor {
+        Constructor(0x94)
+    }
+
+    fn encode(&self) -> Vec<u8> {
         todo!()
     }
 }
@@ -270,6 +466,23 @@ impl From<Symbol> for AmqpType {
     }
 }
 
+impl From<f32> for Decimal32 {
+    fn from(value: f32) -> Self {
+        Decimal32(BigDecimal::try_from(value).unwrap())
+    }
+}
+
+impl From<f64> for Decimal64 {
+    fn from(value: f64) -> Self {
+        Decimal64(BigDecimal::try_from(value).unwrap())
+    }
+}
+
+impl From<f64> for Decimal128 {
+    fn from(value: f64) -> Self {
+        Decimal128(BigDecimal::try_from(value).unwrap())
+    }
+}
 // impl From<List> for AmqpType {
 //     fn from(value: List) -> Self {
 //         AmqpType::List(value)
@@ -420,14 +633,20 @@ mod tests {
 
     #[test]
     fn amqp_type_can_construct_decimal_32() {
-        let val = AmqpType::Decimal32(32.0);
+        let val = AmqpType::Decimal32(32.0.into());
         assert_eq!(val.constructor().0, 0x74);
     }
 
     #[test]
     fn amqp_type_can_construct_decimal_64() {
-        let val = AmqpType::Decimal64(64.0);
+        let val = AmqpType::Decimal64(64.0.into());
         assert_eq!(val.constructor().0, 0x84);
+    }
+
+    #[test]
+    fn amqp_type_can_construct_decimal_128() {
+        let val = AmqpType::Decimal128(128.0.into());
+        assert_eq!(val.constructor().0, 0x94);
     }
 
     #[test]
