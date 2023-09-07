@@ -1,4 +1,5 @@
 use bigdecimal::BigDecimal;
+use indexmap::IndexMap;
 
 use crate::error::AppError;
 trait Encode {
@@ -10,15 +11,17 @@ trait Decode<'a>: From<&'a [u8]> + Encode {}
 pub struct Timestamp(u64);
 pub struct Binary(Vec<u8>);
 pub struct Symbol(String);
-pub struct List();
-pub struct Map();
-pub struct Array();
 pub struct Uuid(uuid::Uuid);
 pub struct Described();
 pub struct Constructor(u8);
 pub struct Decimal32(BigDecimal);
 pub struct Decimal64(BigDecimal);
 pub struct Decimal128(BigDecimal);
+pub struct List(Vec<AmqpType>);
+pub struct Array(Vec<AmqpType>);
+pub struct Map(IndexMap<AmqpType, AmqpType>);
+
+
 pub enum AmqpType {
     Null,
     Boolean(bool),
@@ -41,9 +44,9 @@ pub enum AmqpType {
     Binary(Binary),
     String(String),
     Symbol(Symbol),
-    // List(List),
-    // Map(Map),
-    // Array(Array<T>),
+    List(List),
+    Map(Map),
+    Array(Array),
 }
 
 impl Encode for AmqpType {
@@ -70,9 +73,9 @@ impl Encode for AmqpType {
             Self::Binary(val) => val.constructor(),
             Self::String(val) => val.constructor(),
             Self::Symbol(val) => val.constructor(),
-            // Self::List(val) => val.constructor(),
-            // Self::Map(val) => val.constructor(),
-            // Self::Array(val) => val.constructor(),
+            Self::List(val) => val.constructor(),
+            Self::Map(val) => val.constructor(),
+            Self::Array(val) => val.constructor(),
         }
     }
 
@@ -99,6 +102,9 @@ impl Encode for AmqpType {
             Self::Binary(val) => val.encode(),
             Self::String(val) => val.encode(),
             Self::Symbol(val) => val.encode(),
+            Self::List(val) => val.encode(),
+            Self::Map(val) => val.encode(),
+            Self::Array(val) => val.encode(),
         }
     }
 }
