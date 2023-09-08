@@ -1,27 +1,34 @@
+use std::hash::Hash;
+
 use bigdecimal::BigDecimal;
 use indexmap::IndexMap;
-
+use crate::types::binary::Binary;
+use crate::types::collection::*;
+use crate::types::decimal::*;
 use crate::error::AppError;
-trait Encode {
+pub trait Encode {
     fn constructor(&self) -> Constructor;
     fn encode(&self) -> Vec<u8>;
 }
 
-trait Decode<'a>: From<&'a [u8]> + Encode {}
-pub struct Timestamp(u64);
-pub struct Binary(Vec<u8>);
+ pub trait Decode<'a>: From<&'a [u8]> + Encode {}
+
+#[derive(Hash, Eq, PartialEq)]
 pub struct Symbol(String);
+#[derive(Hash, Eq, PartialEq)]
 pub struct Uuid(uuid::Uuid);
+#[derive(Hash, Eq, PartialEq)]
 pub struct Described();
+#[derive(Hash, Eq, PartialEq)]
 pub struct Constructor(u8);
-pub struct Decimal32(BigDecimal);
-pub struct Decimal64(BigDecimal);
-pub struct Decimal128(BigDecimal);
-pub struct List(Vec<AmqpType>);
-pub struct Array(Vec<AmqpType>);
-pub struct Map(IndexMap<AmqpType, AmqpType>);
+#[derive(Hash, Eq, PartialEq)]
+pub struct Timestamp(u64);
+#[derive(PartialEq, Eq)]
+pub struct Float(f32);
+#[derive(PartialEq, Eq)]
+pub struct Double(f64);
 
-
+#[derive(Hash, Eq, PartialEq)]
 pub enum AmqpType {
     Null,
     Boolean(bool),
@@ -33,8 +40,8 @@ pub enum AmqpType {
     Short(i16),
     Int(i32),
     Long(i64),
-    Float(f32),
-    Double(f64),
+    Float(Float),
+    Double(Double),
     Decimal32(Decimal32),
     Decimal64(Decimal64),
     Decimal128(Decimal128),
@@ -109,6 +116,32 @@ impl Encode for AmqpType {
     }
 }
 
+impl Hash for f32 {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        todo!()
+    }
+}
+
+impl From<u8> for Constructor {
+    fn from(value: u8) -> Self {
+        Constructor(value)
+    }
+}
+
+impl Encode for Timestamp {
+    fn constructor(&self) -> Constructor {
+        Constructor(0x83)
+    }
+
+    fn encode(&self) -> Vec<u8> {
+        todo!()
+    }
+}
+impl From<Timestamp> for AmqpType {
+    fn from(value: Timestamp) -> Self {
+        AmqpType::Timestamp(value)
+    }
+}
 impl Encode for bool {
     #[cfg(feature = "zero-length-bools")]
     fn constructor(&self) -> Constructor {
@@ -198,15 +231,6 @@ impl Encode for char {
     }
 }
 
-impl Encode for Timestamp {
-    fn constructor(&self) -> Constructor {
-        Constructor(0x83)
-    }
-
-    fn encode(&self) -> Vec<u8> {
-        todo!()
-    }
-}
 
 impl Encode for Uuid {
     fn constructor(&self) -> Constructor {
@@ -284,47 +308,7 @@ impl Encode for String {
     }
 }
 
-impl Encode for Binary {
-    fn constructor(&self) -> Constructor {
-        todo!()
-    }
-
-    fn encode(&self) -> Vec<u8> {
-        todo!()
-    }
-}
-
 impl Encode for Symbol {
-    fn constructor(&self) -> Constructor {
-        todo!()
-    }
-
-    fn encode(&self) -> Vec<u8> {
-        todo!()
-    }
-}
-
-impl Encode for List {
-    fn constructor(&self) -> Constructor {
-        todo!()
-    }
-
-    fn encode(&self) -> Vec<u8> {
-        todo!()
-    }
-}
-
-impl Encode for Map {
-    fn constructor(&self) -> Constructor {
-        todo!()
-    }
-
-    fn encode(&self) -> Vec<u8> {
-        todo!()
-    }
-}
-
-impl Encode for Array {
     fn constructor(&self) -> Constructor {
         todo!()
     }
@@ -344,35 +328,6 @@ impl Encode for Described {
     }
 }
 
-impl Encode for Decimal32 {
-    fn constructor(&self) -> Constructor {
-        Constructor(0x74)
-    }
-
-    fn encode(&self) -> Vec<u8> {
-        todo!()
-    }
-}
-
-impl Encode for Decimal64 {
-    fn constructor(&self) -> Constructor {
-        Constructor(0x84)
-    }
-
-    fn encode(&self) -> Vec<u8> {
-        todo!()
-    }
-}
-
-impl Encode for Decimal128 {
-    fn constructor(&self) -> Constructor {
-        Constructor(0x94)
-    }
-
-    fn encode(&self) -> Vec<u8> {
-        todo!()
-    }
-}
 
 impl From<bool> for AmqpType {
     fn from(value: bool) -> Self {
@@ -446,11 +401,6 @@ impl From<char> for AmqpType {
     }
 }
 
-impl From<Timestamp> for AmqpType {
-    fn from(value: Timestamp) -> Self {
-        AmqpType::Timestamp(value)
-    }
-}
 
 impl From<Uuid> for AmqpType {
     fn from(value: Uuid) -> Self {
@@ -476,40 +426,24 @@ impl From<Symbol> for AmqpType {
     }
 }
 
-impl From<f32> for Decimal32 {
-    fn from(value: f32) -> Self {
-        Decimal32(BigDecimal::try_from(value).unwrap())
+
+impl From<List> for AmqpType {
+    fn from(value: List) -> Self {
+        AmqpType::List(value)
     }
 }
 
-impl From<f64> for Decimal64 {
-    fn from(value: f64) -> Self {
-        Decimal64(BigDecimal::try_from(value).unwrap())
+impl From<Map> for AmqpType {
+    fn from(value: Map) -> Self {
+        AmqpType::Map(value)
     }
 }
 
-impl From<f64> for Decimal128 {
-    fn from(value: f64) -> Self {
-        Decimal128(BigDecimal::try_from(value).unwrap())
+impl From<Array> for AmqpType {
+    fn from(value: Array) -> Self {
+        AmqpType::Array(value)
     }
 }
-// impl From<List> for AmqpType {
-//     fn from(value: List) -> Self {
-//         AmqpType::List(value)
-//     }
-// }
-
-// impl From<Map> for AmqpType {
-//     fn from(value: Map) -> Self {
-//         AmqpType::Map(value)
-//     }
-// }
-
-// impl From<Array> for AmqpType {
-//     fn from(value: Array) -> Self {
-//         AmqpType::Array(value)
-//     }
-// }
 
 #[cfg(test)]
 mod tests {
@@ -671,17 +605,17 @@ mod tests {
         assert_eq!(val.constructor().0, 0x83);
     }
 
-    // #[test]
-    // fn amqp_type_can_construct_uuid() {
-    //     let val = AmqpType::Uuid(Uuid());
-    //     assert_eq!(val.constructor().0, 0x98);
-    // }
+    #[test]
+    fn amqp_type_can_construct_uuid() {
+        let val = AmqpType::Uuid(Uuid(uuid::Uuid::new_v4()));
+        assert_eq!(val.constructor().0, 0x98);
+    }
 
-    // #[test]
-    // fn amqp_type_can_construct_binary() {
-    //     let val = AmqpType::Binary(Binary());
-    //     assert_eq!(val.constructor().0, 0xa0);
-    // }
+    #[test]
+    fn amqp_type_can_construct_binary() {
+        let val = AmqpType::Binary(Vec::new().into());
+        assert_eq!(val.constructor().0, 0xa0);
+    }
 
     #[test]
     fn amqp_type_encodes_strings_up_to_255_bytes_as_str8() {
@@ -695,27 +629,49 @@ mod tests {
         assert_eq!(val.constructor().0, 0xb1);
     }
 
-    // #[test]
-    // fn amqp_type_can_construct_symbol() {
-    //     let val = AmqpType::Symbol(Symbol());
-    //     assert_eq!(val.constructor().0, 0xa3);
-    // }
+    #[test]
+    fn amqp_type_can_construct_symbol() {
+        let val = AmqpType::Symbol(Symbol("".to_string()));
+        assert_eq!(val.constructor().0, 0xa3);
+    }
 
-    // #[test]
-    // fn amqp_type_can_construct_list() {
-    //     let val = AmqpType::List(List());
-    //     assert_eq!(val.constructor().0, 0x45);
-    // }
+    #[test]
+    fn amqp_type_can_construct_list() {
+        let val = AmqpType::List(vec![1.into()].into());
+        assert_eq!(val.constructor().0, 0x45);
+    }
 
-    // #[test]
-    // fn amqp_type_can_construct_map() {
-    //     let val = AmqpType::Map(Map());
-    //     assert_eq!(val.constructor().0, 0xc1);
-    // }
+    #[test]
+    fn amqp_type_can_construct_map_with_less_than_255_elements() {
+        let val = AmqpType::Map(IndexMap::new());
+        assert_eq!(val.constructor().0, 0xc1);
+    }
 
-    // #[test]
-    // fn amqp_type_can_construct_array() {
-    //     let val = AmqpType::Array(Array());
-    //     assert_eq!(val.constructor().0, 0xe0);
-    // }
+    #[test]
+    fn amqp_type_can_construct_map_with_less_more_255_elements() {
+        let mut map = IndexMap::new();
+        for i in 1 .. 500 {
+            map.insert(i.into(), i.into());
+        }
+        let val = AmqpType::Map(map.into());
+        assert_eq!(val.constructor().0, 0xd1);
+    }
+
+    #[test]
+    fn amqp_type_can_construct_array_with_less_than_255_elements() {
+        let val = AmqpType::Array(vec![].into());
+        assert_eq!(val.constructor().0, 0xe0);
+    }
+
+    #[test]
+    fn amqp_type_can_construct_array_with_more_than_255_elements() {
+
+        let mut arr = vec![];
+        for i in 0 .. 500 {
+            arr.push(i.into())
+        }
+        let val = AmqpType::Array(arr.into());
+        assert_eq!(val.constructor().0, 0xf0);
+        
+    }
 }
