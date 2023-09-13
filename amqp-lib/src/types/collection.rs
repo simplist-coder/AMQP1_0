@@ -14,9 +14,12 @@ pub struct Map(IndexMap<AmqpType, AmqpType>);
 
 impl Encode for List {
     fn encode(&self) -> Encoded {
-        let size = std::mem::size_of_val(self);
-        let len = self.0.len();
-        match (len, size) {
+        let encoded_list: Vec<Encoded> = self.0.iter()
+                .map(|x| x.encode())
+        .collect();
+        let byte_size = encoded_list.iter()
+        .fold(0, |acc, x| acc + x.data_len());
+        match (encoded_list.len(), byte_size) {
             (0, _) => 0x45.into(),
             (len, size) if len <= 255 && size < 256 => 0xc0.into(),
             (_, _) => 0xd0.into()

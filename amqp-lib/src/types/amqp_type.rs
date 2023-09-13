@@ -25,6 +25,13 @@ impl Encoded {
     pub fn constructor(&self) -> u8 {
         self.constructor
     }
+
+    pub fn data_len(&self) -> usize {
+        match &self.data {
+            Some(data) => data.len().into(),
+            None => 0
+        }
+    }
 }
 
 
