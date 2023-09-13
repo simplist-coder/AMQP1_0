@@ -6,12 +6,34 @@ use crate::types::binary::Binary;
 use crate::types::collection::*;
 use crate::types::decimal::*;
 use crate::error::AppError;
+
+
+pub trait Hashable: std::hash::Hash {}
 pub trait Encode {
-    fn constructor(&self) -> Constructor;
-    fn encode(&self) -> Vec<u8>;
+    fn encode(&self) -> Encoded;
 }
 
  pub trait Decode<'a>: From<&'a [u8]> + Encode {}
+
+
+pub struct Encoded {
+    constructor: u8,
+    data: Option<Vec<u8>>
+}
+
+impl Encoded {
+    pub fn constructor(&self) -> u8 {
+        self.constructor
+    }
+}
+
+
+impl From<u8> for Encoded {
+    fn from(value: u8) -> Self {
+        Encoded { constructor: value, data: None }
+    }
+}
+
 
 #[derive(Hash, Eq, PartialEq)]
 pub struct Symbol(String);
@@ -23,9 +45,7 @@ pub struct Described();
 pub struct Constructor(u8);
 #[derive(Hash, Eq, PartialEq)]
 pub struct Timestamp(u64);
-#[derive(PartialEq, Eq)]
 pub struct Float(f32);
-#[derive(PartialEq, Eq)]
 pub struct Double(f64);
 
 #[derive(Hash, Eq, PartialEq)]
@@ -57,38 +77,9 @@ pub enum AmqpType {
 }
 
 impl Encode for AmqpType {
-    fn constructor(&self) -> Constructor {
+    fn encode(&self) -> Encoded {
         match self {
-            Self::Null => Constructor(0x40),
-            Self::Boolean(val) => val.constructor(),
-            Self::Ubyte(val) => val.constructor(),
-            Self::Ushort(val) => val.constructor(),
-            Self::Uint(val) => val.constructor(),
-            Self::Ulong(val) => val.constructor(),
-            Self::Byte(val) => val.constructor(),
-            Self::Short(val) => val.constructor(),
-            Self::Int(val) => val.constructor(),
-            Self::Long(val) => val.constructor(),
-            Self::Float(val) => val.constructor(),
-            Self::Double(val) => val.constructor(),
-            Self::Decimal32(val) => val.constructor(),
-            Self::Decimal64(val) => val.constructor(),
-            Self::Decimal128(val) => val.constructor(),
-            Self::Char(val) => val.constructor(),
-            Self::Timestamp(val) => val.constructor(),
-            Self::Uuid(val) => val.constructor(),
-            Self::Binary(val) => val.constructor(),
-            Self::String(val) => val.constructor(),
-            Self::Symbol(val) => val.constructor(),
-            Self::List(val) => val.constructor(),
-            Self::Map(val) => val.constructor(),
-            Self::Array(val) => val.constructor(),
-        }
-    }
-
-    fn encode(&self) -> Vec<u8> {
-        match self {
-            Self::Null => todo!(),
+            Self::Null => 0x40.into(),
             Self::Boolean(val) => val.encode(),
             Self::Ubyte(val) => val.encode(),
             Self::Ushort(val) => val.encode(),
@@ -114,14 +105,47 @@ impl Encode for AmqpType {
             Self::Array(val) => val.encode(),
         }
     }
+
 }
 
-impl Hash for f32 {
+impl Hash for Float {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-        todo!()
+        self.0.to_bits().hash(state)
     }
 }
 
+impl Hash for Double {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.0.to_bits().hash(state)
+    }
+}
+
+
+impl PartialEq for Float {
+    fn eq(&self, other: &Self) -> bool {
+        self.0.to_bits() == other.0.to_bits()
+    }
+
+    fn ne(&self, other: &Self) -> bool {
+        !self.eq(other)
+    }
+}
+
+impl Eq for Float {}
+
+
+impl PartialEq for Double {
+    fn eq(&self, other: &Self) -> bool {
+        self.0.to_bits() == self.0.to_bits()
+    }
+
+    fn ne(&self, other: &Self) -> bool {
+        !self.eq(other)
+    }
+}
+
+
+impl Eq for Double {}
 impl From<u8> for Constructor {
     fn from(value: u8) -> Self {
         Constructor(value)
@@ -129,13 +153,10 @@ impl From<u8> for Constructor {
 }
 
 impl Encode for Timestamp {
-    fn constructor(&self) -> Constructor {
-        Constructor(0x83)
+    fn encode(&self) -> Encoded {
+        0x83.into()
     }
 
-    fn encode(&self) -> Vec<u8> {
-        todo!()
-    }
 }
 impl From<Timestamp> for AmqpType {
     fn from(value: Timestamp) -> Self {
@@ -144,188 +165,142 @@ impl From<Timestamp> for AmqpType {
 }
 impl Encode for bool {
     #[cfg(feature = "zero-length-bools")]
-    fn constructor(&self) -> Constructor {
+    fn encode(&self) -> Encoded {
         match self {
-            true => Constructor(0x41),
-            false => Constructor(0x42),
+            true => 0x41.into(),
+            false => 0x42.into(),
         }
     }
 
     #[cfg(not(feature = "zero-length-bools"))]
-    fn constructor(&self) -> Constructor {
-        Constructor(0x56)
-    }
-
-    fn encode(&self) -> Vec<u8> {
-        todo!()
+    fn encode(&self) -> Encoded {
+        0x56.into()
     }
 }
 
 impl Encode for u8 {
-    fn constructor(&self) -> Constructor {
-        Constructor(0x50)
+    fn encode(&self) -> Encoded {
+        0x50.into()
     }
 
-    fn encode(&self) -> Vec<u8> {
-        todo!()
-    }
 }
 
 impl Encode for u16 {
-    fn constructor(&self) -> Constructor {
-        Constructor(0x60)
+    fn encode(&self) -> Encoded {
+        0x60.into()
     }
 
-    fn encode(&self) -> Vec<u8> {
-        todo!()
-    }
 }
 
 impl Encode for i8 {
-    fn constructor(&self) -> Constructor {
-        Constructor(0x51)
+    fn encode(&self) -> Encoded {
+        0x51.into()
     }
 
-    fn encode(&self) -> Vec<u8> {
-        todo!()
-    }
 }
 
 impl Encode for i16 {
-    fn constructor(&self) -> Constructor {
-        Constructor(0x61)
+    fn encode(&self) -> Encoded {
+        0x61.into()
     }
 
-    fn encode(&self) -> Vec<u8> {
-        todo!()
-    }
 }
 
-impl Encode for f32 {
-    fn constructor(&self) -> Constructor {
-        Constructor(0x72)
+impl Encode for Float {
+    fn encode(&self) -> Encoded {
+        0x72.into()
     }
 
-    fn encode(&self) -> Vec<u8> {
-        todo!()
-    }
 }
 
-impl Encode for f64 {
-    fn constructor(&self) -> Constructor {
-        Constructor(0x82)
+impl Encode for Double {
+    fn encode(&self) -> Encoded {
+        0x82.into()
     }
 
-    fn encode(&self) -> Vec<u8> {
-        todo!()
-    }
 }
 
 impl Encode for char {
-    fn constructor(&self) -> Constructor {
-        Constructor(0x73)
+    fn encode(&self) -> Encoded {
+        0x73.into()
     }
 
-    fn encode(&self) -> Vec<u8> {
-        todo!()
-    }
 }
 
 
 impl Encode for Uuid {
-    fn constructor(&self) -> Constructor {
-        Constructor(0x98)
+    fn encode(&self) -> Encoded {
+        0x98.into()
     }
 
-    fn encode(&self) -> Vec<u8> {
-        todo!()
-    }
 }
 impl Encode for u32 {
-    fn constructor(&self) -> Constructor {
+    fn encode(&self) -> Encoded {
         match self {
-            0 => Constructor(0x43),
-            x if x > &0 && x <= &255 => Constructor(0x52),
-            _ => Constructor(0x70),
+            0 => 0x43.into(),
+            x if x > &0 && x <= &255 => 0x52.into(),
+            _ => 0x70.into(),
         }
     }
 
-    fn encode(&self) -> Vec<u8> {
-        todo!()
-    }
 }
 
 impl Encode for u64 {
-    fn constructor(&self) -> Constructor {
+    fn encode(&self) -> Encoded {
         match self {
-            0 => Constructor(0x44),
-            x if x > &&0 && x <= &255 => Constructor(0x53),
-            _ => Constructor(0x80),
+            0 => 0x44.into(),
+            x if x > &&0 && x <= &255 => 0x53.into(),
+            _ => 0x80.into(),
         }
     }
 
-    fn encode(&self) -> Vec<u8> {
-        todo!()
-    }
 }
 
 impl Encode for i32 {
-    fn constructor(&self) -> Constructor {
+    fn encode(&self) -> Encoded {
         match self {
-            x if x >= &-128 && x <= &127 => Constructor(0x54),
-            _ => Constructor(0x71),
+            x if x >= &-128 && x <= &127 => 0x54.into(),
+            _ => 0x71.into(),
         }
     }
 
-    fn encode(&self) -> Vec<u8> {
-        todo!()
-    }
 }
 
 impl Encode for i64 {
-    fn constructor(&self) -> Constructor {
+    fn encode(&self) -> Encoded {
         match self {
-            x if x >= &-128 && x <= &127 => Constructor(0x55),
-            _ => Constructor(0x81),
+            x if x >= &-128 && x <= &127 => 0x55.into(),
+            _ => 0x81.into(),
         }
     }
 
-    fn encode(&self) -> Vec<u8> {
-        todo!()
-    }
 }
 
 impl Encode for String {
-    fn constructor(&self) -> Constructor {
+    fn encode(&self) -> Encoded {
         match self.len() {
-            x if x >= 0 as usize && x <= 255 as usize => Constructor(0xa1),
-            _ => Constructor(0xb1),
+            x if x >= 0 as usize && x <= 255 as usize => 0xa1.into(),
+            _ => 0xb1.into(),
         }
     }
 
-    fn encode(&self) -> Vec<u8> {
-        todo!()
-    }
 }
 
 impl Encode for Symbol {
-    fn constructor(&self) -> Constructor {
-        todo!()
+    fn encode(&self) -> Encoded {
+        match self.0.len() {
+            x if x <= 255 => 0xa3.into(),
+            _ => 0xb1.into()
+        }
     }
 
-    fn encode(&self) -> Vec<u8> {
-        todo!()
-    }
 }
 
 impl Encode for Described {
-    fn constructor(&self) -> Constructor {
+    fn encode(&self) -> Encoded {
         todo!()
     }
 
-    fn encode(&self) -> Vec<u8> {
-        todo!()
-    }
 }
 
 
@@ -383,15 +358,27 @@ impl From<i64> for AmqpType {
     }
 }
 
-impl From<f32> for AmqpType {
-    fn from(value: f32) -> Self {
-        AmqpType::Float(value)
+impl From<Float> for AmqpType {
+    fn from(value: Float) -> Self {
+        AmqpType::Float(value.into())
     }
 }
 
-impl From<f64> for AmqpType {
+impl From<f32> for Float {
+    fn from(value: f32) -> Self {
+        Float(value)
+    }
+}
+
+impl From<Double> for AmqpType {
+    fn from(value: Double) -> Self {
+        AmqpType::Double(value.into())
+    }
+}
+
+impl From<f64> for Double {
     fn from(value: f64) -> Self {
-        AmqpType::Double(value)
+        Double(value)
     }
 }
 
@@ -411,6 +398,12 @@ impl From<Uuid> for AmqpType {
 impl From<Binary> for AmqpType {
     fn from(value: Binary) -> Self {
         AmqpType::Binary(value)
+    }
+}
+
+impl From<&str> for AmqpType {
+    fn from(value: &str) -> Self {
+        value.to_string().into()
     }
 }
 
@@ -453,198 +446,225 @@ mod tests {
     #[test]
     fn amqp_type_can_construct_null() {
         let val = AmqpType::Null;
-        assert_eq!(val.constructor().0, 0x40);
+        assert_eq!(val.encode().constructor(), 0x40);
     }
 
     #[test]
     #[cfg(not(feature = "zero-length-bools"))]
     fn amqp_type_can_construct_bool() {
         let val = AmqpType::Boolean(true);
-        assert_eq!(val.constructor().0, 0x56);
+        assert_eq!(val.encode().constructor(), 0x56);
     }
 
     #[test]
     #[cfg(feature = "zero-length-bools")]
     fn amqp_type_constructs_bool_false_as_zero_length() {
         let val = AmqpType::Boolean(false);
-        assert_eq!(val.constructor().0, 0x42);
+        assert_eq!(val.encode().constructor(), 0x42);
     }
 
     #[test]
     #[cfg(feature = "zero-length-bools")]
     fn amqp_type_contructs_bool_true_as_zero_length() {
         let val = AmqpType::Boolean(true);
-        assert_eq!(val.constructor().0, 0x41)
+        assert_eq!(val.encode().constructor(), 0x41)
     }
 
     #[test]
     fn amqp_type_can_construct_ubyte() {
         let val = AmqpType::Ubyte(8);
-        assert_eq!(val.constructor().0, 0x50);
+        assert_eq!(val.encode().constructor(), 0x50);
     }
 
     #[test]
     fn amqp_type_can_construct_ushort() {
         let val = AmqpType::Ushort(16);
-        assert_eq!(val.constructor().0, 0x60);
+        assert_eq!(val.encode().constructor(), 0x60);
     }
 
     #[test]
     fn amqp_type_can_construct_uint() {
         let val = AmqpType::Uint(500);
-        assert_eq!(val.constructor().0, 0x70);
+        assert_eq!(val.encode().constructor(), 0x70);
     }
 
     #[test]
     fn amqp_type_encodes_uint_value_0_as_zero_length() {
         let val = AmqpType::Uint(0);
-        assert_eq!(val.constructor().0, 0x43);
+        assert_eq!(val.encode().constructor(), 0x43);
     }
 
     #[test]
     fn amqp_type_encodes_uint_values_smaller_than_256_as_smalluint() {
         let val = AmqpType::Uint(255);
-        assert_eq!(val.constructor().0, 0x52);
+        assert_eq!(val.encode().constructor(), 0x52);
     }
     #[test]
     fn amqp_type_can_construct_ulong() {
         let val = AmqpType::Ulong(500);
-        assert_eq!(val.constructor().0, 0x80);
+        assert_eq!(val.encode().constructor(), 0x80);
     }
 
     #[test]
     fn amqp_type_encodes_ulong_smaller_than_256_as_smallulong() {
         let val = AmqpType::Ulong(255);
-        assert_eq!(val.constructor().0, 0x53);
+        assert_eq!(val.encode().constructor(), 0x53);
     }
 
     #[test]
     fn amqp_type_encodes_ulong_value_0_as_zero_length() {
         let val = AmqpType::Ulong(0);
-        assert_eq!(val.constructor().0, 0x44);
+        assert_eq!(val.encode().constructor(), 0x44);
     }
 
     #[test]
     fn amqp_type_can_construct_byte() {
         let val = AmqpType::Byte(8);
-        assert_eq!(val.constructor().0, 0x51);
+        assert_eq!(val.encode().constructor(), 0x51);
     }
 
     #[test]
     fn amqp_type_can_construct_short() {
         let val = AmqpType::Short(8);
-        assert_eq!(val.constructor().0, 0x61);
+        assert_eq!(val.encode().constructor(), 0x61);
     }
 
     #[test]
     fn amqp_type_can_construct_int() {
         let val = AmqpType::Int(500);
-        assert_eq!(val.constructor().0, 0x71);
+        assert_eq!(val.encode().constructor(), 0x71);
     }
 
     #[test]
     fn amqp_encodes_ints_between_neg_128_and_127_as_smallint() {
         let lower = AmqpType::Int(-128);
         let higher = AmqpType::Int(127);
-        assert_eq!(lower.constructor().0, 0x54);
-        assert_eq!(higher.constructor().0, 0x54);
+        assert_eq!(lower.encode().constructor(), 0x54);
+        assert_eq!(higher.encode().constructor(), 0x54);
     }
     #[test]
     fn amqp_type_can_construct_long() {
         let val = AmqpType::Long(500);
-        assert_eq!(val.constructor().0, 0x81);
+        assert_eq!(val.encode().constructor(), 0x81);
     }
 
     #[test]
     fn amqp_encodes_longs_between_neg_128_and_127_as_smalllong() {
         let lower = AmqpType::Long(-128);
         let higher = AmqpType::Long(127);
-        assert_eq!(lower.constructor().0, 0x55);
-        assert_eq!(higher.constructor().0, 0x55);
+        assert_eq!(lower.encode().constructor(), 0x55);
+        assert_eq!(higher.encode().constructor(), 0x55);
     }
 
     #[test]
     fn amqp_type_can_construct_float() {
-        let val = AmqpType::Float(32.0);
-        assert_eq!(val.constructor().0, 0x72);
+        let val = AmqpType::Float(32.0.into());
+        assert_eq!(val.encode().constructor(), 0x72);
     }
 
     #[test]
     fn amqp_type_can_construct_double() {
-        let val = AmqpType::Double(64.0);
-        assert_eq!(val.constructor().0, 0x82);
+        let val = AmqpType::Double(64.0.into());
+        assert_eq!(val.encode().constructor(), 0x82);
     }
 
     #[test]
     fn amqp_type_can_construct_decimal_32() {
         let val = AmqpType::Decimal32(32.0.into());
-        assert_eq!(val.constructor().0, 0x74);
+        assert_eq!(val.encode().constructor(), 0x74);
     }
 
     #[test]
     fn amqp_type_can_construct_decimal_64() {
         let val = AmqpType::Decimal64(64.0.into());
-        assert_eq!(val.constructor().0, 0x84);
+        assert_eq!(val.encode().constructor(), 0x84);
     }
 
     #[test]
     fn amqp_type_can_construct_decimal_128() {
         let val = AmqpType::Decimal128(128.0.into());
-        assert_eq!(val.constructor().0, 0x94);
+        assert_eq!(val.encode().constructor(), 0x94);
     }
 
     #[test]
     fn amqp_type_can_construct_char() {
         let val = AmqpType::Char('a');
-        assert_eq!(val.constructor().0, 0x73);
+        assert_eq!(val.encode().constructor(), 0x73);
     }
 
     #[test]
     fn amqp_type_can_construct_timestamp() {
         let val = AmqpType::Timestamp(Timestamp(1));
-        assert_eq!(val.constructor().0, 0x83);
+        assert_eq!(val.encode().constructor(), 0x83);
     }
 
     #[test]
     fn amqp_type_can_construct_uuid() {
         let val = AmqpType::Uuid(Uuid(uuid::Uuid::new_v4()));
-        assert_eq!(val.constructor().0, 0x98);
+        assert_eq!(val.encode().constructor(), 0x98);
     }
 
     #[test]
     fn amqp_type_can_construct_binary() {
         let val = AmqpType::Binary(Vec::new().into());
-        assert_eq!(val.constructor().0, 0xa0);
+        assert_eq!(val.encode().constructor(), 0xa0);
     }
 
     #[test]
     fn amqp_type_encodes_strings_up_to_255_bytes_as_str8() {
         let val = AmqpType::String("hello".to_string());
-        assert_eq!(val.constructor().0, 0xa1);
+        assert_eq!(val.encode().constructor(), 0xa1);
     }
 
     #[test]
     fn amqp_type_encodes_strings_longer_than_255_bytes_as_str32() {
         let val = AmqpType::String("hhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh".to_string());
-        assert_eq!(val.constructor().0, 0xb1);
+        assert_eq!(val.encode().constructor(), 0xb1);
     }
 
     #[test]
     fn amqp_type_can_construct_symbol() {
         let val = AmqpType::Symbol(Symbol("".to_string()));
-        assert_eq!(val.constructor().0, 0xa3);
+        assert_eq!(val.encode().constructor(), 0xa3);
     }
 
     #[test]
-    fn amqp_type_can_construct_list() {
+    fn amqp_type_can_construct_empty_list() {
+        let val = AmqpType::List(vec![].into());
+        assert_eq!(val.encode().constructor(), 0x45);
+    }
+
+    #[test]
+    fn amqp_type_can_construct_list_with_less_than_255_elements() {
         let val = AmqpType::List(vec![1.into()].into());
-        assert_eq!(val.constructor().0, 0x45);
+        assert_eq!(val.encode().constructor(), 0xc0);
+    }
+
+    #[test]
+    fn amqp_type_can_construct_list_with_more_than_255_elements() {
+        let mut arr = vec![];
+        for i in 0 .. 500 {
+            arr.push(i.into())
+        }
+        let val = AmqpType::List(arr.into());
+        assert_eq!(val.encode().constructor(), 0xd0);
+    }
+
+    #[test]
+    fn amqp_type_can_construct_list_with_less_than_255_elements_and_larger_than_255_bytes() {
+        let mut arr = vec![];
+        for i in 0 .. 100 {
+            arr.push("aaaaaaaaaaaaaaaaaaaa".into());
+        }
+        let val = AmqpType::List(arr.into());
+        assert_eq!(val.encode().constructor(), 0xd0);
+        
     }
 
     #[test]
     fn amqp_type_can_construct_map_with_less_than_255_elements() {
-        let val = AmqpType::Map(IndexMap::new());
-        assert_eq!(val.constructor().0, 0xc1);
+        let val = AmqpType::Map(IndexMap::new().into());
+        assert_eq!(val.encode().constructor(), 0xc1);
     }
 
     #[test]
@@ -654,13 +674,13 @@ mod tests {
             map.insert(i.into(), i.into());
         }
         let val = AmqpType::Map(map.into());
-        assert_eq!(val.constructor().0, 0xd1);
+        assert_eq!(val.encode().constructor(), 0xd1);
     }
 
     #[test]
     fn amqp_type_can_construct_array_with_less_than_255_elements() {
         let val = AmqpType::Array(vec![].into());
-        assert_eq!(val.constructor().0, 0xe0);
+        assert_eq!(val.encode().constructor(), 0xe0);
     }
 
     #[test]
@@ -671,7 +691,7 @@ mod tests {
             arr.push(i.into())
         }
         let val = AmqpType::Array(arr.into());
-        assert_eq!(val.constructor().0, 0xf0);
+        assert_eq!(val.encode().constructor(), 0xf0);
         
     }
 }

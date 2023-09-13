@@ -1,41 +1,38 @@
-
+use std::hash::Hash;
 use indexmap::IndexMap;
 use crate::types::amqp_type::{Encode, Constructor, AmqpType};
+
+use super::amqp_type::Encoded;
 
 
 #[derive(Hash, Eq, PartialEq)]
 pub struct List(Vec<AmqpType>);
 #[derive(Hash, Eq, PartialEq)]
 pub struct Array(Vec<AmqpType>);
-#[derive(Hash, Eq, PartialEq)]
+#[derive(Eq, PartialEq)]
 pub struct Map(IndexMap<AmqpType, AmqpType>);
 
 impl Encode for List {
-    fn constructor(&self) -> Constructor {
-        todo!()
-    }
-
-    fn encode(&self) -> Vec<u8> {
-        todo!()
+    fn encode(&self) -> Encoded {
+        let size = std::mem::size_of_val(self);
+        let len = self.0.len();
+        match (len, size) {
+            (0, _) => 0x45.into(),
+            (len, size) if len <= 255 && size < 256 => 0xc0.into(),
+            (_, _) => 0xd0.into()
+        }
     }
 }
 
 impl Encode for Map {
-    fn constructor(&self) -> Constructor {
+    fn encode(&self) -> Encoded {
         todo!()
     }
 
-    fn encode(&self) -> Vec<u8> {
-        todo!()
-    }
 }
 
 impl Encode for Array {
-    fn constructor(&self) -> Constructor {
-        todo!()
-    }
-
-    fn encode(&self) -> Vec<u8> {
+    fn encode (&self) -> Encoded{
         todo!()
     }
 }
@@ -57,3 +54,10 @@ impl From<Vec<AmqpType>> for Array {
         Array(value)
     }
 }
+
+impl Hash for Map {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        todo!()
+    }
+}
+

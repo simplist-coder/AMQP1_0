@@ -1,6 +1,8 @@
 use bigdecimal::BigDecimal;
 use crate::types::amqp_type::{Encode, Constructor};
 
+use super::amqp_type::Encoded;
+
 
 #[derive(Hash, Eq, PartialEq)]
 pub struct Decimal32(BigDecimal);
@@ -12,32 +14,20 @@ pub struct Decimal128(BigDecimal);
 
 
 impl Encode for Decimal32 {
-    fn constructor(&self) -> Constructor {
+    fn encode(&self) -> Encoded {
         0x74.into()
-    }
-
-    fn encode(&self) -> Vec<u8> {
-        todo!()
     }
 }
 
 impl Encode for Decimal64 {
-    fn constructor(&self) -> Constructor {
+    fn encode(&self) -> Encoded {
         0x84.into()
-    }
-
-    fn encode(&self) -> Vec<u8> {
-        todo!()
     }
 }
 
 impl Encode for Decimal128 {
-    fn constructor(&self) -> Constructor {
+    fn encode(&self) -> Encoded{
         0x94.into()
-    }
-
-    fn encode(&self) -> Vec<u8> {
-        todo!()
     }
 }
 
