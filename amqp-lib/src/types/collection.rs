@@ -13,9 +13,9 @@ pub struct Map(IndexMap<AmqpType, AmqpType>);
 
 impl Encode for List {
     fn encode(&self) -> Encoded {
-        let encoded_list: Vec<Encoded> = self.0.iter().map(|x| x.encode()).collect();
-        let byte_size = encoded_list.iter().fold(0, |acc, x| acc + x.data_len());
-        match (encoded_list.len(), byte_size) {
+        let encoded: Vec<Encoded> = self.0.iter().map(|x| x.encode()).collect();
+        let byte_size = encoded.iter().fold(0, |acc, x| acc + x.data_len());
+        match (encoded.len(), byte_size) {
             (0, _) => 0x45.into(),
             (len, size) if len <= 255 && size < 256 => 0xc0.into(),
             (_, _) => 0xd0.into(),
@@ -31,7 +31,13 @@ impl Encode for Map {
 
 impl Encode for Array {
     fn encode(&self) -> Encoded {
-        todo!()
+        let encoded: Vec<Encoded> = self.0.iter().map(|x| x.encode()).collect();
+        let byte_size = encoded.iter().fold(0, |acc, x| acc + x.data_len());
+        match (encoded.len(), byte_size) {
+            (len, size) if len <= 255 && size < 256 => 0xe0.into(),
+            (_, _) => 0xf0.into(),
+        }
+        
     }
 }
 

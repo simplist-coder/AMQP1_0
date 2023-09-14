@@ -4,6 +4,7 @@ use crate::error::AppError;
 use crate::types::binary::Binary;
 use crate::types::collection::*;
 use crate::types::decimal::*;
+use crate::types::floating_point::*;
 use bigdecimal::BigDecimal;
 use indexmap::IndexMap;
 
@@ -20,6 +21,10 @@ pub struct Encoded {
 }
 
 impl Encoded {
+    pub fn new(constructor: u8, data: Option<Vec<u8>>) -> Self {
+        Encoded { constructor, data }
+    }
+
     pub fn constructor(&self) -> u8 {
         self.constructor
     }
@@ -51,8 +56,6 @@ pub struct Described();
 pub struct Constructor(u8);
 #[derive(Hash, Eq, PartialEq)]
 pub struct Timestamp(u64);
-pub struct Float(f32);
-pub struct Double(f64);
 
 #[derive(Hash, Eq, PartialEq)]
 pub enum AmqpType {
@@ -110,40 +113,6 @@ impl Encode for AmqpType {
             Self::Map(val) => val.encode(),
             Self::Array(val) => val.encode(),
         }
-    }
-}
-
-impl Hash for Float {
-    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-        self.0.to_bits().hash(state)
-    }
-}
-
-impl Hash for Double {
-    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-        self.0.to_bits().hash(state)
-    }
-}
-
-impl PartialEq for Float {
-    fn eq(&self, other: &Self) -> bool {
-        self.0.to_bits() == other.0.to_bits()
-    }
-
-    fn ne(&self, other: &Self) -> bool {
-        !self.eq(other)
-    }
-}
-
-impl Eq for Float {}
-
-impl PartialEq for Double {
-    fn eq(&self, other: &Self) -> bool {
-        self.0.to_bits() == self.0.to_bits()
-    }
-
-    fn ne(&self, other: &Self) -> bool {
-        !self.eq(other)
     }
 }
 
@@ -267,7 +236,9 @@ impl Encode for i64 {
 impl Encode for String {
     fn encode(&self) -> Encoded {
         match self.len() {
-            x if x >= 0 as usize && x <= 255 as usize => 0xa1.into(),
+            x if x >= 0 as usize && x <= 255 as usize => {
+                Encoded::new(0xa1, Some(self.as_bytes().to_vec()))
+            }
             _ => 0xb1.into(),
         }
     }
@@ -348,11 +319,6 @@ impl From<Float> for AmqpType {
     }
 }
 
-impl From<f32> for Float {
-    fn from(value: f32) -> Self {
-        Float(value)
-    }
-}
 
 impl From<Double> for AmqpType {
     fn from(value: Double) -> Self {
@@ -360,11 +326,6 @@ impl From<Double> for AmqpType {
     }
 }
 
-impl From<f64> for Double {
-    fn from(value: f64) -> Self {
-        Double(value)
-    }
-}
 
 impl From<char> for AmqpType {
     fn from(value: char) -> Self {
@@ -672,5 +633,16 @@ mod tests {
         }
         let val = AmqpType::Array(arr.into());
         assert_eq!(val.encode().constructor(), 0xf0);
+    }
+
+    #[test]
+    fn amqp_type_can_construct_array_with_less_than_255_elements_and_larger_than_255_bytes() {
+        let mut arr = vec![];
+        for i in 0..100 {
+            arr.push("aaaaaaaaaaaaaaaaaaaa".into());
+        }
+        let val = AmqpType::Array(arr.into());
+        assert_eq!(val.encode().constructor(), 0xe0);
+        
     }
 }
