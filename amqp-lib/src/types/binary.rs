@@ -1,10 +1,9 @@
-use crate::types::amqp_type::{Encode, Constructor};
+use crate::types::amqp_type::{Constructor, Encode};
 
 use super::amqp_type::Encoded;
 
 #[derive(Hash, Eq, PartialEq)]
 pub struct Binary(Vec<u8>);
-
 
 impl Encode for Binary {
     fn encode(&self) -> Encoded {

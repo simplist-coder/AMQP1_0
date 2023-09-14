@@ -1,24 +1,22 @@
 use std::hash::Hash;
 
-use bigdecimal::BigDecimal;
-use indexmap::IndexMap;
+use crate::error::AppError;
 use crate::types::binary::Binary;
 use crate::types::collection::*;
 use crate::types::decimal::*;
-use crate::error::AppError;
-
+use bigdecimal::BigDecimal;
+use indexmap::IndexMap;
 
 pub trait Hashable: std::hash::Hash {}
 pub trait Encode {
     fn encode(&self) -> Encoded;
 }
 
- pub trait Decode<'a>: From<&'a [u8]> + Encode {}
-
+pub trait Decode<'a>: From<&'a [u8]> + Encode {}
 
 pub struct Encoded {
     constructor: u8,
-    data: Option<Vec<u8>>
+    data: Option<Vec<u8>>,
 }
 
 impl Encoded {
@@ -28,19 +26,20 @@ impl Encoded {
 
     pub fn data_len(&self) -> usize {
         match &self.data {
-            Some(data) => data.len().into(),
-            None => 0
+            Some(data) => data.len(),
+            None => 0,
         }
     }
 }
 
-
 impl From<u8> for Encoded {
     fn from(value: u8) -> Self {
-        Encoded { constructor: value, data: None }
+        Encoded {
+            constructor: value,
+            data: None,
+        }
     }
 }
-
 
 #[derive(Hash, Eq, PartialEq)]
 pub struct Symbol(String);
@@ -112,7 +111,6 @@ impl Encode for AmqpType {
             Self::Array(val) => val.encode(),
         }
     }
-
 }
 
 impl Hash for Float {
@@ -127,7 +125,6 @@ impl Hash for Double {
     }
 }
 
-
 impl PartialEq for Float {
     fn eq(&self, other: &Self) -> bool {
         self.0.to_bits() == other.0.to_bits()
@@ -140,7 +137,6 @@ impl PartialEq for Float {
 
 impl Eq for Float {}
 
-
 impl PartialEq for Double {
     fn eq(&self, other: &Self) -> bool {
         self.0.to_bits() == self.0.to_bits()
@@ -150,7 +146,6 @@ impl PartialEq for Double {
         !self.eq(other)
     }
 }
-
 
 impl Eq for Double {}
 impl From<u8> for Constructor {
@@ -163,7 +158,6 @@ impl Encode for Timestamp {
     fn encode(&self) -> Encoded {
         0x83.into()
     }
-
 }
 impl From<Timestamp> for AmqpType {
     fn from(value: Timestamp) -> Self {
@@ -189,57 +183,48 @@ impl Encode for u8 {
     fn encode(&self) -> Encoded {
         0x50.into()
     }
-
 }
 
 impl Encode for u16 {
     fn encode(&self) -> Encoded {
         0x60.into()
     }
-
 }
 
 impl Encode for i8 {
     fn encode(&self) -> Encoded {
         0x51.into()
     }
-
 }
 
 impl Encode for i16 {
     fn encode(&self) -> Encoded {
         0x61.into()
     }
-
 }
 
 impl Encode for Float {
     fn encode(&self) -> Encoded {
         0x72.into()
     }
-
 }
 
 impl Encode for Double {
     fn encode(&self) -> Encoded {
         0x82.into()
     }
-
 }
 
 impl Encode for char {
     fn encode(&self) -> Encoded {
         0x73.into()
     }
-
 }
-
 
 impl Encode for Uuid {
     fn encode(&self) -> Encoded {
         0x98.into()
     }
-
 }
 impl Encode for u32 {
     fn encode(&self) -> Encoded {
@@ -249,7 +234,6 @@ impl Encode for u32 {
             _ => 0x70.into(),
         }
     }
-
 }
 
 impl Encode for u64 {
@@ -260,7 +244,6 @@ impl Encode for u64 {
             _ => 0x80.into(),
         }
     }
-
 }
 
 impl Encode for i32 {
@@ -270,7 +253,6 @@ impl Encode for i32 {
             _ => 0x71.into(),
         }
     }
-
 }
 
 impl Encode for i64 {
@@ -280,7 +262,6 @@ impl Encode for i64 {
             _ => 0x81.into(),
         }
     }
-
 }
 
 impl Encode for String {
@@ -290,26 +271,22 @@ impl Encode for String {
             _ => 0xb1.into(),
         }
     }
-
 }
 
 impl Encode for Symbol {
     fn encode(&self) -> Encoded {
         match self.0.len() {
             x if x <= 255 => 0xa3.into(),
-            _ => 0xb1.into()
+            _ => 0xb1.into(),
         }
     }
-
 }
 
 impl Encode for Described {
     fn encode(&self) -> Encoded {
         todo!()
     }
-
 }
-
 
 impl From<bool> for AmqpType {
     fn from(value: bool) -> Self {
@@ -395,7 +372,6 @@ impl From<char> for AmqpType {
     }
 }
 
-
 impl From<Uuid> for AmqpType {
     fn from(value: Uuid) -> Self {
         AmqpType::Uuid(value)
@@ -425,7 +401,6 @@ impl From<Symbol> for AmqpType {
         AmqpType::Symbol(value)
     }
 }
-
 
 impl From<List> for AmqpType {
     fn from(value: List) -> Self {
@@ -650,7 +625,7 @@ mod tests {
     #[test]
     fn amqp_type_can_construct_list_with_more_than_255_elements() {
         let mut arr = vec![];
-        for i in 0 .. 500 {
+        for i in 0..500 {
             arr.push(i.into())
         }
         let val = AmqpType::List(arr.into());
@@ -660,12 +635,11 @@ mod tests {
     #[test]
     fn amqp_type_can_construct_list_with_less_than_255_elements_and_larger_than_255_bytes() {
         let mut arr = vec![];
-        for i in 0 .. 100 {
+        for i in 0..100 {
             arr.push("aaaaaaaaaaaaaaaaaaaa".into());
         }
         let val = AmqpType::List(arr.into());
         assert_eq!(val.encode().constructor(), 0xd0);
-        
     }
 
     #[test]
@@ -677,7 +651,7 @@ mod tests {
     #[test]
     fn amqp_type_can_construct_map_with_less_more_255_elements() {
         let mut map = IndexMap::new();
-        for i in 1 .. 500 {
+        for i in 1..500 {
             map.insert(i.into(), i.into());
         }
         let val = AmqpType::Map(map.into());
@@ -692,13 +666,11 @@ mod tests {
 
     #[test]
     fn amqp_type_can_construct_array_with_more_than_255_elements() {
-
         let mut arr = vec![];
-        for i in 0 .. 500 {
+        for i in 0..500 {
             arr.push(i.into())
         }
         let val = AmqpType::Array(arr.into());
         assert_eq!(val.encode().constructor(), 0xf0);
-        
     }
 }
