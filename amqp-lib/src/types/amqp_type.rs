@@ -642,7 +642,7 @@ mod tests {
             arr.push("aaaaaaaaaaaaaaaaaaaa".into());
         }
         let val = AmqpType::Array(arr.into());
-        assert_eq!(val.encode().constructor(), 0xe0);
+        assert_eq!(val.encode().constructor(), 0xf0);
         
     }
 }
