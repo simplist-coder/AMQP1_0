@@ -1,4 +1,5 @@
 use std::hash::Hash;
+use crate::types::amqp_type::{Encode, Encoded};
 
 pub struct Float(f32);
 pub struct Double(f64);
@@ -43,6 +44,22 @@ impl PartialEq for Double {
         !self.eq(other)
     }
 }
+
+
+
+impl Encode for Float {
+    fn encode(&self) -> Encoded {
+        Encoded::new(0x72, Some(self.0.to_be_bytes().to_vec()))
+    }
+}
+
+impl Encode for Double {
+    fn encode(&self) -> Encoded {
+        Encoded::new(0x82, Some(self.0.to_be_bytes().to_vec()))
+    }
+}
+
+
 
 impl From<f32> for Float {
     fn from(value: f32) -> Self {

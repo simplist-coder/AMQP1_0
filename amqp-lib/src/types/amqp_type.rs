@@ -6,6 +6,7 @@ use crate::types::collection::*;
 use crate::types::decimal::*;
 use crate::types::floating_point::*;
 use bigdecimal::BigDecimal;
+use bigdecimal::num_traits::ToBytes;
 use indexmap::IndexMap;
 
 pub trait Hashable: std::hash::Hash {}
@@ -144,55 +145,46 @@ impl Encode for bool {
 
     #[cfg(not(feature = "zero-length-bools"))]
     fn encode(&self) -> Encoded {
-        0x56.into()
+        match self {
+            true => Encoded::new(0x56, Some(vec![0x01])),
+            false => Encoded::new(0x56, Some(vec![0x00]))
+        }
     }
 }
 
 impl Encode for u8 {
     fn encode(&self) -> Encoded {
-        0x50.into()
+        Encoded::new(0x50, Some(self.to_be_bytes().to_vec()))
     }
 }
 
 impl Encode for u16 {
     fn encode(&self) -> Encoded {
-        0x60.into()
+        Encoded::new(0x60, Some(self.to_be_bytes().to_vec()))
     }
 }
 
 impl Encode for i8 {
     fn encode(&self) -> Encoded {
-        0x51.into()
+        Encoded::new(0x51, Some(self.to_be_bytes().to_vec()))
     }
 }
 
 impl Encode for i16 {
     fn encode(&self) -> Encoded {
-        0x61.into()
-    }
-}
-
-impl Encode for Float {
-    fn encode(&self) -> Encoded {
-        0x72.into()
-    }
-}
-
-impl Encode for Double {
-    fn encode(&self) -> Encoded {
-        0x82.into()
+        Encoded::new(0x61, Some(self.to_be_bytes().to_vec()))
     }
 }
 
 impl Encode for char {
     fn encode(&self) -> Encoded {
-        0x73.into()
+        Encoded::new(0x73, Some(self.to_string().into_bytes()))
     }
 }
 
 impl Encode for Uuid {
     fn encode(&self) -> Encoded {
-        0x98.into()
+        Encoded::new(0x98, Some(self.0.into_bytes().to_vec()))
     }
 }
 impl Encode for u32 {
