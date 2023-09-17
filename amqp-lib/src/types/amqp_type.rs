@@ -190,9 +190,9 @@ impl Encode for Uuid {
 impl Encode for u32 {
     fn encode(&self) -> Encoded {
         match self {
-            0 => 0x43.into(),
-            x if x > &0 && x <= &255 => 0x52.into(),
-            _ => 0x70.into(),
+            0 => Encoded::new(0x43, None),
+            x if x > &0 && x <= &255 => Encoded::new(0x52, Some(x.to_be_bytes().to_vec())),
+            _ => Encoded::new(0x70, Some(self.to_be_bytes().to_vec())),
         }
     }
 }
@@ -200,9 +200,9 @@ impl Encode for u32 {
 impl Encode for u64 {
     fn encode(&self) -> Encoded {
         match self {
-            0 => 0x44.into(),
-            x if x > &&0 && x <= &255 => 0x53.into(),
-            _ => 0x80.into(),
+            0 => Encoded::new(0x44, None),
+            x if x > &&0 && x <= &255 => Encoded::new(0x53, Some(x.to_be_bytes().to_vec())),
+            _ => Encoded::new(0x80, Some(self.to_be_bytes().to_vec()))
         }
     }
 }
@@ -210,8 +210,8 @@ impl Encode for u64 {
 impl Encode for i32 {
     fn encode(&self) -> Encoded {
         match self {
-            x if x >= &-128 && x <= &127 => 0x54.into(),
-            _ => 0x71.into(),
+            x if x >= &-128 && x <= &127 => Encoded::new(0x54, Some(x.to_be_bytes().to_vec())),
+            _ => Encoded::new(0x71, Some(self.to_be_bytes().to_vec()))
         }
     }
 }
@@ -219,8 +219,8 @@ impl Encode for i32 {
 impl Encode for i64 {
     fn encode(&self) -> Encoded {
         match self {
-            x if x >= &-128 && x <= &127 => 0x55.into(),
-            _ => 0x81.into(),
+            x if x >= &-128 && x <= &127 => Encoded::new(0x55, Some(x.to_be_bytes().to_vec())),
+            _ => Encoded::new(0x81, Some(self.to_be_bytes().to_vec()))
         }
     }
 }
@@ -231,7 +231,7 @@ impl Encode for String {
             x if x >= 0 as usize && x <= 255 as usize => {
                 Encoded::new(0xa1, Some(self.as_bytes().to_vec()))
             }
-            _ => 0xb1.into(),
+            _ => Encoded::new(0xb1, Some(self.as_bytes().to_vec()))
         }
     }
 }
@@ -239,8 +239,8 @@ impl Encode for String {
 impl Encode for Symbol {
     fn encode(&self) -> Encoded {
         match self.0.len() {
-            x if x <= 255 => 0xa3.into(),
-            _ => 0xb1.into(),
+            x if x <= 255 => Encoded::new(0xa3, Some(self.0.as_bytes().to_vec())),
+            _ => Encoded::new(0xb1, Some(self.0.as_bytes().to_vec())),
         }
     }
 }
