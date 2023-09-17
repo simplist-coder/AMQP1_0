@@ -16,34 +16,63 @@ pub trait Encode {
 
 pub trait Decode<'a>: From<&'a [u8]> + Encode {}
 
-pub struct Encoded {
-    constructor: u8,
-    data: Option<Vec<u8>>,
+
+
+pub enum Encoded {
+    Empty(u8), // Constructor
+    Fixed(u8, Vec<u8>), // Constructor, Data
+    Variable(u8, Vec<u8>), // Constructor, Data, size is computed from data
+    Compound(u8, u32, Vec<u8>), // Constructor, count, data
+    Array(u8, u32, u8, Vec<u8>) // Constructor, count, element constructor, data
 }
 
+
 impl Encoded {
-    pub fn new(constructor: u8, data: Option<Vec<u8>>) -> Self {
-        Encoded { constructor, data }
+    pub fn new_empty(constructor: u8) -> Self {
+        Encoded::Empty(constructor)
+    }
+
+    pub fn new_fixed(constructor: u8, data: Vec<u8>) -> Self  {
+        Encoded::Fixed(constructor, data)
+     }
+
+    pub fn new_variable(constructor: u8, data: Vec<u8>) -> Self  {
+        Encoded::Variable(constructor, data)
+    }
+
+    pub fn new_compound(constructor: u8, count: u32, data: Vec<u8>) -> Self  {
+        Encoded::Compound(constructor, count, data)
+    }
+
+    pub fn new_array(constructor: u8, count: u32, element_constructor: u8, data: Vec<u8>) -> Self  {
+        Encoded::Array(constructor, count, element_constructor, data)
     }
 
     pub fn constructor(&self) -> u8 {
-        self.constructor
+        match self {
+            Self::Empty(c) => c.to_owned(),
+            Self::Fixed(c, _) => c.to_owned(),
+            Self::Variable(c, _) => c.to_owned(),
+            Self::Compound(c, _, _) => c.to_owned(),
+            Self::Array(c, _, _, _) => c.to_owned()
+        }
     }
 
     pub fn data_len(&self) -> usize {
-        match &self.data {
-            Some(data) => data.len(),
-            None => 0,
+        match self {
+            Self::Empty(_) => 0,
+            Self::Fixed(_, data) => data.len(),
+            Self::Variable(_, data) => data.len(),
+            Self::Compound(_, _, data) => data.len(),
+            Self::Array(_, _, _, data) => data.len(),
+            
         }
     }
 }
 
 impl From<u8> for Encoded {
     fn from(value: u8) -> Self {
-        Encoded {
-            constructor: value,
-            data: None,
-        }
+        Encoded::Empty(value)
     }
 }
 
@@ -146,53 +175,53 @@ impl Encode for bool {
     #[cfg(not(feature = "zero-length-bools"))]
     fn encode(&self) -> Encoded {
         match self {
-            true => Encoded::new(0x56, Some(vec![0x01])),
-            false => Encoded::new(0x56, Some(vec![0x00]))
+            true => Encoded::new_fixed(0x56, vec![0x01]),
+            false => Encoded::new_fixed(0x56, vec![0x00])
         }
     }
 }
 
 impl Encode for u8 {
     fn encode(&self) -> Encoded {
-        Encoded::new(0x50, Some(self.to_be_bytes().to_vec()))
+        Encoded::new_fixed(0x50, self.to_be_bytes().to_vec())
     }
 }
 
 impl Encode for u16 {
     fn encode(&self) -> Encoded {
-        Encoded::new(0x60, Some(self.to_be_bytes().to_vec()))
+        Encoded::new_fixed(0x60, self.to_be_bytes().to_vec())
     }
 }
 
 impl Encode for i8 {
     fn encode(&self) -> Encoded {
-        Encoded::new(0x51, Some(self.to_be_bytes().to_vec()))
+        Encoded::new_fixed(0x51, self.to_be_bytes().to_vec())
     }
 }
 
 impl Encode for i16 {
     fn encode(&self) -> Encoded {
-        Encoded::new(0x61, Some(self.to_be_bytes().to_vec()))
+        Encoded::new_fixed(0x61, self.to_be_bytes().to_vec())
     }
 }
 
 impl Encode for char {
     fn encode(&self) -> Encoded {
-        Encoded::new(0x73, Some(self.to_string().into_bytes()))
+        Encoded::new_fixed(0x73, self.to_string().into_bytes())
     }
 }
 
 impl Encode for Uuid {
     fn encode(&self) -> Encoded {
-        Encoded::new(0x98, Some(self.0.into_bytes().to_vec()))
+        Encoded::new_fixed(0x98, self.0.into_bytes().to_vec())
     }
 }
 impl Encode for u32 {
     fn encode(&self) -> Encoded {
         match self {
-            0 => Encoded::new(0x43, None),
-            x if x > &0 && x <= &255 => Encoded::new(0x52, Some(x.to_be_bytes().to_vec())),
-            _ => Encoded::new(0x70, Some(self.to_be_bytes().to_vec())),
+            0 => Encoded::new_empty(0x43),
+            x if x > &0 && x <= &255 => Encoded::new_fixed(0x52, x.to_be_bytes().to_vec()),
+            _ => Encoded::new_fixed(0x70, self.to_be_bytes().to_vec()),
         }
     }
 }
@@ -200,9 +229,9 @@ impl Encode for u32 {
 impl Encode for u64 {
     fn encode(&self) -> Encoded {
         match self {
-            0 => Encoded::new(0x44, None),
-            x if x > &&0 && x <= &255 => Encoded::new(0x53, Some(x.to_be_bytes().to_vec())),
-            _ => Encoded::new(0x80, Some(self.to_be_bytes().to_vec()))
+            0 => Encoded::new_empty(0x44),
+            x if x > &&0 && x <= &255 => Encoded::new_fixed(0x53, x.to_be_bytes().to_vec()),
+            _ => Encoded::new_fixed(0x80,self.to_be_bytes().to_vec())
         }
     }
 }
@@ -210,8 +239,8 @@ impl Encode for u64 {
 impl Encode for i32 {
     fn encode(&self) -> Encoded {
         match self {
-            x if x >= &-128 && x <= &127 => Encoded::new(0x54, Some(x.to_be_bytes().to_vec())),
-            _ => Encoded::new(0x71, Some(self.to_be_bytes().to_vec()))
+            x if x >= &-128 && x <= &127 => Encoded::new_fixed(0x54, x.to_be_bytes().to_vec()),
+            _ => Encoded::new_fixed(0x71, self.to_be_bytes().to_vec())
         }
     }
 }
@@ -219,8 +248,8 @@ impl Encode for i32 {
 impl Encode for i64 {
     fn encode(&self) -> Encoded {
         match self {
-            x if x >= &-128 && x <= &127 => Encoded::new(0x55, Some(x.to_be_bytes().to_vec())),
-            _ => Encoded::new(0x81, Some(self.to_be_bytes().to_vec()))
+            x if x >= &-128 && x <= &127 => Encoded::new_fixed(0x55, x.to_be_bytes().to_vec()),
+            _ => Encoded::new_fixed(0x81, self.to_be_bytes().to_vec())
         }
     }
 }
@@ -229,9 +258,9 @@ impl Encode for String {
     fn encode(&self) -> Encoded {
         match self.len() {
             x if x >= 0 as usize && x <= 255 as usize => {
-                Encoded::new(0xa1, Some(self.as_bytes().to_vec()))
+                Encoded::new_variable(0xa1, self.as_bytes().to_vec())
             }
-            _ => Encoded::new(0xb1, Some(self.as_bytes().to_vec()))
+            _ => Encoded::new_variable(0xb1, self.as_bytes().to_vec())
         }
     }
 }
@@ -239,8 +268,8 @@ impl Encode for String {
 impl Encode for Symbol {
     fn encode(&self) -> Encoded {
         match self.0.len() {
-            x if x <= 255 => Encoded::new(0xa3, Some(self.0.as_bytes().to_vec())),
-            _ => Encoded::new(0xb1, Some(self.0.as_bytes().to_vec())),
+            x if x <= 255 => Encoded::new_variable(0xa3, self.0.as_bytes().to_vec()),
+            _ => Encoded::new_variable(0xb1, self.0.as_bytes().to_vec()),
         }
     }
 }

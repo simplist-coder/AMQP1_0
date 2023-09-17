@@ -8,8 +8,8 @@ pub struct Binary(Vec<u8>);
 impl Encode for Binary {
     fn encode(&self) -> Encoded {
         match self.0.len() {
-            x if x <= 255 => Encoded::new(0xa0, Some(self.0.to_owned())),
-            _ => Encoded::new(0xb0, Some(self.0.to_owned()))
+            x if x <= 255 => Encoded::new_variable(0xa0, self.0.to_owned()),
+            _ => Encoded::new_variable(0xb0, self.0.to_owned())
         }
     }
 }

@@ -49,13 +49,13 @@ impl PartialEq for Double {
 
 impl Encode for Float {
     fn encode(&self) -> Encoded {
-        Encoded::new(0x72, Some(self.0.to_be_bytes().to_vec()))
+        Encoded::new_fixed(0x72, self.0.to_be_bytes().to_vec())
     }
 }
 
 impl Encode for Double {
     fn encode(&self) -> Encoded {
-        Encoded::new(0x82, Some(self.0.to_be_bytes().to_vec()))
+        Encoded::new_variable(0x82, self.0.to_be_bytes().to_vec())
     }
 }
 
