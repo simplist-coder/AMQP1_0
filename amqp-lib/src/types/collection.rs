@@ -15,10 +15,11 @@ pub struct Map(IndexMap<AmqpType, AmqpType>);
 impl Encode for List {
     fn encode(&self) -> Encoded {
         let encoded: Vec<Encoded> = self.0.iter().map(|x| x.encode()).collect();
+        let count = encoded.len();
         let byte_size = encoded.iter().fold(0, |acc, x| acc + x.data_len());
         match (encoded.len(), byte_size) {
             (0, _) => 0x45.into(),
-            (len, size) if len <= 255 && size < 256 => 0xc0.into(),
+            (len, size) if len <= 255 && size < 256 => Encoded::new_compound(0xc0, count, encoded.into()),
             (_, _) => 0xd0.into(),
         }
     }

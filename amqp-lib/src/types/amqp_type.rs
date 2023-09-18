@@ -70,6 +70,18 @@ impl Encoded {
     }
 }
 
+impl From<Encoded> for Vec<u8> {
+    fn from(value: Encoded) -> Self {
+        todo!()
+    }
+}
+
+impl From<Vec<Encoded>> for Vec<u8> {
+    fn from(value: Vec<Encoded>) -> Self {
+        todo!()
+    }
+}
+
 impl From<u8> for Encoded {
     fn from(value: u8) -> Self {
         Encoded::Empty(value)
