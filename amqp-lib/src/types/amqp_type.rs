@@ -72,12 +72,31 @@ impl Encoded {
 
 impl From<Encoded> for Vec<u8> {
     fn from(value: Encoded) -> Self {
-        todo!()
+        let mut res = Vec::new();
+        match value {
+            Encoded::Empty(c) => res.push(c),
+            Encoded::Fixed(c, data) => {
+                res.push(c);
+                res.append(data);
+            }
+            Encoded::Variable(c, data) => {
+                res.push(c);
+                res.append(data);
+            }
+            Encoded::Compound(c, count, data) => {
+                
+            }
+        }
+        res
     }
 }
 
-impl From<Vec<Encoded>> for Vec<u8> {
-    fn from(value: Vec<Encoded>) -> Self {
+
+impl From<Encoded> for &mut Vec<u8> {
+    fn from(value: Encoded) -> Self {
+        match value {
+            
+        }
         todo!()
     }
 }

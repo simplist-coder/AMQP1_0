@@ -12,6 +12,7 @@ pub struct Array(Vec<AmqpType>);
 #[derive(Eq, PartialEq)]
 pub struct Map(IndexMap<AmqpType, AmqpType>);
 
+struct EncodedCompound(Vec<Encoded>);
 impl Encode for List {
     fn encode(&self) -> Encoded {
         let encoded: Vec<Encoded> = self.0.iter().map(|x| x.encode()).collect();
@@ -19,8 +20,8 @@ impl Encode for List {
         let byte_size = encoded.iter().fold(0, |acc, x| acc + x.data_len());
         match (encoded.len(), byte_size) {
             (0, _) => 0x45.into(),
-            (len, size) if len <= 255 && size < 256 => Encoded::new_compound(0xc0, count, encoded.into()),
-            (_, _) => 0xd0.into(),
+            (len, size) if len <= 255 && size < 256 => Encoded::new_compound(0xc0, count as u32 as u32, EncodedCompound(encoded).into()),
+            (_, _) =>Encoded::new_compound(0xd0, count as u32 as u32, EncodedCompound(encoded).into()),
         }
     }
 }
@@ -40,6 +41,16 @@ impl Encode for Array {
             (_, _) => 0xf0.into(),
         }
         
+    }
+}
+
+impl From<EncodedCompound> for Vec<u8> {
+    fn from(value: EncodedCompound) -> Self {
+        let mut res = Vec::new();
+        for val in value.0 {
+            res.append(val.into());
+        }
+        res
     }
 }
 
