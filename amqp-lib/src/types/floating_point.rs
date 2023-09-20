@@ -1,5 +1,6 @@
-use crate::types::amqp_type::{Encode, Encoded};
 use std::hash::Hash;
+
+use crate::types::amqp_type::{Encode, Encoded};
 
 pub struct Float(f32);
 pub struct Double(f64);
@@ -37,7 +38,7 @@ impl Eq for Float {}
 
 impl PartialEq for Double {
     fn eq(&self, other: &Self) -> bool {
-        self.0.to_bits() == self.0.to_bits()
+        self.0.to_bits() == other.0.to_bits()
     }
 
     fn ne(&self, other: &Self) -> bool {

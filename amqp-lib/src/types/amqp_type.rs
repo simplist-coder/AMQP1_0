@@ -9,6 +9,7 @@ use crate::types::decimal::*;
 use crate::types::floating_point::*;
 
 pub trait Hashable: Hash {}
+
 pub trait Encode {
     fn encode(&self) -> Encoded;
 }
@@ -16,10 +17,14 @@ pub trait Encode {
 pub trait Decode<'a>: From<&'a [u8]> + Encode {}
 
 pub enum Encoded {
-    Empty(u8),                   // Constructor
-    Fixed(u8, Vec<u8>),          // Constructor, Data
-    Variable(u8, Vec<u8>),       // Constructor, Data, size is computed from data
-    Compound(u8, u32, Vec<u8>),  // Constructor, count, data
+    Empty(u8),
+    // Constructor
+    Fixed(u8, Vec<u8>),
+    // Constructor, Data
+    Variable(u8, Vec<u8>),
+    // Constructor, Data, size is computed from data
+    Compound(u8, u32, Vec<u8>),
+    // Constructor, count, data
     Array(u8, u32, u8, Vec<u8>), // Constructor, count, element constructor, data
 }
 
@@ -76,11 +81,21 @@ impl From<Encoded> for Vec<u8> {
             }
             Encoded::Variable(c, mut data) => {
                 res.push(c);
+                let mut size: Vec<u8> = match c {
+                    0xA => vec![data.len() as u8],
+                    _ => (data.len() as u32).to_be_bytes().to_vec()
+                };
+                res.append(&mut size);
                 res.append(&mut data);
             }
-            Encoded::Compound(c, count, data) => {}
-
-            Encoded::Array(_, _, _, _) => {}
+            Encoded::Compound(c, count, mut data) => {
+                res.push(c);
+                res.append(&mut count.to_be_bytes().to_vec());
+                res.append(&mut data);
+            }
+            Encoded::Array(_, _, _, _) => {
+                todo!("Implement Array encode to bytes")
+            }
         }
         res
     }
@@ -94,12 +109,16 @@ impl From<u8> for Encoded {
 
 #[derive(Hash, Eq, PartialEq)]
 pub struct Symbol(String);
+
 #[derive(Hash, Eq, PartialEq)]
 pub struct Uuid(uuid::Uuid);
+
 #[derive(Hash, Eq, PartialEq)]
 pub struct Described();
+
 #[derive(Hash, Eq, PartialEq)]
 pub struct Constructor(u8);
+
 #[derive(Hash, Eq, PartialEq)]
 pub struct Timestamp(u64);
 
@@ -163,6 +182,7 @@ impl Encode for AmqpType {
 }
 
 impl Eq for Double {}
+
 impl From<u8> for Constructor {
     fn from(value: u8) -> Self {
         Constructor(value)
@@ -174,11 +194,13 @@ impl Encode for Timestamp {
         0x83.into()
     }
 }
+
 impl From<Timestamp> for AmqpType {
     fn from(value: Timestamp) -> Self {
         AmqpType::Timestamp(value)
     }
 }
+
 impl Encode for bool {
     #[cfg(feature = "zero-length-bools")]
     fn encode(&self) -> Encoded {
@@ -232,6 +254,7 @@ impl Encode for Uuid {
         Encoded::new_fixed(0x98, self.0.into_bytes().to_vec())
     }
 }
+
 impl Encode for u32 {
     fn encode(&self) -> Encoded {
         match self {
@@ -421,14 +444,14 @@ mod tests {
     use super::*;
 
     #[test]
-    fn amqp_type_can_construct_null() {
+    fn construct_null() {
         let val = AmqpType::Null;
         assert_eq!(val.encode().constructor(), 0x40);
     }
 
     #[test]
     #[cfg(not(feature = "zero-length-bools"))]
-    fn amqp_type_can_construct_bool() {
+    fn construct_bool() {
         let val = AmqpType::Boolean(true);
         assert_eq!(val.encode().constructor(), 0x56);
     }
@@ -448,19 +471,19 @@ mod tests {
     }
 
     #[test]
-    fn amqp_type_can_construct_ubyte() {
+    fn construct_ubyte() {
         let val = AmqpType::Ubyte(8);
         assert_eq!(val.encode().constructor(), 0x50);
     }
 
     #[test]
-    fn amqp_type_can_construct_ushort() {
+    fn construct_ushort() {
         let val = AmqpType::Ushort(16);
         assert_eq!(val.encode().constructor(), 0x60);
     }
 
     #[test]
-    fn amqp_type_can_construct_uint() {
+    fn construct_uint() {
         let val = AmqpType::Uint(500);
         assert_eq!(val.encode().constructor(), 0x70);
     }
@@ -476,8 +499,9 @@ mod tests {
         let val = AmqpType::Uint(255);
         assert_eq!(val.encode().constructor(), 0x52);
     }
+
     #[test]
-    fn amqp_type_can_construct_ulong() {
+    fn construct_ulong() {
         let val = AmqpType::Ulong(500);
         assert_eq!(val.encode().constructor(), 0x80);
     }
@@ -495,19 +519,19 @@ mod tests {
     }
 
     #[test]
-    fn amqp_type_can_construct_byte() {
+    fn construct_byte() {
         let val = AmqpType::Byte(8);
         assert_eq!(val.encode().constructor(), 0x51);
     }
 
     #[test]
-    fn amqp_type_can_construct_short() {
+    fn construct_short() {
         let val = AmqpType::Short(8);
         assert_eq!(val.encode().constructor(), 0x61);
     }
 
     #[test]
-    fn amqp_type_can_construct_int() {
+    fn construct_int() {
         let val = AmqpType::Int(500);
         assert_eq!(val.encode().constructor(), 0x71);
     }
@@ -519,8 +543,9 @@ mod tests {
         assert_eq!(lower.encode().constructor(), 0x54);
         assert_eq!(higher.encode().constructor(), 0x54);
     }
+
     #[test]
-    fn amqp_type_can_construct_long() {
+    fn construct_long() {
         let val = AmqpType::Long(500);
         assert_eq!(val.encode().constructor(), 0x81);
     }
@@ -534,55 +559,55 @@ mod tests {
     }
 
     #[test]
-    fn amqp_type_can_construct_float() {
+    fn construct_float() {
         let val = AmqpType::Float(32.0.into());
         assert_eq!(val.encode().constructor(), 0x72);
     }
 
     #[test]
-    fn amqp_type_can_construct_double() {
+    fn construct_double() {
         let val = AmqpType::Double(64.0.into());
         assert_eq!(val.encode().constructor(), 0x82);
     }
 
     #[test]
-    fn amqp_type_can_construct_decimal_32() {
+    fn construct_decimal_32() {
         let val = AmqpType::Decimal32(32.0.into());
         assert_eq!(val.encode().constructor(), 0x74);
     }
 
     #[test]
-    fn amqp_type_can_construct_decimal_64() {
+    fn construct_decimal_64() {
         let val = AmqpType::Decimal64(64.0.into());
         assert_eq!(val.encode().constructor(), 0x84);
     }
 
     #[test]
-    fn amqp_type_can_construct_decimal_128() {
+    fn construct_decimal_128() {
         let val = AmqpType::Decimal128(128.0.into());
         assert_eq!(val.encode().constructor(), 0x94);
     }
 
     #[test]
-    fn amqp_type_can_construct_char() {
+    fn construct_char() {
         let val = AmqpType::Char('a');
         assert_eq!(val.encode().constructor(), 0x73);
     }
 
     #[test]
-    fn amqp_type_can_construct_timestamp() {
+    fn construct_timestamp() {
         let val = AmqpType::Timestamp(Timestamp(1));
         assert_eq!(val.encode().constructor(), 0x83);
     }
 
     #[test]
-    fn amqp_type_can_construct_uuid() {
+    fn construct_uuid() {
         let val = AmqpType::Uuid(Uuid(uuid::Uuid::new_v4()));
         assert_eq!(val.encode().constructor(), 0x98);
     }
 
     #[test]
-    fn amqp_type_can_construct_binary() {
+    fn construct_binary() {
         let val = AmqpType::Binary(Vec::new().into());
         assert_eq!(val.encode().constructor(), 0xa0);
     }
@@ -600,25 +625,25 @@ mod tests {
     }
 
     #[test]
-    fn amqp_type_can_construct_symbol() {
+    fn construct_symbol() {
         let val = AmqpType::Symbol(Symbol("".to_string()));
         assert_eq!(val.encode().constructor(), 0xa3);
     }
 
     #[test]
-    fn amqp_type_can_construct_empty_list() {
+    fn construct_empty_list() {
         let val = AmqpType::List(vec![].into());
         assert_eq!(val.encode().constructor(), 0x45);
     }
 
     #[test]
-    fn amqp_type_can_construct_list_with_less_than_255_elements() {
+    fn construct_list_with_less_than_255_elements() {
         let val = AmqpType::List(vec![1.into()].into());
         assert_eq!(val.encode().constructor(), 0xc0);
     }
 
     #[test]
-    fn amqp_type_can_construct_list_with_more_than_255_elements() {
+    fn construct_list_with_more_than_255_elements() {
         let mut arr = vec![];
         for i in 0..500 {
             arr.push(i.into())
@@ -628,7 +653,7 @@ mod tests {
     }
 
     #[test]
-    fn amqp_type_can_construct_list_with_less_than_255_elements_and_larger_than_255_bytes() {
+    fn construct_list_with_less_than_255_elements_and_larger_than_255_bytes() {
         let mut arr = vec![];
         for i in 0..100 {
             arr.push("aaaaaaaaaaaaaaaaaaaa".into());
@@ -638,13 +663,13 @@ mod tests {
     }
 
     #[test]
-    fn amqp_type_can_construct_map_with_less_than_255_elements() {
+    fn construct_map_with_less_than_255_elements() {
         let val = AmqpType::Map(IndexMap::new().into());
         assert_eq!(val.encode().constructor(), 0xc1);
     }
 
     #[test]
-    fn amqp_type_can_construct_map_with_less_more_255_elements() {
+    fn construct_map_with_less_more_255_elements() {
         let mut map = IndexMap::new();
         for i in 1..500 {
             map.insert(i.into(), i.into());
@@ -654,13 +679,13 @@ mod tests {
     }
 
     #[test]
-    fn amqp_type_can_construct_array_with_less_than_255_elements() {
+    fn construct_array_with_less_than_255_elements() {
         let val = AmqpType::Array(vec![].into());
         assert_eq!(val.encode().constructor(), 0xe0);
     }
 
     #[test]
-    fn amqp_type_can_construct_array_with_more_than_255_elements() {
+    fn construct_array_with_more_than_255_elements() {
         let mut arr = vec![];
         for i in 0..500 {
             arr.push(i.into())
@@ -670,7 +695,7 @@ mod tests {
     }
 
     #[test]
-    fn amqp_type_can_construct_array_with_less_than_255_elements_and_larger_than_255_bytes() {
+    fn construct_array_with_less_than_255_elements_and_larger_than_255_bytes() {
         let mut arr = vec![];
         for i in 0..100 {
             arr.push("aaaaaaaaaaaaaaaaaaaa".into());
