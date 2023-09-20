@@ -1,50 +1,46 @@
 use std::hash::Hash;
 
-use crate::error::AppError;
+use bigdecimal::num_traits::ToBytes;
+use indexmap::IndexMap;
+
 use crate::types::binary::Binary;
 use crate::types::collection::*;
 use crate::types::decimal::*;
 use crate::types::floating_point::*;
-use bigdecimal::BigDecimal;
-use bigdecimal::num_traits::ToBytes;
-use indexmap::IndexMap;
 
-pub trait Hashable: std::hash::Hash {}
+pub trait Hashable: Hash {}
 pub trait Encode {
     fn encode(&self) -> Encoded;
 }
 
 pub trait Decode<'a>: From<&'a [u8]> + Encode {}
 
-
-
 pub enum Encoded {
-    Empty(u8), // Constructor
-    Fixed(u8, Vec<u8>), // Constructor, Data
-    Variable(u8, Vec<u8>), // Constructor, Data, size is computed from data
-    Compound(u8, u32, Vec<u8>), // Constructor, count, data
-    Array(u8, u32, u8, Vec<u8>) // Constructor, count, element constructor, data
+    Empty(u8),                   // Constructor
+    Fixed(u8, Vec<u8>),          // Constructor, Data
+    Variable(u8, Vec<u8>),       // Constructor, Data, size is computed from data
+    Compound(u8, u32, Vec<u8>),  // Constructor, count, data
+    Array(u8, u32, u8, Vec<u8>), // Constructor, count, element constructor, data
 }
-
 
 impl Encoded {
     pub fn new_empty(constructor: u8) -> Self {
         Encoded::Empty(constructor)
     }
 
-    pub fn new_fixed(constructor: u8, data: Vec<u8>) -> Self  {
+    pub fn new_fixed(constructor: u8, data: Vec<u8>) -> Self {
         Encoded::Fixed(constructor, data)
-     }
+    }
 
-    pub fn new_variable(constructor: u8, data: Vec<u8>) -> Self  {
+    pub fn new_variable(constructor: u8, data: Vec<u8>) -> Self {
         Encoded::Variable(constructor, data)
     }
 
-    pub fn new_compound(constructor: u8, count: u32, data: Vec<u8>) -> Self  {
+    pub fn new_compound(constructor: u8, count: u32, data: Vec<u8>) -> Self {
         Encoded::Compound(constructor, count, data)
     }
 
-    pub fn new_array(constructor: u8, count: u32, element_constructor: u8, data: Vec<u8>) -> Self  {
+    pub fn new_array(constructor: u8, count: u32, element_constructor: u8, data: Vec<u8>) -> Self {
         Encoded::Array(constructor, count, element_constructor, data)
     }
 
@@ -54,7 +50,7 @@ impl Encoded {
             Self::Fixed(c, _) => c.to_owned(),
             Self::Variable(c, _) => c.to_owned(),
             Self::Compound(c, _, _) => c.to_owned(),
-            Self::Array(c, _, _, _) => c.to_owned()
+            Self::Array(c, _, _, _) => c.to_owned(),
         }
     }
 
@@ -65,7 +61,6 @@ impl Encoded {
             Self::Variable(_, data) => data.len(),
             Self::Compound(_, _, data) => data.len(),
             Self::Array(_, _, _, data) => data.len(),
-            
         }
     }
 }
@@ -75,29 +70,19 @@ impl From<Encoded> for Vec<u8> {
         let mut res = Vec::new();
         match value {
             Encoded::Empty(c) => res.push(c),
-            Encoded::Fixed(c, data) => {
+            Encoded::Fixed(c, mut data) => {
                 res.push(c);
-                res.append(data);
+                res.append(&mut data);
             }
-            Encoded::Variable(c, data) => {
+            Encoded::Variable(c, mut data) => {
                 res.push(c);
-                res.append(data);
+                res.append(&mut data);
             }
-            Encoded::Compound(c, count, data) => {
-                
-            }
+            Encoded::Compound(c, count, data) => {}
+
+            Encoded::Array(_, _, _, _) => {}
         }
         res
-    }
-}
-
-
-impl From<Encoded> for &mut Vec<u8> {
-    fn from(value: Encoded) -> Self {
-        match value {
-            
-        }
-        todo!()
     }
 }
 
@@ -207,7 +192,7 @@ impl Encode for bool {
     fn encode(&self) -> Encoded {
         match self {
             true => Encoded::new_fixed(0x56, vec![0x01]),
-            false => Encoded::new_fixed(0x56, vec![0x00])
+            false => Encoded::new_fixed(0x56, vec![0x00]),
         }
     }
 }
@@ -262,7 +247,7 @@ impl Encode for u64 {
         match self {
             0 => Encoded::new_empty(0x44),
             x if x > &&0 && x <= &255 => Encoded::new_fixed(0x53, x.to_be_bytes().to_vec()),
-            _ => Encoded::new_fixed(0x80,self.to_be_bytes().to_vec())
+            _ => Encoded::new_fixed(0x80, self.to_be_bytes().to_vec()),
         }
     }
 }
@@ -271,7 +256,7 @@ impl Encode for i32 {
     fn encode(&self) -> Encoded {
         match self {
             x if x >= &-128 && x <= &127 => Encoded::new_fixed(0x54, x.to_be_bytes().to_vec()),
-            _ => Encoded::new_fixed(0x71, self.to_be_bytes().to_vec())
+            _ => Encoded::new_fixed(0x71, self.to_be_bytes().to_vec()),
         }
     }
 }
@@ -280,7 +265,7 @@ impl Encode for i64 {
     fn encode(&self) -> Encoded {
         match self {
             x if x >= &-128 && x <= &127 => Encoded::new_fixed(0x55, x.to_be_bytes().to_vec()),
-            _ => Encoded::new_fixed(0x81, self.to_be_bytes().to_vec())
+            _ => Encoded::new_fixed(0x81, self.to_be_bytes().to_vec()),
         }
     }
 }
@@ -291,7 +276,7 @@ impl Encode for String {
             x if x >= 0 as usize && x <= 255 as usize => {
                 Encoded::new_variable(0xa1, self.as_bytes().to_vec())
             }
-            _ => Encoded::new_variable(0xb1, self.as_bytes().to_vec())
+            _ => Encoded::new_variable(0xb1, self.as_bytes().to_vec()),
         }
     }
 }
@@ -371,13 +356,11 @@ impl From<Float> for AmqpType {
     }
 }
 
-
 impl From<Double> for AmqpType {
     fn from(value: Double) -> Self {
         AmqpType::Double(value.into())
     }
 }
-
 
 impl From<char> for AmqpType {
     fn from(value: char) -> Self {
@@ -435,7 +418,6 @@ impl From<Array> for AmqpType {
 
 #[cfg(test)]
 mod tests {
-
     use super::*;
 
     #[test]
@@ -695,6 +677,5 @@ mod tests {
         }
         let val = AmqpType::Array(arr.into());
         assert_eq!(val.encode().constructor(), 0xf0);
-        
     }
 }

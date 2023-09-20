@@ -1,11 +1,11 @@
-use std::hash::Hash;
 use crate::types::amqp_type::{Encode, Encoded};
+use std::hash::Hash;
 
 pub struct Float(f32);
 pub struct Double(f64);
 
-/// Crate assumes nothing about the values being passed to it. 
-/// Any kind of f32 value is handled as is. 
+/// Crate assumes nothing about the values being passed to it.
+/// Any kind of f32 value is handled as is.
 /// This means that the hash function considers only the bytes of a float.
 /// Two f32 or f64 values are considered Equal if and only if, the entirety of their by sequences match.
 /// This ensures that no information is lost.
@@ -45,8 +45,6 @@ impl PartialEq for Double {
     }
 }
 
-
-
 impl Encode for Float {
     fn encode(&self) -> Encoded {
         Encoded::new_fixed(0x72, self.0.to_be_bytes().to_vec())
@@ -58,8 +56,6 @@ impl Encode for Double {
         Encoded::new_variable(0x82, self.0.to_be_bytes().to_vec())
     }
 }
-
-
 
 impl From<f32> for Float {
     fn from(value: f32) -> Self {

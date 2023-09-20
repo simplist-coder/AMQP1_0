@@ -9,7 +9,7 @@ impl Encode for Binary {
     fn encode(&self) -> Encoded {
         match self.0.len() {
             x if x <= 255 => Encoded::new_variable(0xa0, self.0.to_owned()),
-            _ => Encoded::new_variable(0xb0, self.0.to_owned())
+            _ => Encoded::new_variable(0xb0, self.0.to_owned()),
         }
     }
 }

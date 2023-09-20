@@ -1,27 +1,33 @@
-use crate::types::amqp_type::{AmqpType, Constructor, Encode};
-use indexmap::IndexMap;
-use tracing::info;
 use std::hash::Hash;
+
+use indexmap::IndexMap;
+
+use crate::types::amqp_type::{AmqpType, Encode};
 
 use super::amqp_type::Encoded;
 
 #[derive(Hash, Eq, PartialEq)]
 pub struct List(Vec<AmqpType>);
+
 #[derive(Hash, Eq, PartialEq)]
 pub struct Array(Vec<AmqpType>);
+
 #[derive(Eq, PartialEq)]
 pub struct Map(IndexMap<AmqpType, AmqpType>);
 
-struct EncodedCompound(Vec<Encoded>);
+struct EncodedVec(Vec<Encoded>);
+
 impl Encode for List {
     fn encode(&self) -> Encoded {
         let encoded: Vec<Encoded> = self.0.iter().map(|x| x.encode()).collect();
-        let count = encoded.len();
+        let count = encoded.len() as u32;
         let byte_size = encoded.iter().fold(0, |acc, x| acc + x.data_len());
         match (encoded.len(), byte_size) {
             (0, _) => 0x45.into(),
-            (len, size) if len <= 255 && size < 256 => Encoded::new_compound(0xc0, count as u32 as u32, EncodedCompound(encoded).into()),
-            (_, _) =>Encoded::new_compound(0xd0, count as u32 as u32, EncodedCompound(encoded).into()),
+            (len, size) if len <= 255 && size < 256 => {
+                Encoded::new_compound(0xc0, count, EncodedVec(encoded).into())
+            }
+            (_, _) => Encoded::new_compound(0xd0, count, EncodedVec(encoded).into()),
         }
     }
 }
@@ -40,15 +46,15 @@ impl Encode for Array {
             (len, size) if len <= 255 && size < 256 => 0xe0.into(),
             (_, _) => 0xf0.into(),
         }
-        
     }
 }
 
-impl From<EncodedCompound> for Vec<u8> {
-    fn from(value: EncodedCompound) -> Self {
+impl From<EncodedVec> for Vec<u8> {
+    fn from(value: EncodedVec) -> Self {
         let mut res = Vec::new();
-        for val in value.0 {
-            res.append(val.into());
+        for mut val in value.0 {
+            let mut enc: Vec<u8> = val.into();
+            res.append(&mut enc);
         }
         res
     }
