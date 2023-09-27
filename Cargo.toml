@@ -1,6 +1,8 @@
 [workspace]
 members = [
-  "amqp-lib",
-  "client",
-  "server"
+  "amqp-type",
+  "amqp-transport",
+  "amqp-messaging",
+  "amqp-transaction",
+  "amqp-security",
 ]

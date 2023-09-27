@@ -33,10 +33,20 @@ dependencies = [
 ]
 
 [[package]]
-name = "anyhow"
-version = "1.0.75"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a4668cab20f66d8d020e1fbc0ebe47217433c1b6c8f2040faf858554e394ace6"
+name = "amqp-messaging"
+version = "0.1.0"
+
+[[package]]
+name = "amqp-security"
+version = "0.1.0"
+
+[[package]]
+name = "amqp-transaction"
+version = "0.1.0"
+
+[[package]]
+name = "amqp-transport"
+version = "0.1.0"
 
 [[package]]
 name = "async-trait"
@@ -115,16 +125,6 @@ name = "cfg-if"
 version = "1.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "baf1de4339761588bc0619e3cbc0120ee582ebb74b53b4efbf79117bd2da40fd"
-
-[[package]]
-name = "client"
-version = "0.1.0"
-dependencies = [
- "amqp-lib",
- "anyhow",
- "tokio",
- "tracing",
-]
 
 [[package]]
 name = "equivalent"
@@ -341,16 +341,6 @@ name = "scopeguard"
 version = "1.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "94143f37725109f92c262ed2cf5e59bce7498c01bcc1502d7b9afe439a4e9f49"
-
-[[package]]
-name = "server"
-version = "0.1.0"
-dependencies = [
- "amqp-lib",
- "anyhow",
- "tokio",
- "tracing",
-]
 
 [[package]]
 name = "signal-hook-registry"
