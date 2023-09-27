@@ -6,3 +6,4 @@ members = [
   "amqp-transaction",
   "amqp-security",
 ]
+resolver = "2"

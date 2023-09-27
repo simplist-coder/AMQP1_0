@@ -102,14 +102,6 @@ impl From<Encoded> for Vec<u8> {
 }
 
 
-impl From<Encoded> for &mut Vec<u8> {
-    fn from(value: Encoded) -> Self {
-        match value {
-            _ => todo!()
-            
-        }
-    }
-}
 
 impl From<u8> for Encoded {
     fn from(value: u8) -> Self {
