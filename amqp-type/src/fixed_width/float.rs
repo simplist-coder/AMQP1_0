@@ -1,5 +1,5 @@
-use std::hash::Hash;
 use crate::serde::encode::{Encode, Encoded};
+use std::hash::Hash;
 
 pub struct Float(f32);
 

@@ -54,6 +54,10 @@ impl Encoded {
             Self::Array(_, _, _, data) => data.len(),
         }
     }
+
+    pub fn to_bytes(self) -> Vec<u8> {
+        self.into()
+    }
 }
 
 impl From<Encoded> for Vec<u8> {

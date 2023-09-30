@@ -1,7 +1,7 @@
-mod error;
 mod amqp_type;
-mod serde;
-mod fixed_width;
-mod variable_width;
-mod compound;
 mod array;
+mod compound;
+mod error;
+mod fixed_width;
+mod serde;
+mod variable_width;

@@ -18,7 +18,6 @@ impl From<Vec<u8>> for Binary {
     }
 }
 
-
 #[cfg(test)]
 mod test {
     use super::*;

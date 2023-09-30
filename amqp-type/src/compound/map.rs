@@ -1,12 +1,11 @@
-use std::hash::Hash;
-use indexmap::IndexMap;
 use crate::amqp_type::AmqpType;
 use crate::compound::encoded_vec::EncodedVec;
 use crate::serde::encode::{Encode, Encoded};
+use indexmap::IndexMap;
+use std::hash::Hash;
 
 #[derive(Eq, PartialEq)]
 pub struct Map(IndexMap<AmqpType, AmqpType>);
-
 
 impl Encode for Map {
     fn encode(&self) -> Encoded {
@@ -23,7 +22,7 @@ impl Encode for Map {
         }
         match data_len {
             x if x <= 255 => Encoded::new_compound(0xc1, count, EncodedVec::new(res).into()),
-            _ => Encoded::new_compound(0xd1, count, EncodedVec::new(res).into())
+            _ => Encoded::new_compound(0xd1, count, EncodedVec::new(res).into()),
         }
     }
 }

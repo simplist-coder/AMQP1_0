@@ -1,6 +1,5 @@
 use bigdecimal::BigDecimal;
 
-
 use crate::serde::encode::{Encode, Encoded};
 
 #[derive(Hash, Eq, PartialEq)]
@@ -46,9 +45,8 @@ impl From<f64> for Decimal128 {
     }
 }
 
-
 #[cfg(test)]
-mod test{
+mod test {
     use super::*;
 
     #[test]

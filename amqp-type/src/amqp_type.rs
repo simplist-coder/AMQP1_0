@@ -210,6 +210,4 @@ mod tests {
         let val = AmqpType::Null;
         assert_eq!(val.encode().constructor(), 0x40);
     }
-
-
 }

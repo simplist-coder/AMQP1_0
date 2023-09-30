@@ -1,6 +1,5 @@
-use std::hash::Hash;
 use crate::serde::encode::{Encode, Encoded};
-
+use std::hash::Hash;
 
 /// Crate assumes nothing about the values being passed to it.
 /// Any kind of f32 value is handled as is.
@@ -33,7 +32,6 @@ impl Encode for Double {
         Encoded::new_variable(0x82, self.0.to_be_bytes().to_vec())
     }
 }
-
 
 impl From<f64> for Double {
     fn from(value: f64) -> Self {

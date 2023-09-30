@@ -16,7 +16,7 @@ mod test {
 
     #[test]
     fn construct_long() {
-        let val : i64 = 500;
+        let val: i64 = 500;
         assert_eq!(val.encode().constructor(), 0x81);
     }
 

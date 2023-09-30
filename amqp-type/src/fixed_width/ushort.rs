@@ -11,7 +11,6 @@ mod test {
 
     use super::*;
 
-
     #[test]
     fn construct_ushort() {
         let val: u16 = 16;

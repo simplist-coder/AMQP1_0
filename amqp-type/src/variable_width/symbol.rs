@@ -3,7 +3,6 @@ use crate::serde::encode::{Encode, Encoded};
 #[derive(Hash, Eq, PartialEq)]
 pub struct Symbol(String);
 
-
 impl Encode for Symbol {
     fn encode(&self) -> Encoded {
         match self.0.len() {
@@ -16,7 +15,6 @@ impl Encode for Symbol {
 #[cfg(test)]
 mod test {
     use super::*;
-
 
     #[test]
     fn construct_symbol() {

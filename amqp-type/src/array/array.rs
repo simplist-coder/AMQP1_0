@@ -20,7 +20,6 @@ impl From<Vec<AmqpType>> for Array {
     }
 }
 
-
 #[cfg(test)]
 mod test {
     use super::*;

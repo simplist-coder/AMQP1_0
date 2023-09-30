@@ -9,7 +9,6 @@ impl Encode for Timestamp {
     }
 }
 
-
 #[cfg(test)]
 mod test {
 

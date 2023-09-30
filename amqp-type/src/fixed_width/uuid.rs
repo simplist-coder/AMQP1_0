@@ -1,6 +1,5 @@
 use crate::serde::encode::{Encode, Encoded};
 
-
 #[derive(Hash, Eq, PartialEq)]
 pub struct Uuid(uuid::Uuid);
 

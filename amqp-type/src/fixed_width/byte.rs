@@ -6,12 +6,10 @@ impl Encode for i8 {
     }
 }
 
-
 #[cfg(test)]
 mod test {
 
     use super::*;
-
 
     #[test]
     fn construct_byte() {

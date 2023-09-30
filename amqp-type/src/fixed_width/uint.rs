@@ -15,7 +15,6 @@ mod test {
 
     use super::*;
 
-
     #[test]
     fn construct_uint() {
         let val: u32 = 500;

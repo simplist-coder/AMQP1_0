@@ -15,7 +15,6 @@ mod test {
 
     use super::*;
 
-
     #[test]
     fn construct_ulong() {
         let val: u64 = 500;

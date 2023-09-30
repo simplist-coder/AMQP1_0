@@ -13,7 +13,7 @@ mod test {
 
     #[test]
     fn construct_short() {
-        let val : i16 = 8;
+        let val: i16 = 8;
         assert_eq!(val.encode().constructor(), 0x61);
     }
 }
