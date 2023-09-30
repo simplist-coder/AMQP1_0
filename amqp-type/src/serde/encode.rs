@@ -73,7 +73,7 @@ impl From<Encoded> for Vec<u8> {
                 res.push(c);
                 let mut size: Vec<u8> = match c {
                     0xA => vec![data.len() as u8],
-                    _ => (data.len() as u32).to_be_bytes().to_vec()
+                    _ => (data.len() as u32).to_be_bytes().to_vec(),
                 };
                 res.append(&mut size);
                 res.append(&mut data);
@@ -90,8 +90,6 @@ impl From<Encoded> for Vec<u8> {
         res
     }
 }
-
-
 
 impl From<u8> for Encoded {
     fn from(value: u8) -> Self {

@@ -7,7 +7,9 @@ use crate::{
 pub struct Constructor(u8);
 
 pub trait Decode {
-    fn try_decode(data: impl Iterator<Item = u8>) -> Result<Self, AppError> where Self: Sized;
+    fn try_decode(data: impl Iterator<Item = u8>) -> Result<Self, AppError>
+    where
+        Self: Sized;
     fn can_decode(data: impl Iterator<Item = u8>) -> bool;
 }
 
