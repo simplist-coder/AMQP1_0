@@ -46,7 +46,7 @@ mod test {
     use super::*;
     #[test]
     fn construct_map_with_less_than_255_elements() {
-        let val = AmqpType::Map(IndexMap::new().into());
+        let val = Map(IndexMap::new());
         assert_eq!(val.encode().constructor(), 0xc1);
     }
 
@@ -56,7 +56,7 @@ mod test {
         for i in 1..500 {
             map.insert(i.into(), i.into());
         }
-        let val = AmqpType::Map(map.into());
+        let val = Map(map);
         assert_eq!(val.encode().constructor(), 0xd1);
     }
 }

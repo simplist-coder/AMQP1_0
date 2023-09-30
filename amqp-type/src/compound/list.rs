@@ -32,13 +32,13 @@ mod test {
     use super::*;
     #[test]
     fn construct_empty_list() {
-        let val = AmqpType::List(vec![].into());
+        let val = List(vec![]);
         assert_eq!(val.encode().constructor(), 0x45);
     }
 
     #[test]
     fn construct_list_with_less_than_255_elements() {
-        let val = AmqpType::List(vec![1.into()].into());
+        let val = List(vec![1.into()]);
         assert_eq!(val.encode().constructor(), 0xc0);
     }
 
@@ -48,7 +48,7 @@ mod test {
         for i in 0..500 {
             arr.push(i.into())
         }
-        let val = AmqpType::List(arr.into());
+        let val = List(arr);
         assert_eq!(val.encode().constructor(), 0xd0);
     }
 
@@ -58,7 +58,7 @@ mod test {
         for _ in 0..100 {
             arr.push("aaaaaaaaaaaaaaaaaaaa".into());
         }
-        let val = AmqpType::List(arr.into());
+        let val = List(arr);
         assert_eq!(val.encode().constructor(), 0xd0);
     }
 }

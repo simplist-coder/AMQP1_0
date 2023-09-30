@@ -75,6 +75,12 @@ impl Encode for AmqpType {
     }
 }
 
+impl From<bool> for AmqpType {
+    fn from(value: bool) -> Self {
+        AmqpType::Boolean(value)
+    }
+}
+
 impl From<Timestamp> for AmqpType {
     fn from(value: Timestamp) -> Self {
         AmqpType::Timestamp(value)
