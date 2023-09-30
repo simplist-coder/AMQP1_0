@@ -1,4 +1,4 @@
-use crate::types::amqp_type::Encode;
+use crate::amqp_type::Encode;
 
 use super::amqp_type::Encoded;
 

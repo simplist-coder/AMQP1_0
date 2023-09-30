@@ -1,6 +1,6 @@
 use std::hash::Hash;
 
-use crate::types::amqp_type::{Encode, Encoded};
+use crate::amqp_type::{Encode, Encoded};
 
 pub struct Float(f32);
 pub struct Double(f64);

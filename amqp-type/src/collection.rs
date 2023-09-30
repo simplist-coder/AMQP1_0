@@ -2,7 +2,7 @@ use std::hash::Hash;
 
 use indexmap::IndexMap;
 
-use crate::types::amqp_type::{AmqpType, Encode};
+use crate::amqp_type::{AmqpType, Encode};
 
 use super::amqp_type::Encoded;
 

@@ -3,10 +3,10 @@ use std::hash::Hash;
 use bigdecimal::num_traits::ToBytes;
 use indexmap::IndexMap;
 
-use crate::types::binary::Binary;
-use crate::types::collection::*;
-use crate::types::decimal::*;
-use crate::types::floating_point::*;
+use crate::binary::Binary;
+use crate::collection::*;
+use crate::decimal::*;
+use crate::floating_point::*;
 
 pub trait Hashable: Hash {}
 
