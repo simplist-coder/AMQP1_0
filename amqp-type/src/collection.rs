@@ -34,7 +34,21 @@ impl Encode for List {
 
 impl Encode for Map {
     fn encode(&self) -> Encoded {
-        todo!()
+        let mut res: Vec<Encoded> = Vec::new();
+        let mut data_len = 0;
+        let mut count = 0;
+        for (key, value) in &self.0 {
+            let k = key.encode();
+            let v = value.encode();
+            data_len += k.data_len() + v.data_len();
+            res.push(k);
+            res.push(v);
+            count += 2;
+        }
+        match data_len {
+            x if x <= 255 => Encoded::new_compound(0xc1, count, EncodedVec(res).into()),
+            _ => Encoded::new_compound(0xd1, count, EncodedVec(res).into())
+        }
     }
 }
 
