@@ -1,6 +1,4 @@
-use crate::amqp_type::Encode;
-
-use super::amqp_type::Encoded;
+use crate::serde::encode::{Encode, Encoded};
 
 #[derive(Hash, Eq, PartialEq)]
 pub struct Binary(Vec<u8>);
@@ -17,5 +15,17 @@ impl Encode for Binary {
 impl From<Vec<u8>> for Binary {
     fn from(value: Vec<u8>) -> Self {
         Binary(value)
+    }
+}
+
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn construct_binary() {
+        let val = Binary(Vec::new());
+        assert_eq!(val.encode().constructor(), 0xa0);
     }
 }

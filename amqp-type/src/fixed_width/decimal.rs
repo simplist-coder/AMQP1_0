@@ -1,8 +1,7 @@
 use bigdecimal::BigDecimal;
 
-use crate::amqp_type::Encode;
 
-use super::amqp_type::Encoded;
+use crate::serde::encode::{Encode, Encoded};
 
 #[derive(Hash, Eq, PartialEq)]
 pub struct Decimal32(BigDecimal);
@@ -44,5 +43,29 @@ impl From<f64> for Decimal64 {
 impl From<f64> for Decimal128 {
     fn from(value: f64) -> Self {
         Decimal128(BigDecimal::try_from(value).unwrap())
+    }
+}
+
+
+#[cfg(test)]
+mod test{
+    use super::*;
+
+    #[test]
+    fn construct_decimal_32() {
+        let val: Decimal32 = 32.0.into();
+        assert_eq!(val.encode().constructor(), 0x74);
+    }
+
+    #[test]
+    fn construct_decimal_64() {
+        let val: Decimal64 = 64.0.into();
+        assert_eq!(val.encode().constructor(), 0x84);
+    }
+
+    #[test]
+    fn construct_decimal_128() {
+        let val: Decimal128 = 128.0.into();
+        assert_eq!(val.encode().constructor(), 0x94);
     }
 }
