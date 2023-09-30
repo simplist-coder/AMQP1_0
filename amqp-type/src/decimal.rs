@@ -1,5 +1,6 @@
-use crate::amqp_type::{Constructor, Encode};
 use bigdecimal::BigDecimal;
+
+use crate::amqp_type::Encode;
 
 use super::amqp_type::Encoded;
 

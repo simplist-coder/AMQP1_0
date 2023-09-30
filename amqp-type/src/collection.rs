@@ -52,7 +52,7 @@ impl Encode for Array {
 impl From<EncodedVec> for Vec<u8> {
     fn from(value: EncodedVec) -> Self {
         let mut res = Vec::new();
-        for mut val in value.0 {
+        for val in value.0 {
             let mut enc: Vec<u8> = val.into();
             res.append(&mut enc);
         }
@@ -79,7 +79,7 @@ impl From<Vec<AmqpType>> for Array {
 }
 
 impl Hash for Map {
-    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+    fn hash<H: std::hash::Hasher>(&self, _state: &mut H) {
         todo!()
     }
 }

@@ -1,7 +1,6 @@
 use std::hash::Hash;
 
 use bigdecimal::num_traits::ToBytes;
-use indexmap::IndexMap;
 
 use crate::binary::Binary;
 use crate::collection::*;
@@ -444,6 +443,7 @@ impl From<Array> for AmqpType {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use indexmap::IndexMap;
 
     #[test]
     fn construct_null() {
@@ -657,7 +657,7 @@ mod tests {
     #[test]
     fn construct_list_with_less_than_255_elements_and_larger_than_255_bytes() {
         let mut arr = vec![];
-        for i in 0..100 {
+        for _ in 0..100 {
             arr.push("aaaaaaaaaaaaaaaaaaaa".into());
         }
         let val = AmqpType::List(arr.into());
@@ -699,7 +699,7 @@ mod tests {
     #[test]
     fn construct_array_with_less_than_255_elements_and_larger_than_255_bytes() {
         let mut arr = vec![];
-        for i in 0..100 {
+        for _ in 0..100 {
             arr.push("aaaaaaaaaaaaaaaaaaaa".into());
         }
         let val = AmqpType::Array(arr.into());
