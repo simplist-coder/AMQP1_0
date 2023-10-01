@@ -37,7 +37,7 @@ impl Decode for u32 {
     }
 }
 
-fn parse_uint(mut iter: impl Iterator<Item = u8>) -> Result<u32, AppError> {
+fn parse_uint(iter: impl Iterator<Item = u8>) -> Result<u32, AppError> {
     let mut byte_vals = [0; 4];
     let mut index = 0;
     for b in iter.take(4) {

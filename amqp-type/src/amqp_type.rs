@@ -1,6 +1,5 @@
 use std::hash::Hash;
 
-use bigdecimal::num_traits::ToBytes;
 
 use crate::array::array::Array;
 use crate::compound::list::List;
