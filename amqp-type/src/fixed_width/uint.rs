@@ -1,6 +1,6 @@
 use crate::error::AppError;
-use crate::serde::encode::{Encode, Encoded};
 use crate::serde::decode::Decode;
+use crate::serde::encode::{Encode, Encoded};
 use crate::verify::verify_bytes_read_eq;
 
 impl Encode for u32 {
@@ -19,19 +19,20 @@ impl Decode for u32 {
             Some(0x70) => true,
             Some(0x52) => true,
             Some(0x43) => true,
-            _ => false
+            _ => false,
         }
     }
 
     fn try_decode(mut iter: impl Iterator<Item = u8>) -> Result<Self, crate::error::AppError>
-        where
-            Self: Sized {
+    where
+        Self: Sized,
+    {
         match iter.next() {
             Some(0x70) => Ok(parse_uint(iter)?),
             Some(0x52) => Ok(parse_small_uint(iter)?),
             Some(0x43) => Ok(0u32),
             Some(c) => Err(AppError::DeserializationIllegalConstructorError(c)),
-            None => Err(AppError::IteratorEmptyOrTooShortError)
+            None => Err(AppError::IteratorEmptyOrTooShortError),
         }
     }
 }
@@ -53,7 +54,6 @@ fn parse_small_uint(mut iter: impl Iterator<Item = u8>) -> Result<u32, AppError>
     } else {
         Err(AppError::IteratorEmptyOrTooShortError)
     }
-    
 }
 
 #[cfg(test)]
@@ -79,7 +79,6 @@ mod test {
         assert_eq!(val.encode().constructor(), 0x52);
     }
 
-
     #[test]
     fn can_deocde_returns_true_if_constructor_is_valid() {
         let val_norm = vec![0x70];
@@ -98,7 +97,7 @@ mod test {
 
     #[test]
     fn try_decode_returns_correct_value() {
-        let val = vec![0x70, 0x00,0x00, 0x00, 0x10];
+        let val = vec![0x70, 0x00, 0x00, 0x00, 0x10];
         assert_eq!(u32::try_decode(val.into_iter()).unwrap(), 16);
     }
 
@@ -123,12 +122,12 @@ mod test {
     #[test]
     fn try_decode_can_decode_smalluint_values() {
         let val = vec![0x52, 0xff];
-        assert_eq!(u32::try_decode(val.into_iter()).unwrap(), 255);        
+        assert_eq!(u32::try_decode(val.into_iter()).unwrap(), 255);
     }
 
     #[test]
     fn try_decode_returns_error_when_parsing_small_unint_and_bytes_are_missing() {
         let val = vec![0x52];
-        assert!(u32::try_decode(val.into_iter()).is_err());        
+        assert!(u32::try_decode(val.into_iter()).is_err());
     }
 }
