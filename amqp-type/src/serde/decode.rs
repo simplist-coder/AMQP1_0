@@ -5,8 +5,8 @@ use crate::error::AppError;
 pub struct Constructor(u8);
 
 pub trait Decode {
-    fn can_decode(data: impl Iterator<Item = u8>) -> bool;
-    fn try_decode(data: impl Iterator<Item = u8>) -> Result<Self, AppError>
+    fn can_decode(iter: impl Iterator<Item = u8>) -> bool;
+    fn try_decode(iter: impl Iterator<Item = u8>) -> Result<Self, AppError>
     where
         Self: Sized;
 }
