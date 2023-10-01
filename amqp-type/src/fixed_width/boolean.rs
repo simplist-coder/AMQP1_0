@@ -45,10 +45,6 @@ impl Decode for bool {
                 "bool".to_string(),
                 format!("bool cannot be constructed from value {:#04x}", c),
             )),
-            (Some(c), None) => Err(AppError::DeserializationError(
-                "bool".to_string(),
-                "Iterator was empty".to_string(),
-            )),
             (None, _) => Err(AppError::DeserializationError(
                 "bool".to_string(),
                 "Iterator was empty".to_string(),

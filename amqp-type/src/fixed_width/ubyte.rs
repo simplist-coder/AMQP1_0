@@ -1,4 +1,6 @@
 use crate::serde::encode::{Encode, Encoded};
+use crate::serde::decode::Decode;
+
 
 impl Encode for u8 {
     fn encode(&self) -> Encoded {
@@ -6,8 +8,26 @@ impl Encode for u8 {
     }
 }
 
+impl Decode for u8 {
+    fn can_decode(data: impl Iterator<Item = u8>) -> bool {
+        let mut iter = data.into_iter().peekable();
+        match iter.peek() {
+            Some(0x50) => true,
+            _ => false
+        }
+    }
+
+    fn try_decode(data: impl Iterator<Item = u8>) -> Result<Self, crate::error::AppError>
+        where
+            Self: Sized {
+        todo!()
+    }
+    
+}
+
 #[cfg(test)]
 mod test {
+
 
     use super::*;
 
@@ -16,4 +36,23 @@ mod test {
         let val: u8 = 8;
         assert_eq!(val.encode().constructor(), 0x50);
     }
+
+    #[test]
+    fn can_deocde_returns_true_if_constructor_is_valid() {
+        let val = vec![0x50, 0x41];
+        assert_eq!(u8::can_decode(val.into_iter()), true);
+    }
+
+    #[test]
+    fn can_decode_return_false_if_constructor_is_invalid() {
+        let val = vec![0x51];
+        assert_eq!(u8::can_decode(val.into_iter()), false);
+    }
+
+    #[test]
+    fn try_decode_returns_correct_value() {
+        let val = vec![0x50, 0x10];
+        assert_eq!(u8::try_decode(val.into_iter()).unwrap(), 16)
+    }
+
 }
