@@ -1,4 +1,7 @@
+use crate::error::AppError;
 use crate::serde::encode::{Encode, Encoded};
+use crate::serde::decode::Decode;
+use crate::verify::verify_bytes_read_eq;
 
 impl Encode for u32 {
     fn encode(&self) -> Encoded {
@@ -8,6 +11,49 @@ impl Encode for u32 {
             _ => Encoded::new_fixed(0x70, self.to_be_bytes().to_vec()),
         }
     }
+}
+
+impl Decode for u32 {
+    fn can_decode(iter: impl Iterator<Item = u8>) -> bool {
+        match iter.peekable().peek() {
+            Some(0x70) => true,
+            Some(0x52) => true,
+            Some(0x43) => true,
+            _ => false
+        }
+    }
+
+    fn try_decode(mut iter: impl Iterator<Item = u8>) -> Result<Self, crate::error::AppError>
+        where
+            Self: Sized {
+        match iter.next() {
+            Some(0x70) => Ok(parse_uint(iter)?),
+            Some(0x52) => Ok(parse_small_uint(iter)?),
+            Some(0x43) => Ok(0u32),
+            Some(c) => Err(AppError::DeserializationIllegalConstructorError(c)),
+            None => Err(AppError::IteratorEmptyOrTooShortError)
+        }
+    }
+}
+
+fn parse_uint(mut iter: impl Iterator<Item = u8>) -> Result<u32, AppError> {
+    let mut byte_vals = [0; 4];
+    let mut index = 0;
+    for b in iter.take(4) {
+        byte_vals[index] = b;
+        index += 1;
+    }
+    verify_bytes_read_eq(index, 4)?;
+    Ok(u32::from_be_bytes(byte_vals))
+}
+
+fn parse_small_uint(mut iter: impl Iterator<Item = u8>) -> Result<u32, AppError> {
+    if let Some(val) = iter.next() {
+        Ok(val as u32)
+    } else {
+        Err(AppError::IteratorEmptyOrTooShortError)
+    }
+    
 }
 
 #[cfg(test)]
@@ -31,5 +77,58 @@ mod test {
     fn amqp_type_encodes_uint_values_smaller_than_256_as_smalluint() {
         let val: u32 = 255;
         assert_eq!(val.encode().constructor(), 0x52);
+    }
+
+
+    #[test]
+    fn can_deocde_returns_true_if_constructor_is_valid() {
+        let val_norm = vec![0x70];
+        let val_small = vec![0x52];
+        let val_zero = vec![0x43];
+        assert_eq!(u32::can_decode(val_norm.into_iter()), true);
+        assert_eq!(u32::can_decode(val_small.into_iter()), true);
+        assert_eq!(u32::can_decode(val_zero.into_iter()), true);
+    }
+
+    #[test]
+    fn can_decode_return_false_if_constructor_is_invalid() {
+        let val = vec![0x71];
+        assert_eq!(u32::can_decode(val.into_iter()), false);
+    }
+
+    #[test]
+    fn try_decode_returns_correct_value() {
+        let val = vec![0x70, 0x00,0x00, 0x00, 0x10];
+        assert_eq!(u32::try_decode(val.into_iter()).unwrap(), 16);
+    }
+
+    #[test]
+    fn decode_returns_error_when_value_bytes_are_invalid() {
+        let val = vec![0x66, 0x44];
+        assert!(u32::try_decode(val.into_iter()).is_err());
+    }
+
+    #[test]
+    fn decode_returns_error_when_bytes_are_missing() {
+        let val = vec![0x70, 0x00, 0x00, 0x01];
+        assert!(u32::try_decode(val.into_iter()).is_err());
+    }
+
+    #[test]
+    fn try_decode_can_decode_zero_length_value_zero() {
+        let val = vec![0x43];
+        assert_eq!(u32::try_decode(val.into_iter()).unwrap(), 0);
+    }
+
+    #[test]
+    fn try_decode_can_decode_smalluint_values() {
+        let val = vec![0x52, 0xff];
+        assert_eq!(u32::try_decode(val.into_iter()).unwrap(), 255);        
+    }
+
+    #[test]
+    fn try_decode_returns_error_when_parsing_small_unint_and_bytes_are_missing() {
+        let val = vec![0x52];
+        assert!(u32::try_decode(val.into_iter()).is_err());        
     }
 }
