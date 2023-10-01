@@ -1,7 +1,6 @@
 use crate::error::AppError;
-use crate::serde::encode::{Encode, Encoded};
 use crate::serde::decode::Decode;
-
+use crate::serde::encode::{Encode, Encoded};
 
 impl Encode for u8 {
     fn encode(&self) -> Encoded {
@@ -14,27 +13,26 @@ impl Decode for u8 {
         let mut iter = data.into_iter().peekable();
         match iter.peek() {
             Some(0x50) => true,
-            _ => false
+            _ => false,
         }
     }
 
     fn try_decode(mut iter: impl Iterator<Item = u8>) -> Result<Self, crate::error::AppError>
-        where
-            Self: Sized {
+    where
+        Self: Sized,
+    {
         let con = iter.next();
         let val = iter.next();
         match (con, val) {
             (Some(0x50), Some(x)) => Ok(x),
-            (Some(_), _) => Err(AppError::DeserializationError("ubyte (u8)".to_string(), "Wrong constructor".to_string())),
-            (_, _) => Err(AppError::DeserializationError("ubyte (u8)".to_string(), "Iterator was empty".to_string()))
+            (Some(c), _) => Err(AppError::DeserializationIllegalConstructorError(c)),
+            (_, _) => Err(AppError::IteratorEmptyOrTooShortError),
         }
     }
-    
 }
 
 #[cfg(test)]
 mod test {
-
 
     use super::*;
 
@@ -61,5 +59,4 @@ mod test {
         let val = vec![0x50, 0x10];
         assert_eq!(u8::try_decode(val.into_iter()).unwrap(), 16)
     }
-
 }

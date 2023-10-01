@@ -41,14 +41,8 @@ impl Decode for bool {
         match (con, val) {
             (Some(c), Some(v)) if c == 0x56 && v == 0x00 => Ok(false),
             (Some(c), Some(v)) if c == 0x56 && v == 0x01 => Ok(true),
-            (Some(c), _) => Err(AppError::DeserializationError(
-                "bool".to_string(),
-                format!("bool cannot be constructed from value {:#04x}", c),
-            )),
-            (None, _) => Err(AppError::DeserializationError(
-                "bool".to_string(),
-                "Iterator was empty".to_string(),
-            )),
+            (Some(c), _) => Err(AppError::DeserializationIllegalConstructorError(c)),
+            (None, _) => Err(AppError::IteratorEmptyOrTooShortError),
         }
     }
 }
@@ -72,16 +66,10 @@ impl Decode for bool {
             return match val {
                 0x41 => Ok(true),
                 0x42 => Ok(false),
-                _ => Err(AppError::DeserializationError(
-                    "bool".to_string(),
-                    format!("bool cannot be constructed from value {:#04x}", val),
-                )),
+                _ => Err(AppError::DeserializationIllegalConstructorError(val)),
             };
         }
-        Err(AppError::DeserializationError(
-            "bool".to_string(),
-            "Iterator was empty".to_string(),
-        ))
+        Err(AppError::IteratorEmptyOrTooShortError)
     }
 }
 

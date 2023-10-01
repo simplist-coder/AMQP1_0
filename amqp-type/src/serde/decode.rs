@@ -1,6 +1,5 @@
 use crate::error::AppError;
 
-
 #[derive(Hash, Eq, PartialEq)]
 pub struct Constructor(u8);
 
