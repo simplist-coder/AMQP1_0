@@ -3,12 +3,17 @@ use crate::serde::decode::Decode;
 use crate::serde::encode::{Encode, Encoded};
 use crate::verify::verify_bytes_read_eq;
 
+
+const DEFAULT_CONSTR: u8 = 0x70;
+const SMALL_UINT_CONSTR: u8 = 0x52;
+const UINT_0_CONSTR: u8 = 0x43;
+
 impl Encode for u32 {
     fn encode(&self) -> Encoded {
         match self {
-            0 => Encoded::new_empty(0x43),
-            x if x > &0 && x <= &255 => Encoded::new_fixed(0x52, x.to_be_bytes().to_vec()),
-            _ => Encoded::new_fixed(0x70, self.to_be_bytes().to_vec()),
+            0 => Encoded::new_empty(UINT_0_CONSTR),
+            x if x > &0 && x <= &255 => Encoded::new_fixed(SMALL_UINT_CONSTR, x.to_be_bytes().to_vec()),
+            _ => Encoded::new_fixed(DEFAULT_CONSTR, self.to_be_bytes().to_vec()),
         }
     }
 }
@@ -16,9 +21,9 @@ impl Encode for u32 {
 impl Decode for u32 {
     fn can_decode(iter: impl Iterator<Item = u8>) -> bool {
         match iter.peekable().peek() {
-            Some(0x70) => true,
-            Some(0x52) => true,
-            Some(0x43) => true,
+            Some(&DEFAULT_CONSTR) => true,
+            Some(&SMALL_UINT_CONSTR) => true,
+            Some(&UINT_0_CONSTR) => true,
             _ => false,
         }
     }
@@ -28,9 +33,9 @@ impl Decode for u32 {
         Self: Sized,
     {
         match iter.next() {
-            Some(0x70) => Ok(parse_uint(iter)?),
-            Some(0x52) => Ok(parse_small_uint(iter)?),
-            Some(0x43) => Ok(0u32),
+            Some(DEFAULT_CONSTR) => Ok(parse_uint(iter)?),
+            Some(SMALL_UINT_CONSTR) => Ok(parse_small_uint(iter)?),
+            Some(UINT_0_CONSTR) => Ok(0u32),
             Some(c) => Err(AppError::DeserializationIllegalConstructorError(c)),
             None => Err(AppError::IteratorEmptyOrTooShortError),
         }
