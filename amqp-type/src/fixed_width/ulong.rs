@@ -42,7 +42,7 @@ impl Decode for u64 {
     }
 }
 
-fn parse_ulong(mut iter: impl Iterator<Item = u8>) -> Result<u64, AppError> {
+fn parse_ulong(iter: impl Iterator<Item = u8>) -> Result<u64, AppError> {
     let mut byte_vals = [0; 8];
     let mut index = 0;
     for b in iter.take(8) {

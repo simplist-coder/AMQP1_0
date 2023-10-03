@@ -1,14 +1,21 @@
 use crate::serde::encode::{Encode, Encoded};
 use std::hash::Hash;
 
+use crate::serde::decode::Decode;
+use crate::verify::verify_bytes_read_eq;
+use crate::error::AppError;
+
+
 /// Crate assumes nothing about the values being passed to it.
-/// Any kind of f32 value is handled as is.
+/// Any kind of f64 value is handled as is.
 /// This means that the hash function considers only the bytes of a float.
-/// Two f32 or f64 values are considered Equal if and only if, the entirety of their by sequences match.
+/// Two f64 or f64 values are considered Equal if and only if, the entirety of their by sequences match.
 /// This ensures that no information is lost.
 /// regardless of whether they mean Nan or similar things.
 /// As a result, Nan == Nan if and only if the two numbers have the exact same byte sequence.
 pub struct Double(f64);
+
+const DEFAULT_CONSTR: u8 = 0x82;
 
 impl Hash for Double {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
@@ -39,13 +46,81 @@ impl From<f64> for Double {
     }
 }
 
+
+impl Decode for f64 {
+    
+    fn can_decode(iter: impl Iterator<Item = u8>) -> bool {
+        match iter.peekable().peek() {
+            Some(&DEFAULT_CONSTR) => true,
+            _ => false
+        }
+    }
+
+    fn try_decode(mut iter: impl Iterator<Item = u8>) -> Result<Self, crate::error::AppError>
+        where
+            Self: Sized {
+        match iter.next() {
+            Some(DEFAULT_CONSTR) => Ok(parse_f64(iter)?),
+            Some(c) => Err(AppError::DeserializationIllegalConstructorError(c)),
+            None => Err(AppError::IteratorEmptyOrTooShortError),
+        }
+    }
+}
+
+fn parse_f64(iter: impl Iterator<Item = u8>) -> Result<f64, AppError> {
+    let mut byte_vals = [0; 8];
+    let mut index = 0;
+    for b in iter.take(8) {
+        byte_vals[index] = b;
+        index += 1;
+    }
+    verify_bytes_read_eq(index, 8)?;
+    Ok(f64::from_be_bytes(byte_vals))
+}
+
+
 #[cfg(test)]
 mod test {
 
     use super::*;
+
+
     #[test]
     fn construct_double() {
         let val: Double = 64.0.into();
         assert_eq!(val.encode().constructor(), 0x82);
     }
+
+    
+   #[test]
+    fn can_deocde_returns_true_if_constructor_is_valid() {
+        let val_norm = vec![0x82];
+        assert_eq!(f64::can_decode(val_norm.into_iter()), true);
+    }
+
+    #[test]
+    fn can_decode_return_false_if_constructor_is_invalid() {
+        let val = vec![0x75];
+        assert_eq!(f64::can_decode(val.into_iter()), false);
+    }
+
+    #[test]
+    fn try_decode_returns_correct_value() {
+        let val = vec![0x82, 0x40, 0x20, 0x00, 0x00, 0x41, 0x70,0x00, 0x10];
+        assert_eq!(f64::try_decode(val.into_iter()).unwrap(), 8.0000019501895) ;
+    }
+
+    #[test]
+    fn try_decode_returns_error_when_value_bytes_are_invalid() {
+        let val = vec![0x66, 0x44];
+        assert!(f64::try_decode(val.into_iter()).is_err());
+    }
+
+    #[test]
+    fn try_decode_returns_error_when_bytes_are_missing() {
+        let val = vec![0x82, 0x00, 0x01];
+        assert!(f64::try_decode(val.into_iter()).is_err());
+    }
+
+
 }
