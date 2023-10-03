@@ -1,6 +1,6 @@
 use crate::error::AppError;
-use crate::serde::encode::{Encode, Encoded};
 use crate::serde::decode::Decode;
+use crate::serde::encode::{Encode, Encoded};
 use crate::verify::verify_bytes_read_eq;
 
 const DEFAULT_CONSTR: u8 = 0x61;

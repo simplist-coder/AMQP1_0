@@ -1,10 +1,11 @@
 use std::hash::Hash;
 
-
 use crate::array::array::Array;
 use crate::compound::list::List;
 use crate::compound::map::Map;
-use crate::fixed_width::decimal::*;
+use crate::fixed_width::decimal128::Decimal128;
+use crate::fixed_width::decimal32::Decimal32;
+use crate::fixed_width::decimal64::Decimal64;
 use crate::fixed_width::double::*;
 use crate::fixed_width::float::Float;
 use crate::fixed_width::timestamp::Timestamp;
@@ -70,6 +71,15 @@ impl Encode for AmqpType {
             Self::List(val) => val.encode(),
             Self::Map(val) => val.encode(),
             Self::Array(val) => val.encode(),
+        }
+    }
+}
+
+impl From<Option<AmqpType>> for AmqpType {
+    fn from(value: Option<AmqpType>) -> Self {
+        match value {
+            Some(val) => val,
+            None => AmqpType::Null,
         }
     }
 }
@@ -197,6 +207,24 @@ impl From<Map> for AmqpType {
 impl From<Array> for AmqpType {
     fn from(value: Array) -> Self {
         AmqpType::Array(value)
+    }
+}
+
+impl From<Decimal32> for AmqpType {
+    fn from(value: Decimal32) -> Self {
+        AmqpType::Decimal32(value)
+    }
+}
+
+impl From<Decimal64> for AmqpType {
+    fn from(value: Decimal64) -> Self {
+        AmqpType::Decimal64(value)
+    }
+}
+
+impl From<Decimal128> for AmqpType {
+    fn from(value: Decimal128) -> Self {
+        AmqpType::Decimal128(value)
     }
 }
 

@@ -1,14 +1,12 @@
-use std::hash::Hash;
-use crate::serde::encode::{Encode, Encoded};
-use crate::serde::decode::Decode;
-use crate::verify::verify_bytes_read_eq;
 use crate::error::AppError;
+use crate::serde::decode::Decode;
+use crate::serde::encode::{Encode, Encoded};
+use crate::verify::verify_bytes_read_eq;
+use std::hash::Hash;
 
 const DEFAULT_CONSTR: u8 = 0x72;
 
 pub struct Float(f32);
-
-
 
 impl Hash for Float {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
@@ -41,17 +39,17 @@ impl From<f32> for Float {
 }
 
 impl Decode for f32 {
-    
     fn can_decode(iter: impl Iterator<Item = u8>) -> bool {
         match iter.peekable().peek() {
             Some(&DEFAULT_CONSTR) => true,
-            _ => false
+            _ => false,
         }
     }
 
     fn try_decode(mut iter: impl Iterator<Item = u8>) -> Result<Self, crate::error::AppError>
-        where
-            Self: Sized {
+    where
+        Self: Sized,
+    {
         match iter.next() {
             Some(DEFAULT_CONSTR) => Ok(parse_f32(iter)?),
             Some(c) => Err(AppError::DeserializationIllegalConstructorError(c)),
@@ -71,7 +69,6 @@ fn parse_f32(iter: impl Iterator<Item = u8>) -> Result<f32, AppError> {
     Ok(f32::from_be_bytes(byte_vals))
 }
 
-
 #[cfg(test)]
 mod test {
 
@@ -83,8 +80,7 @@ mod test {
         assert_eq!(val.encode().constructor(), 0x72);
     }
 
-    
-   #[test]
+    #[test]
     fn can_deocde_returns_true_if_constructor_is_valid() {
         let val_norm = vec![0x72];
         assert_eq!(f32::can_decode(val_norm.into_iter()), true);
@@ -98,8 +94,8 @@ mod test {
 
     #[test]
     fn try_decode_returns_correct_value() {
-        let val = vec![0x72, 0x41, 0x70,0x00, 0x10];
-        assert_eq!(f32::try_decode(val.into_iter()).unwrap(), 15.000015) ;
+        let val = vec![0x72, 0x41, 0x70, 0x00, 0x10];
+        assert_eq!(f32::try_decode(val.into_iter()).unwrap(), 15.000015);
     }
 
     #[test]
@@ -113,6 +109,4 @@ mod test {
         let val = vec![0x72, 0x00, 0x01];
         assert!(f32::try_decode(val.into_iter()).is_err());
     }
-
-
 }

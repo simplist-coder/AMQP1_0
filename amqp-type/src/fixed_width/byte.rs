@@ -1,6 +1,6 @@
 use crate::error::AppError;
-use crate::serde::encode::{Encode, Encoded};
 use crate::serde::decode::Decode;
+use crate::serde::encode::{Encode, Encoded};
 
 const DEFAULT_CONSTR: u8 = 0x51;
 
@@ -14,15 +14,16 @@ impl Decode for i8 {
     fn can_decode(iter: impl Iterator<Item = u8>) -> bool {
         match iter.peekable().peek() {
             Some(&DEFAULT_CONSTR) => true,
-            _ => false
+            _ => false,
         }
     }
 
     fn try_decode(mut iter: impl Iterator<Item = u8>) -> Result<Self, crate::error::AppError>
-        where
-            Self: Sized {
+    where
+        Self: Sized,
+    {
         match iter.next() {
-            Some(DEFAULT_CONSTR) => Ok(parse_i8(iter)?),            
+            Some(DEFAULT_CONSTR) => Ok(parse_i8(iter)?),
             Some(c) => Err(AppError::DeserializationIllegalConstructorError(c)),
             None => Err(AppError::IteratorEmptyOrTooShortError),
         }
@@ -37,7 +38,6 @@ fn parse_i8(mut iter: impl Iterator<Item = u8>) -> Result<i8, AppError> {
     }
 }
 
-
 #[cfg(test)]
 mod test {
 
@@ -49,7 +49,7 @@ mod test {
         assert_eq!(val.encode().constructor(), 0x51);
     }
 
-   #[test]
+    #[test]
     fn can_decode_returns_true_if_constructor_is_valid() {
         let val = vec![0x51];
         assert_eq!(i8::can_decode(val.into_iter()), true);

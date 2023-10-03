@@ -1,8 +1,7 @@
 use crate::error::AppError;
-use crate::serde::encode::{Encode, Encoded};
 use crate::serde::decode::Decode;
+use crate::serde::encode::{Encode, Encoded};
 use crate::verify::verify_bytes_read_eq;
-
 
 const DEFAULT_CONSTR: u8 = 0x80;
 const SMALL_ULONG_CONSTR: u8 = 0x53;
@@ -12,26 +11,28 @@ impl Encode for u64 {
     fn encode(&self) -> Encoded {
         match self {
             0 => Encoded::new_empty(ULONG_0_CONSTR),
-            x if x > &&0 && x <= &255 => Encoded::new_fixed(SMALL_ULONG_CONSTR, x.to_be_bytes().to_vec()),
+            x if x > &&0 && x <= &255 => {
+                Encoded::new_fixed(SMALL_ULONG_CONSTR, x.to_be_bytes().to_vec())
+            }
             _ => Encoded::new_fixed(DEFAULT_CONSTR, self.to_be_bytes().to_vec()),
         }
     }
 }
 
 impl Decode for u64 {
-    
     fn can_decode(iter: impl Iterator<Item = u8>) -> bool {
         match iter.peekable().peek() {
             Some(&DEFAULT_CONSTR) => true,
             Some(&SMALL_ULONG_CONSTR) => true,
             Some(&ULONG_0_CONSTR) => true,
-            _ => false
+            _ => false,
         }
     }
 
     fn try_decode(mut iter: impl Iterator<Item = u8>) -> Result<Self, crate::error::AppError>
-        where
-            Self: Sized {
+    where
+        Self: Sized,
+    {
         match iter.next() {
             Some(DEFAULT_CONSTR) => Ok(parse_ulong(iter)?),
             Some(SMALL_ULONG_CONSTR) => Ok(parse_small_ulong(iter)?),
@@ -83,8 +84,8 @@ mod test {
         let val: u64 = 0;
         assert_eq!(val.encode().constructor(), 0x44);
     }
-    
-   #[test]
+
+    #[test]
     fn can_deocde_returns_true_if_constructor_is_valid() {
         let val_norm = vec![0x80];
         let val_small = vec![0x53];
@@ -102,7 +103,7 @@ mod test {
 
     #[test]
     fn try_decode_returns_correct_value() {
-        let val = vec![0x80, 0x01, 0x01,0x11, 0x10, 0x10, 0x00,  0x00, 0x10];
+        let val = vec![0x80, 0x01, 0x01, 0x11, 0x10, 0x10, 0x00, 0x00, 0x10];
         assert_eq!(u64::try_decode(val.into_iter()).unwrap(), 72357829700222992);
     }
 

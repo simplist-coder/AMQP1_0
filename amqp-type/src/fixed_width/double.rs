@@ -1,10 +1,9 @@
 use crate::serde::encode::{Encode, Encoded};
 use std::hash::Hash;
 
+use crate::error::AppError;
 use crate::serde::decode::Decode;
 use crate::verify::verify_bytes_read_eq;
-use crate::error::AppError;
-
 
 /// Crate assumes nothing about the values being passed to it.
 /// Any kind of f64 value is handled as is.
@@ -46,19 +45,18 @@ impl From<f64> for Double {
     }
 }
 
-
 impl Decode for f64 {
-    
     fn can_decode(iter: impl Iterator<Item = u8>) -> bool {
         match iter.peekable().peek() {
             Some(&DEFAULT_CONSTR) => true,
-            _ => false
+            _ => false,
         }
     }
 
     fn try_decode(mut iter: impl Iterator<Item = u8>) -> Result<Self, crate::error::AppError>
-        where
-            Self: Sized {
+    where
+        Self: Sized,
+    {
         match iter.next() {
             Some(DEFAULT_CONSTR) => Ok(parse_f64(iter)?),
             Some(c) => Err(AppError::DeserializationIllegalConstructorError(c)),
@@ -78,12 +76,10 @@ fn parse_f64(iter: impl Iterator<Item = u8>) -> Result<f64, AppError> {
     Ok(f64::from_be_bytes(byte_vals))
 }
 
-
 #[cfg(test)]
 mod test {
 
     use super::*;
-
 
     #[test]
     fn construct_double() {
@@ -91,8 +87,7 @@ mod test {
         assert_eq!(val.encode().constructor(), 0x82);
     }
 
-    
-   #[test]
+    #[test]
     fn can_deocde_returns_true_if_constructor_is_valid() {
         let val_norm = vec![0x82];
         assert_eq!(f64::can_decode(val_norm.into_iter()), true);
@@ -106,8 +101,8 @@ mod test {
 
     #[test]
     fn try_decode_returns_correct_value() {
-        let val = vec![0x82, 0x40, 0x20, 0x00, 0x00, 0x41, 0x70,0x00, 0x10];
-        assert_eq!(f64::try_decode(val.into_iter()).unwrap(), 8.0000019501895) ;
+        let val = vec![0x82, 0x40, 0x20, 0x00, 0x00, 0x41, 0x70, 0x00, 0x10];
+        assert_eq!(f64::try_decode(val.into_iter()).unwrap(), 8.0000019501895);
     }
 
     #[test]
@@ -121,6 +116,4 @@ mod test {
         let val = vec![0x82, 0x00, 0x01];
         assert!(f64::try_decode(val.into_iter()).is_err());
     }
-
-
 }

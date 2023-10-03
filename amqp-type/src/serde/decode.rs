@@ -9,7 +9,7 @@ pub trait Decode {
     /// TODO: make this function async
     fn can_decode(iter: impl Iterator<Item = u8>) -> bool;
 
-    /// Tries to decode the implementing type from the byte iterator. this advances the iterator until the 
+    /// Tries to decode the implementing type from the byte iterator. this advances the iterator until the
     /// type and its value are completely decoded.
     /// TODO: Make this function async
     fn try_decode(iter: impl Iterator<Item = u8>) -> Result<Self, AppError>

@@ -2,10 +2,8 @@ use crate::serde::encode::{Encode, Encoded};
 
 impl Encode for String {
     fn encode(&self) -> Encoded {
-        match self.len() {
-            x if x >= 0usize && x <= 255usize => {
-                Encoded::new_variable(0xa1, self.as_bytes().to_vec())
-            }
+        match self.len() as i32 {
+            x if x >= 0 && x <= 255 => Encoded::new_variable(0xa1, self.as_bytes().to_vec()),
             _ => Encoded::new_variable(0xb1, self.as_bytes().to_vec()),
         }
     }

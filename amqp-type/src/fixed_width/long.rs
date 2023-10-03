@@ -1,12 +1,10 @@
-use crate::serde::encode::{Encode, Encoded};
-use crate::serde::decode::Decode;
-use crate::verify::verify_bytes_read_eq;
 use crate::error::AppError;
-
+use crate::serde::decode::Decode;
+use crate::serde::encode::{Encode, Encoded};
+use crate::verify::verify_bytes_read_eq;
 
 const DEFAULT_CONSTR: u8 = 0x81;
 const SMALL_LONG_CONSTR: u8 = 0x55;
-
 
 impl Encode for i64 {
     fn encode(&self) -> Encoded {
@@ -17,20 +15,19 @@ impl Encode for i64 {
     }
 }
 
-
 impl Decode for i64 {
-    
     fn can_decode(iter: impl Iterator<Item = u8>) -> bool {
         match iter.peekable().peek() {
             Some(&DEFAULT_CONSTR) => true,
             Some(&SMALL_LONG_CONSTR) => true,
-            _ => false
+            _ => false,
         }
     }
 
     fn try_decode(mut iter: impl Iterator<Item = u8>) -> Result<Self, crate::error::AppError>
-        where
-            Self: Sized {
+    where
+        Self: Sized,
+    {
         match iter.next() {
             Some(DEFAULT_CONSTR) => Ok(parse_i64(iter)?),
             Some(SMALL_LONG_CONSTR) => Ok(parse_small_i64(iter)?),
@@ -59,10 +56,6 @@ fn parse_small_i64(mut iter: impl Iterator<Item = u8>) -> Result<i64, AppError> 
     }
 }
 
-
-
-
-
 #[cfg(test)]
 mod test {
 
@@ -81,8 +74,8 @@ mod test {
         assert_eq!(lower.encode().constructor(), 0x55);
         assert_eq!(higher.encode().constructor(), 0x55);
     }
-    
-   #[test]
+
+    #[test]
     fn can_deocde_returns_true_if_constructor_is_valid() {
         let val_norm = vec![0x81];
         let val_small = vec![0x55];
@@ -98,8 +91,8 @@ mod test {
 
     #[test]
     fn try_decode_returns_correct_value() {
-        let val = vec![0x81, 0x00, 0x00,0x00, 0x00, 0x00, 0x10,  0x00, 0x10];
-        assert_eq!(i64::try_decode(val.into_iter()).unwrap(), 1048592) ;
+        let val = vec![0x81, 0x00, 0x00, 0x00, 0x00, 0x00, 0x10, 0x00, 0x10];
+        assert_eq!(i64::try_decode(val.into_iter()).unwrap(), 1048592);
     }
 
     #[test]

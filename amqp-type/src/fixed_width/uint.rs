@@ -3,7 +3,6 @@ use crate::serde::decode::Decode;
 use crate::serde::encode::{Encode, Encoded};
 use crate::verify::verify_bytes_read_eq;
 
-
 const DEFAULT_CONSTR: u8 = 0x70;
 const SMALL_UINT_CONSTR: u8 = 0x52;
 const UINT_0_CONSTR: u8 = 0x43;
@@ -12,7 +11,9 @@ impl Encode for u32 {
     fn encode(&self) -> Encoded {
         match self {
             0 => Encoded::new_empty(UINT_0_CONSTR),
-            x if x > &0 && x <= &255 => Encoded::new_fixed(SMALL_UINT_CONSTR, x.to_be_bytes().to_vec()),
+            x if x > &0 && x <= &255 => {
+                Encoded::new_fixed(SMALL_UINT_CONSTR, x.to_be_bytes().to_vec())
+            }
             _ => Encoded::new_fixed(DEFAULT_CONSTR, self.to_be_bytes().to_vec()),
         }
     }

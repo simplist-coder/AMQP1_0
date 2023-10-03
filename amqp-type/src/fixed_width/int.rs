@@ -1,6 +1,9 @@
-use crate::{serde::encode::{Encode, Encoded}, error::AppError};
 use crate::serde::decode::Decode;
 use crate::verify::verify_bytes_read_eq;
+use crate::{
+    error::AppError,
+    serde::encode::{Encode, Encoded},
+};
 
 const DEFAULT_CONSTR: u8 = 0x71;
 const SMALL_INT_CONSTR: u8 = 0x54;
@@ -60,7 +63,6 @@ mod test {
 
     use super::*;
 
-
     #[test]
     fn can_deocde_returns_true_if_constructor_is_valid() {
         let val = vec![0x71, 0x41];
@@ -93,7 +95,6 @@ mod test {
         assert!(i32::try_decode(val.into_iter()).is_err());
     }
 
-    
     #[test]
     fn try_decode_can_decode_smallulong_values() {
         let val = vec![0x54, 0xff];
