@@ -17,6 +17,16 @@ impl From<f64> for Decimal64 {
     }
 }
 
+#[derive(thiserror::Error, Debug)]
+pub enum Decimal64ConversionError {
+    #[error("Coefficient is too large for Decimal64 representation.")]
+    CoefficientTooLarge,
+    #[error("Exponent overflowed in Decimal64 representation")]
+    ExponentOverflow,
+    #[error("Exponent underflowed in Decimal64 representation")]
+    ExponentUnderflow,
+}
+
 #[cfg(test)]
 mod test {
     use super::*;
