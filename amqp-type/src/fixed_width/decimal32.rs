@@ -44,6 +44,9 @@ pub enum Decimal32ConversionError {
     CoefficientScalingFailedError,
     #[error("The base value for setting the sign for converting the Decimal32 into bytes must be zero.")]
     SignSettingValueIsNotZero,
+    #[error("The base value for setting the exponent was not 0x80000000 or 0x00000000.")]
+    IllegalBaseValueForExponentSetting,
+
 }
 
 type ConversionError = Decimal32ConversionError;
@@ -77,11 +80,24 @@ fn set_sign_bit(mut result: u32, sign: Sign) -> Result<u32, ConversionError> {
     }
 }
 
+/// the wikipedia article at https://en.wikipedia.org/wiki/Decimal32_floating-point_format
+/// describes decoding a decimal32. in this case we are encoding and thus have to think the other way around
+/// if the significant's MSB is 0 then left shift significand by 1 (leading zero becomes implicit)
+/// and exponent mus start with bits 00, 01 or 10.
+/// if significand's 3 MSB are 100, left shift it by 3 to make the 100 implicit
+/// and insert 11 after the sign bit and right shift exponent field by 2 to preserve 
+/// the two added bits.
 fn set_exponent_bits(mut result: u32, exp: i64)-> Result<u32, ConversionError> {
+    if result != 0x8000_0000 && result != 0x0000_0000 {
+        return Err(Decimal32ConversionError::IllegalBaseValueForExponentSetting);
+    }
     match exp {
         _ if exp < EXPONENT_MIN => Err(Decimal32ConversionError::ExponentUnderflow),
         _ if exp > EXPONENT_MAX => Err(Decimal32ConversionError::ExponentOverflow),
         x => {
+            let mut unsigned_exponent: u32 = (exp + EXPONENT_BIAS).try_into().unwrap();
+            unsigned_exponent <<= 20;
+            result = result | unsigned_exponent;
             Ok(result)
         }
     }
@@ -128,22 +144,21 @@ mod test {
     
     #[test]
     fn set_exponent_bits_works() {
-        assert_eq!(set_exponent_bits(0x80000000, 1).unwrap(), 0x86600000);
-        assert_eq!(set_exponent_bits(0x80000000, 2).unwrap(), 0x86700000);
-        assert_eq!(set_exponent_bits(0x80000000, 8).unwrap(), 0x86D00000);
-        assert_eq!(set_exponent_bits(0x80000000, 16).unwrap(), 0x87500000);
-        assert_eq!(set_exponent_bits(0x80000000, 32).unwrap(), 0x88500000);
-        assert_eq!(set_exponent_bits(0x80000000, 64).unwrap(), 0x8A500000);
-        assert_eq!(set_exponent_bits(0x80000000, 96).unwrap(), 0x8C500000);
-        assert_eq!(set_exponent_bits(0x80000000, 0).unwrap(), 0x86500000);
-        assert_eq!(set_exponent_bits(0x80000000, -1).unwrap(), 0x86400000);
-        // TODO continue here
-        assert_eq!(set_exponent_bits(0x80000000, -2).unwrap(), 0x86600000);
-        assert_eq!(set_exponent_bits(0x80000000, -8).unwrap(), 0x86600000);
-        assert_eq!(set_exponent_bits(0x80000000, -16).unwrap(), 0x86600000);
-        assert_eq!(set_exponent_bits(0x80000000, -32).unwrap(), 0x86600000);
-        assert_eq!(set_exponent_bits(0x80000000, -64).unwrap(), 0x86600000);
-        assert_eq!(set_exponent_bits(0x80000000, -95).unwrap(), 0x86600000);
+        assert_eq!(format!("{:#b}", set_exponent_bits(0x8000_0000, 96).unwrap()),  format!("{:#b}", 0x8C50_0000u32));
+        assert_eq!(format!("{:#b}", set_exponent_bits(0x8000_0000, 64).unwrap()),  format!("{:#b}", 0x8A50_0000u32));
+        assert_eq!(format!("{:#b}", set_exponent_bits(0x8000_0000, 32).unwrap()),  format!("{:#b}", 0x8850_0000u32));
+        assert_eq!(format!("{:#b}", set_exponent_bits(0x8000_0000, 16).unwrap()),  format!("{:#b}", 0x8750_0000u32));
+        assert_eq!(format!("{:#b}", set_exponent_bits(0x8000_0000, 8).unwrap()),   format!("{:#b}", 0x86D0_0000u32));
+        assert_eq!(format!("{:#b}", set_exponent_bits(0x8000_0000, 2).unwrap()),   format!("{:#b}", 0x8670_0000u32));
+        assert_eq!(format!("{:#b}", set_exponent_bits(0x8000_0000, 1).unwrap()),   format!("{:#b}", 0x8660_0000u32));
+        assert_eq!(format!("{:#b}", set_exponent_bits(0x8000_0000, 0).unwrap()),   format!("{:#b}", 0x8650_0000u32));
+        assert_eq!(format!("{:#b}", set_exponent_bits(0x8000_0000, -1).unwrap()),  format!("{:#b}", 0x8640_0000u32));
+        assert_eq!(format!("{:#b}", set_exponent_bits(0x8000_0000, -2).unwrap()),  format!("{:#b}", 0x8630_0000u32));
+        assert_eq!(format!("{:#b}", set_exponent_bits(0x8000_0000, -8).unwrap()),  format!("{:#b}", 0x85C0_0000u32));
+        assert_eq!(format!("{:#b}", set_exponent_bits(0x8000_0000, -16).unwrap()), format!("{:#b}", 0x8550_0000u32));
+        assert_eq!(format!("{:#b}", set_exponent_bits(0x8000_0000, -32).unwrap()), format!("{:#b}", 0x8450_0000u32));
+        assert_eq!(format!("{:#b}", set_exponent_bits(0x8000_0000, -64).unwrap()), format!("{:#b}", 0x8250_0000u32));
+        assert_eq!(format!("{:#b}", set_exponent_bits(0x8000_0000, -95).unwrap()), format!("{:#b}", 0x8060_0000u32));
     }
     
 }
