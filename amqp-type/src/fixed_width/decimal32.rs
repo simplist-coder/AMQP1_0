@@ -1,7 +1,7 @@
 use crate::serde::encode::{Encode, Encoded};
 use bigdecimal::{
     num_bigint::{BigInt, Sign},
-    BigDecimal, Signed, Zero,
+    BigDecimal, Signed, Zero, num_traits::ToBytes,
 };
 
 const EXPONENT_BIAS: i64 = 101;
@@ -30,7 +30,7 @@ impl TryFrom<f32> for Decimal32 {
     }
 }
 
-#[derive(thiserror::Error, Debug)]
+#[derive(thiserror::Error, Debug, PartialEq)]
 pub enum Decimal32ConversionError {
     #[error("Failed to parse f32 value to Decimal32 value.")]
     ParseDecimal32Error(#[from] bigdecimal::ParseBigDecimalError),
@@ -59,25 +59,8 @@ fn encode_to_bytes(value: &BigDecimal) -> Result<Vec<u8>, Decimal32ConversionErr
 
 
     let (mut coeff, mut exp) = value.as_bigint_and_exponent();
-    verify_coefficient_not_too_large(&coeff)?;
-    verify_exponent_below_max(&exp)?;
-    let sign_bit = match coeff.sign() {
-        Sign::Minus => 0x80,
-        _ => 0,
-    };
 
-    let biased_exp = (exp + EXPONENT_BIAS) as u8;
-    let coeff_bytes = coeff.abs().to_bytes_be().1;
-
-    verify_coefficient_scaling(&coeff_bytes)?;
-
-    let mut result: [u8; 4] = [sign_bit | biased_exp, 0, 0, 0];
-    let offset = 4 - coeff_bytes.len();
-    for (i, &byte) in coeff_bytes.iter().enumerate() {
-        result[offset + i] = byte;
-    }
-
-    Ok(result.to_vec())
+    Ok(result.to_be_bytes().to_vec())
 }
 
 fn set_sign_bit(mut result: u32, sign: Sign) -> Result<u32, ConversionError> {
@@ -94,37 +77,19 @@ fn set_sign_bit(mut result: u32, sign: Sign) -> Result<u32, ConversionError> {
     }
 }
 
-fn verify_coefficient_not_too_large(coeff: &BigInt) -> Result<(), ConversionError> {
-    if coeff.abs() > COEFFICIENT_MAX.into() {
-        return Err(Decimal32ConversionError::CoefficientTooLarge);
+fn set_exponent_bits(mut result: u32, exp: i64)-> Result<u32, ConversionError> {
+    match exp {
+        _ if exp < EXPONENT_MIN => Err(Decimal32ConversionError::ExponentUnderflow),
+        _ if exp > EXPONENT_MAX => Err(Decimal32ConversionError::ExponentOverflow),
+        x => {
+            Ok(result)
+        }
     }
-    Ok(())
 }
 
-fn verify_exponent_below_max(exp: &i64) -> Result<(), Decimal32ConversionError> {
-    if exp > &EXPONENT_MAX {
-        return Err(Decimal32ConversionError::ExponentOverflow);
-    }
-    Ok(())
-}
-
-fn verify_no_exponent_underflow(exp: &i64) -> Result<(), Decimal32ConversionError> {
-    if exp < &EXPONENT_MIN {
-        return Err(Decimal32ConversionError::ExponentUnderflow);
-    }
-    Ok(())
-}
-
-fn verify_coefficient_scaling(coeff_bytes: &Vec<u8>) -> Result<(), Decimal32ConversionError> {
-    if coeff_bytes.len() > 3 {
-        return Err(Decimal32ConversionError::CoefficientScalingFailedError);
-    }
-    Ok(())
-}
 
 #[cfg(test)]
 mod test {
-    use bigdecimal::num_traits::ToBytes;
 
     use super::*;
 
@@ -148,4 +113,37 @@ mod test {
     fn set_sign_bit_resturns_error_on_non_zero_base_number() {
         assert!(set_sign_bit(4, Sign::Minus).is_err());
     }
+
+    #[test]
+    fn set_exponent_bits_if_exponent_too_large_returns_err() {
+        assert_eq!(set_exponent_bits(0x80000000, 100), Err(Decimal32ConversionError::ExponentOverflow));    
+        assert_eq!(set_exponent_bits(0x80000000, 97), Err(Decimal32ConversionError::ExponentOverflow));    
+    }
+
+    #[test]
+    fn set_exponent_bits_if_exponent_too_small_returns_err() {
+        assert_eq!(set_exponent_bits(0x80000000, -100), Err(Decimal32ConversionError::ExponentUnderflow));        
+        assert_eq!(set_exponent_bits(0x80000000, -96), Err(Decimal32ConversionError::ExponentUnderflow));        
+    }
+    
+    #[test]
+    fn set_exponent_bits_works() {
+        assert_eq!(set_exponent_bits(0x80000000, 1).unwrap(), 0x86600000);
+        assert_eq!(set_exponent_bits(0x80000000, 2).unwrap(), 0x86700000);
+        assert_eq!(set_exponent_bits(0x80000000, 8).unwrap(), 0x86D00000);
+        assert_eq!(set_exponent_bits(0x80000000, 16).unwrap(), 0x87500000);
+        assert_eq!(set_exponent_bits(0x80000000, 32).unwrap(), 0x88500000);
+        assert_eq!(set_exponent_bits(0x80000000, 64).unwrap(), 0x8A500000);
+        assert_eq!(set_exponent_bits(0x80000000, 96).unwrap(), 0x8C500000);
+        assert_eq!(set_exponent_bits(0x80000000, 0).unwrap(), 0x86500000);
+        assert_eq!(set_exponent_bits(0x80000000, -1).unwrap(), 0x86400000);
+        // TODO continue here
+        assert_eq!(set_exponent_bits(0x80000000, -2).unwrap(), 0x86600000);
+        assert_eq!(set_exponent_bits(0x80000000, -8).unwrap(), 0x86600000);
+        assert_eq!(set_exponent_bits(0x80000000, -16).unwrap(), 0x86600000);
+        assert_eq!(set_exponent_bits(0x80000000, -32).unwrap(), 0x86600000);
+        assert_eq!(set_exponent_bits(0x80000000, -64).unwrap(), 0x86600000);
+        assert_eq!(set_exponent_bits(0x80000000, -95).unwrap(), 0x86600000);
+    }
+    
 }
