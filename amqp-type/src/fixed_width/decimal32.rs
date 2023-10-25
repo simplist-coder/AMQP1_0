@@ -4,9 +4,9 @@ use bigdecimal::{
     BigDecimal, Signed, Zero, num_traits::ToBytes,
 };
 
-const EXPONENT_BIAS: i64 = 101;
-const EXPONENT_MAX: i64 = 96;
-const EXPONENT_MIN: i64 = -95;
+const EXPONENT_BIAS: i64 = 127;
+const EXPONENT_MAX: i64 = 127;
+const EXPONENT_MIN: i64 = 1 - EXPONENT_MAX;
 const COEFFICIENT_MAX: i64 = 9_999_999; // 7 digits
 const DEFAULT_CONSTR: u8 = 0x74;
 
@@ -27,6 +27,14 @@ impl TryFrom<f32> for Decimal32 {
 
     fn try_from(value: f32) -> Result<Self, Self::Error> {
         Ok(Decimal32(BigDecimal::try_from(value)?))
+    }
+}
+
+impl TryFrom<BigDecimal> for Decimal32 {
+    type Error = ConversionError;
+
+    fn try_from(value: BigDecimal) -> Result<Self, Self::Error> {
+        todo!("implement conversion with error handling to only allow valid values according to IEEE 754")
     }
 }
 
@@ -52,16 +60,14 @@ pub enum Decimal32ConversionError {
 type ConversionError = Decimal32ConversionError;
 
 fn encode_to_bytes(value: &BigDecimal) -> Result<Vec<u8>, Decimal32ConversionError> {    
-    if value.is_zero() {
-        return Ok([0; 4].to_vec());
-    }
-
     // start with empty bit array of 32 bits
-    let result: u32 = 0;
-    
-
+    let mut result: u32 = 0;
 
     let (mut coeff, mut exp) = value.as_bigint_and_exponent();
+
+    result = set_sign_bit(result, coeff.sign())?;
+    result = set_exponent_bits(result, exp)?;
+    result = set_significand_bits(result, coeff)?;
 
     Ok(result.to_be_bytes().to_vec())
 }
@@ -80,13 +86,6 @@ fn set_sign_bit(mut result: u32, sign: Sign) -> Result<u32, ConversionError> {
     }
 }
 
-/// the wikipedia article at https://en.wikipedia.org/wiki/Decimal32_floating-point_format
-/// describes decoding a decimal32. in this case we are encoding and thus have to think the other way around
-/// if the significant's MSB is 0 then left shift significand by 1 (leading zero becomes implicit)
-/// and exponent mus start with bits 00, 01 or 10.
-/// if significand's 3 MSB are 100, left shift it by 3 to make the 100 implicit
-/// and insert 11 after the sign bit and right shift exponent field by 2 to preserve 
-/// the two added bits.
 fn set_exponent_bits(mut result: u32, exp: i64)-> Result<u32, ConversionError> {
     if result != 0x8000_0000 && result != 0x0000_0000 {
         return Err(Decimal32ConversionError::IllegalBaseValueForExponentSetting);
@@ -101,6 +100,12 @@ fn set_exponent_bits(mut result: u32, exp: i64)-> Result<u32, ConversionError> {
             Ok(result)
         }
     }
+}
+
+fn set_significand_bits(mut result: u32, significand: BigInt) -> Result<u32, ConversionError> {
+
+
+    Ok(result)
 }
 
 
@@ -132,18 +137,19 @@ mod test {
 
     #[test]
     fn set_exponent_bits_if_exponent_too_large_returns_err() {
-        assert_eq!(set_exponent_bits(0x80000000, 100), Err(Decimal32ConversionError::ExponentOverflow));    
-        assert_eq!(set_exponent_bits(0x80000000, 97), Err(Decimal32ConversionError::ExponentOverflow));    
+        assert_eq!(set_exponent_bits(0x80000000, 128), Err(Decimal32ConversionError::ExponentOverflow));    
+        assert_eq!(set_exponent_bits(0x80000000, 139), Err(Decimal32ConversionError::ExponentOverflow));    
     }
 
     #[test]
     fn set_exponent_bits_if_exponent_too_small_returns_err() {
-        assert_eq!(set_exponent_bits(0x80000000, -100), Err(Decimal32ConversionError::ExponentUnderflow));        
-        assert_eq!(set_exponent_bits(0x80000000, -96), Err(Decimal32ConversionError::ExponentUnderflow));        
+        assert_eq!(set_exponent_bits(0x80000000, -127), Err(Decimal32ConversionError::ExponentUnderflow));        
+        assert_eq!(set_exponent_bits(0x80000000, -300), Err(Decimal32ConversionError::ExponentUnderflow));        
     }
     
     #[test]
     fn set_exponent_bits_works() {
+        assert_eq!(format!("{:#b}", set_exponent_bits(0x8000_0000, 127).unwrap()),  format!("{:#b}", 0x8C50_0000u32));
         assert_eq!(format!("{:#b}", set_exponent_bits(0x8000_0000, 96).unwrap()),  format!("{:#b}", 0x8C50_0000u32));
         assert_eq!(format!("{:#b}", set_exponent_bits(0x8000_0000, 64).unwrap()),  format!("{:#b}", 0x8A50_0000u32));
         assert_eq!(format!("{:#b}", set_exponent_bits(0x8000_0000, 32).unwrap()),  format!("{:#b}", 0x8850_0000u32));
@@ -159,6 +165,7 @@ mod test {
         assert_eq!(format!("{:#b}", set_exponent_bits(0x8000_0000, -32).unwrap()), format!("{:#b}", 0x8450_0000u32));
         assert_eq!(format!("{:#b}", set_exponent_bits(0x8000_0000, -64).unwrap()), format!("{:#b}", 0x8250_0000u32));
         assert_eq!(format!("{:#b}", set_exponent_bits(0x8000_0000, -95).unwrap()), format!("{:#b}", 0x8060_0000u32));
+        assert_eq!(format!("{:#b}", set_exponent_bits(0x8000_0000, -126).unwrap()), format!("{:#b}", 0x8060_0000u32));
     }
     
 }
