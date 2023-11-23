@@ -72,7 +72,7 @@ impl From<Encoded> for Vec<u8> {
             Encoded::Variable(c, mut data) => {
                 res.push(c);
                 let mut size: Vec<u8> = match c {
-                    0xA => vec![data.len() as u8],
+                    x if x >= 0xA0 && x <= 0xAF => vec![data.len() as u8],
                     _ => (data.len() as u32).to_be_bytes().to_vec(),
                 };
                 res.append(&mut size);
