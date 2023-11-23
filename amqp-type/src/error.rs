@@ -8,6 +8,4 @@ pub enum AppError {
     DeserializationIllegalConstructorError(u8),
     #[error("Iterator was empty or too short.")]
     IteratorEmptyOrTooShortError,
-    #[error("Error while converting Decimal128.")]
-    Decimal128ConversionError(#[from] crate::fixed_width::decimal128::Decimal128ConversionError),
 }
