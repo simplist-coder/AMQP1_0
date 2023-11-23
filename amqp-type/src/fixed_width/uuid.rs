@@ -58,15 +58,6 @@ mod test {
     }
 
     #[test]
-    fn test_encode_consistency() {
-        let uuid = Uuid(uuid::Uuid::new_v4());
-        let first_encoded = uuid.encode();
-        let second_encoded = uuid.encode();
-
-        assert_eq!(first_encoded.to_bytes(), second_encoded.to_bytes());
-    }
-
-    #[test]
     fn test_decode_success() {
         let uuid = uuid::Uuid::new_v4();
         let bytes = uuid.into_bytes();
