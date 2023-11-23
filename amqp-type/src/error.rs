@@ -8,4 +8,6 @@ pub enum AppError {
     DeserializationIllegalConstructorError(u8),
     #[error("Iterator was empty or too short.")]
     IteratorEmptyOrTooShortError,
+    #[error("Byte value was not a valid char")]
+    InvalidChar,
 }
