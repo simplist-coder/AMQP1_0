@@ -1,7 +1,7 @@
+use crate::common::read_bytes_2;
 use crate::error::AppError;
 use crate::serde::decode::Decode;
 use crate::serde::encode::{Encode, Encoded};
-use crate::verify::verify_bytes_read_eq;
 
 const DEFAULT_CONSTR: u8 = 0x61;
 
@@ -31,19 +31,12 @@ impl Decode for i16 {
 }
 
 fn parse_i16(iter: impl Iterator<Item = u8>) -> Result<i16, AppError> {
-    let mut val_bytes = [0; 2];
-    let mut index = 0;
-    for b in iter.take(2) {
-        val_bytes[index] = b;
-        index += 1;
-    }
-    verify_bytes_read_eq(index, 2)?;
+    let val_bytes = read_bytes_2(iter)?;
     Ok(i16::from_be_bytes(val_bytes))
 }
 
 #[cfg(test)]
 mod test {
-
     use super::*;
 
     #[test]

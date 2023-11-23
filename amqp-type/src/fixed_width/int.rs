@@ -1,9 +1,9 @@
-use crate::serde::decode::Decode;
-use crate::verify::verify_bytes_read_eq;
 use crate::{
     error::AppError,
     serde::encode::{Encode, Encoded},
 };
+use crate::common::read_bytes_4;
+use crate::serde::decode::Decode;
 
 const DEFAULT_CONSTR: u8 = 0x71;
 const SMALL_INT_CONSTR: u8 = 0x54;
@@ -40,13 +40,7 @@ impl Decode for i32 {
 }
 
 fn parse_i32(iter: impl Iterator<Item = u8>) -> Result<i32, AppError> {
-    let mut val_bytes = [0; 4];
-    let mut index = 0;
-    for b in iter.take(4) {
-        val_bytes[index] = b;
-        index += 1;
-    }
-    verify_bytes_read_eq(index, 4)?;
+    let val_bytes = read_bytes_4(iter)?;
     Ok(i32::from_be_bytes(val_bytes))
 }
 
@@ -60,7 +54,6 @@ fn parse_small_i32(mut iter: impl Iterator<Item = u8>) -> Result<i32, AppError> 
 
 #[cfg(test)]
 mod test {
-
     use super::*;
 
     #[test]

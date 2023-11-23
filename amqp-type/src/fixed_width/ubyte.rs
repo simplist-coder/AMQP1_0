@@ -33,7 +33,6 @@ impl Decode for u8 {
 
 #[cfg(test)]
 mod test {
-
     use super::*;
 
     #[test]

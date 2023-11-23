@@ -1,7 +1,7 @@
+use crate::common::read_bytes_8;
 use crate::error::AppError;
 use crate::serde::decode::Decode;
 use crate::serde::encode::{Encode, Encoded};
-use crate::verify::verify_bytes_read_eq;
 
 const DEFAULT_CONSTR: u8 = 0x81;
 const SMALL_LONG_CONSTR: u8 = 0x55;
@@ -38,13 +38,7 @@ impl Decode for i64 {
 }
 
 fn parse_i64(iter: impl Iterator<Item = u8>) -> Result<i64, AppError> {
-    let mut byte_vals = [0; 8];
-    let mut index = 0;
-    for b in iter.take(8) {
-        byte_vals[index] = b;
-        index += 1;
-    }
-    verify_bytes_read_eq(index, 8)?;
+    let byte_vals = read_bytes_8(iter)?;
     Ok(i64::from_be_bytes(byte_vals))
 }
 
@@ -58,7 +52,6 @@ fn parse_small_i64(mut iter: impl Iterator<Item = u8>) -> Result<i64, AppError> 
 
 #[cfg(test)]
 mod test {
-
     use super::*;
 
     #[test]

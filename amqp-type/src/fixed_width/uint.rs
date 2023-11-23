@@ -1,7 +1,7 @@
+use crate::common::read_bytes_4;
 use crate::error::AppError;
 use crate::serde::decode::Decode;
 use crate::serde::encode::{Encode, Encoded};
-use crate::verify::verify_bytes_read_eq;
 
 const DEFAULT_CONSTR: u8 = 0x70;
 const SMALL_UINT_CONSTR: u8 = 0x52;
@@ -44,14 +44,8 @@ impl Decode for u32 {
 }
 
 fn parse_uint(iter: impl Iterator<Item = u8>) -> Result<u32, AppError> {
-    let mut byte_vals = [0; 4];
-    let mut index = 0;
-    for b in iter.take(4) {
-        byte_vals[index] = b;
-        index += 1;
-    }
-    verify_bytes_read_eq(index, 4)?;
-    Ok(u32::from_be_bytes(byte_vals))
+    let val_bytes = read_bytes_4(iter)?;
+    Ok(u32::from_be_bytes(val_bytes))
 }
 
 fn parse_small_uint(mut iter: impl Iterator<Item = u8>) -> Result<u32, AppError> {
@@ -64,7 +58,6 @@ fn parse_small_uint(mut iter: impl Iterator<Item = u8>) -> Result<u32, AppError>
 
 #[cfg(test)]
 mod test {
-
     use super::*;
 
     #[test]

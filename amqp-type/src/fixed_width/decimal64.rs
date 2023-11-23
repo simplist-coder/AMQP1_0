@@ -1,9 +1,9 @@
 use std::hash::{Hash, Hasher};
 
+use crate::common::read_bytes_8;
 use crate::error::AppError;
 use crate::serde::decode::Decode;
 use crate::serde::encode::{Encode, Encoded};
-use crate::verify::verify_bytes_read_eq;
 
 const DEFAULT_CONSTR: u8 = 0x84;
 
@@ -36,13 +36,7 @@ impl Decode for Decimal64 {
 }
 
 fn parse_decimal64(iter: impl Iterator<Item=u8>) -> Result<Decimal64, AppError> {
-    let mut byte_vals = [0; 8];
-    let mut index = 0;
-    for b in iter.take(8) {
-        byte_vals[index] = b;
-        index += 1;
-    }
-    verify_bytes_read_eq(index, 8)?;
+    let byte_vals = read_bytes_8(iter)?;
     Ok(Decimal64(f64::from_be_bytes(byte_vals)))
 }
 

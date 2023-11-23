@@ -11,8 +11,8 @@ impl Encode for Uuid {
 
 #[cfg(test)]
 mod test {
-
     use super::*;
+
     #[test]
     fn construct_uuid() {
         let val = Uuid(uuid::Uuid::new_v4());

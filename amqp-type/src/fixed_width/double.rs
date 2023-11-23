@@ -1,9 +1,9 @@
-use crate::serde::encode::{Encode, Encoded};
 use std::hash::Hash;
 
+use crate::common::read_bytes_8;
 use crate::error::AppError;
 use crate::serde::decode::Decode;
-use crate::verify::verify_bytes_read_eq;
+use crate::serde::encode::{Encode, Encoded};
 
 /// Crate assumes nothing about the values being passed to it.
 /// Any kind of f64 value is handled as is.
@@ -66,19 +66,12 @@ impl Decode for f64 {
 }
 
 fn parse_f64(iter: impl Iterator<Item = u8>) -> Result<f64, AppError> {
-    let mut byte_vals = [0; 8];
-    let mut index = 0;
-    for b in iter.take(8) {
-        byte_vals[index] = b;
-        index += 1;
-    }
-    verify_bytes_read_eq(index, 8)?;
+    let byte_vals = read_bytes_8(iter)?;
     Ok(f64::from_be_bytes(byte_vals))
 }
 
 #[cfg(test)]
 mod test {
-
     use super::*;
 
     #[test]

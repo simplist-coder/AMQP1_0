@@ -40,7 +40,6 @@ fn parse_i8(mut iter: impl Iterator<Item = u8>) -> Result<i8, AppError> {
 
 #[cfg(test)]
 mod test {
-
     use super::*;
 
     #[test]

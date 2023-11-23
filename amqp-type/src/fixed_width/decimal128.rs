@@ -1,7 +1,7 @@
 use bigdecimal::BigDecimal;
+
 use crate::error::AppError;
 use crate::serde::decode::Decode;
-
 use crate::serde::encode::{Encode, Encoded};
 
 #[derive(Hash, Eq, PartialEq)]

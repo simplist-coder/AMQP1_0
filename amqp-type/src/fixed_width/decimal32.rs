@@ -1,9 +1,9 @@
 use std::hash::{Hash, Hasher};
+
+use crate::common::read_bytes_4;
 use crate::error::AppError;
 use crate::serde::decode::Decode;
-
 use crate::serde::encode::{Encode, Encoded};
-use crate::verify::verify_bytes_read_eq;
 
 // 7 digits
 const DEFAULT_CONSTR: u8 = 0x74;
@@ -38,13 +38,7 @@ impl Decode for Decimal32 {
 }
 
 fn parse_decimal32(iter: impl Iterator<Item=u8>) -> Result<Decimal32, AppError> {
-    let mut byte_vals = [0; 4];
-    let mut index = 0;
-    for b in iter.take(4) {
-        byte_vals[index] = b;
-        index += 1;
-    }
-    verify_bytes_read_eq(index, 4)?;
+    let byte_vals = read_bytes_4(iter)?;
     Ok(Decimal32(f32::from_be_bytes(byte_vals)))
 }
 
@@ -71,6 +65,7 @@ impl From<f32> for Decimal32 {
 #[cfg(test)]
 mod test {
     use bytes::BufMut;
+
     use super::*;
 
     #[test]

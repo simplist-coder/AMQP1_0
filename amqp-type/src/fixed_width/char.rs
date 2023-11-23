@@ -1,8 +1,8 @@
+use crate::common::read_bytes_4;
 use crate::error::AppError;
 use crate::fixed_width::char;
 use crate::serde::decode::Decode;
 use crate::serde::encode::{Encode, Encoded};
-use crate::verify::verify_bytes_read_eq;
 
 const DEFAULT_CONSTR: u8 = 0x73;
 
@@ -30,13 +30,7 @@ impl Decode for char {
 }
 
 fn parse_char(iter: impl Iterator<Item=u8> + Sized) -> Result<char, AppError> {
-    let mut byte_vals = [0; 4];
-    let mut index = 0;
-    for b in iter.take(4) {
-        byte_vals[index] = b;
-        index += 1;
-    }
-    verify_bytes_read_eq(index, 4)?;
+    let byte_vals = read_bytes_4(iter)?;
     match char::from_u32(u32::from_be_bytes(byte_vals)) {
         None => Err(AppError::InvalidChar),
         Some(c) => Ok(c)
@@ -45,8 +39,8 @@ fn parse_char(iter: impl Iterator<Item=u8> + Sized) -> Result<char, AppError> {
 
 #[cfg(test)]
 mod test {
-
     use super::*;
+
     #[test]
     fn construct_char() {
         let val = 'a';
