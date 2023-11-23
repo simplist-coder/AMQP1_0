@@ -2,9 +2,12 @@ use crate::error::AppError;
 use crate::serde::decode::Decode;
 use crate::serde::encode::{Encode, Encoded};
 
+
+const DEFAULT_CONSTR: u8 = 0x50;
+
 impl Encode for u8 {
     fn encode(&self) -> Encoded {
-        Encoded::new_fixed(0x50, self.to_be_bytes().to_vec())
+        Encoded::new_fixed(DEFAULT_CONSTR, self.to_be_bytes().to_vec())
     }
 }
 
@@ -12,7 +15,7 @@ impl Decode for u8 {
     fn can_decode(data: impl Iterator<Item = u8>) -> bool {
         let mut iter = data.into_iter().peekable();
         match iter.peek() {
-            Some(0x50) => true,
+            Some(&DEFAULT_CONSTR) => true,
             _ => false,
         }
     }
@@ -24,7 +27,7 @@ impl Decode for u8 {
         let con = iter.next();
         let val = iter.next();
         match (con, val) {
-            (Some(0x50), Some(x)) => Ok(x),
+            (Some(DEFAULT_CONSTR), Some(x)) => Ok(x),
             (Some(c), _) => Err(AppError::DeserializationIllegalConstructorError(c)),
             (_, _) => Err(AppError::IteratorEmptyOrTooShortError),
         }
@@ -39,6 +42,21 @@ mod test {
     fn construct_ubyte() {
         let val: u8 = 8;
         assert_eq!(val.encode().constructor(), 0x50);
+    }
+
+    #[test]
+    fn test_encode_u8() {
+        let test_cases = [
+            (0_u8, vec![0x50, 0]),                     // Test with zero
+            (1_u8, vec![0x50, 1]),                     // Test with a small positive value
+            (u8::MAX, vec![0x50, 0xff]),               // Test with the maximum u8 value
+            (100_u8, vec![0x50, 100]),                 // Test with a typical number
+        ];
+
+        for (input, expected) in test_cases {
+            let encoded = input.encode();
+            assert_eq!(encoded.to_bytes(), expected, "Failed encoding for u8 value: {}", input);
+        }
     }
 
     #[test]

@@ -49,6 +49,22 @@ mod test {
     }
 
     #[test]
+    fn test_encode_i8() {
+        let test_cases = [
+            (0_i8, vec![DEFAULT_CONSTR, 0]),          // Test with zero
+            (1_i8, vec![DEFAULT_CONSTR, 1]),          // Test with a positive value
+            (-1_i8, vec![DEFAULT_CONSTR, 0xff]),      // Test with a negative value
+            (i8::MAX, vec![DEFAULT_CONSTR, 0x7f]),    // Test with the maximum i8 value
+            (i8::MIN, vec![DEFAULT_CONSTR, 0x80]),    // Test with the minimum i8 value
+        ];
+
+        for (input, expected) in test_cases {
+            let encoded = input.encode();
+            assert_eq!(encoded.to_bytes(), expected, "Failed encoding for i8 value: {}", input);
+        }
+    }
+
+    #[test]
     fn can_decode_returns_true_if_constructor_is_valid() {
         let val = vec![0x51];
         assert_eq!(i8::can_decode(val.into_iter()), true);

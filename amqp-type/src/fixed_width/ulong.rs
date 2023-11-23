@@ -67,6 +67,22 @@ mod test {
     }
 
     #[test]
+    fn test_encode_u64() {
+        let test_cases = [
+            (0_u64, vec![0x44]),                             // Test with zero
+            (1_u64, vec![0x53, 0, 0, 0, 0, 0, 0, 0, 1]),    // Test with a small positive value
+            (255_u64, vec![0x53, 0, 0, 0, 0, 0, 0, 0, 255]), // Test with upper boundary of small ulong
+            (256_u64, vec![0x80, 0, 0, 0, 0, 0, 0, 1, 0]),   // Test just outside upper boundary
+            (u64::MAX, vec![0x80, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff]), // Test with the maximum u64 value
+        ];
+
+        for (input, expected) in test_cases {
+            let encoded = input.encode();
+            assert_eq!(encoded.to_bytes(), expected, "Failed encoding for u64 value: {}", input);
+        }
+    }
+
+    #[test]
     fn amqp_type_encodes_ulong_smaller_than_256_as_smallulong() {
         let val: u64 = 255;
         assert_eq!(val.encode().constructor(), 0x53);

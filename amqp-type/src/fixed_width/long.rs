@@ -61,6 +61,23 @@ mod test {
     }
 
     #[test]
+    fn test_encode_i64() {
+        let test_cases = [
+            (127_i64, vec![0x55, 0, 0, 0, 0, 0, 0, 0, 127]),         // Test with upper boundary of small long
+            (-128_i64, vec![0x55, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x80]), // Test with lower boundary of small long
+            (128_i64, vec![0x81, 0, 0, 0, 0, 0, 0, 0, 128]),         // Test just outside upper boundary
+            (-129_i64, vec![0x81, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x7f]), // Test just outside lower boundary
+            (i64::MAX, vec![0x81, 0x7f, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff]), // Test with the maximum i64 value
+            (i64::MIN, vec![0x81, 0x80, 0, 0, 0, 0, 0, 0, 0]),       // Test with the minimum i64 value
+        ];
+
+        for (input, expected) in test_cases {
+            let encoded = input.encode();
+            assert_eq!(encoded.to_bytes(), expected, "Failed encoding for i64 value: {}", input);
+        }
+    }
+
+    #[test]
     fn amqp_encodes_longs_between_neg_128_and_127_as_smalllong() {
         let lower: i64 = -128;
         let higher: i64 = 127;

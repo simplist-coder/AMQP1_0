@@ -3,11 +3,20 @@ use crate::serde::decode::Decode;
 use crate::serde::encode::{Encode, Encoded};
 
 #[cfg(not(feature = "zero-length-bools"))]
+const DEFAULT_CONSTR: u8 = 0x56;
+
+#[cfg(feature = "zero-length-bools")]
+
+const DEFAULT_CONSTR_TRUE: u8 = 0x41;
+#[cfg(feature = "zero-length-bools")]
+const DEFAULT_CONSTR_FALSE: u8 = 0x42;
+
+#[cfg(not(feature = "zero-length-bools"))]
 impl Encode for bool {
     fn encode(&self) -> Encoded {
         match self {
-            true => Encoded::new_fixed(0x56, vec![0x01]),
-            false => Encoded::new_fixed(0x56, vec![0x00]),
+            true => Encoded::new_fixed(DEFAULT_CONSTR, vec![0x01]),
+            false => Encoded::new_fixed(DEFAULT_CONSTR, vec![0x00]),
         }
     }
 }
@@ -16,8 +25,8 @@ impl Encode for bool {
 impl Encode for bool {
     fn encode(&self) -> Encoded {
         match self {
-            true => 0x41.into(),
-            false => 0x42.into(),
+            true => DEFAULT_CONSTR_TRUE.into(),
+            false => DEFAULT_CONSTR_FALSE.into(),
         }
     }
 }
@@ -27,7 +36,7 @@ impl Decode for bool {
     fn can_decode(data: impl Iterator<Item = u8>) -> bool {
         let mut iter = data.into_iter().peekable();
         match iter.peek() {
-            Some(0x56) => true,
+            Some(&DEFAULT_CONSTR) => true,
             _ => false,
         }
     }
@@ -39,8 +48,8 @@ impl Decode for bool {
         let con = iter.next();
         let val = iter.next();
         match (con, val) {
-            (Some(c), Some(v)) if c == 0x56 && v == 0x00 => Ok(false),
-            (Some(c), Some(v)) if c == 0x56 && v == 0x01 => Ok(true),
+            (Some(c), Some(v)) if c == DEFAULT_CONSTR && v == 0x00 => Ok(false),
+            (Some(c), Some(v)) if c == DEFAULT_CONSTR && v == 0x01 => Ok(true),
             (Some(c), _) => Err(AppError::DeserializationIllegalConstructorError(c)),
             (None, _) => Err(AppError::IteratorEmptyOrTooShortError),
         }
@@ -52,8 +61,8 @@ impl Decode for bool {
     fn can_decode(data: Iterator<Item = u8>) -> bool {
         let mut iter = data.into_iter().peekable();
         match iter.peek() {
-            Some(0x41) => true,
-            Some(0x42) => true,
+            Some(DEFAULT_CONSTR_TRUE) => true,
+            Some(DEFAULT_CONSTR_FALSE) => true,
             _ => false,
         }
     }
@@ -64,8 +73,8 @@ impl Decode for bool {
     {
         if let Some(val) = iter.next() {
             return match val {
-                0x41 => Ok(true),
-                0x42 => Ok(false),
+                DEFAULT_CONSTR_TRUE => Ok(true),
+                DEFAULT_CONSTR_FALSE => Ok(false),
                 _ => Err(AppError::DeserializationIllegalConstructorError(val)),
             };
         }

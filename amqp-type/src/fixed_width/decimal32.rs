@@ -5,7 +5,6 @@ use crate::error::AppError;
 use crate::serde::decode::Decode;
 use crate::serde::encode::{Encode, Encoded};
 
-// 7 digits
 const DEFAULT_CONSTR: u8 = 0x74;
 
 #[derive(Debug)]
@@ -72,6 +71,23 @@ mod test {
     fn construct_decimal_32() {
         let val: Decimal32 = 32f32.into();
         assert_eq!(val.encode().constructor(), 0x74);
+    }
+
+    #[test]
+    fn test_encode_decimal32() {
+        let test_cases = [
+            (Decimal32(0.0), vec![DEFAULT_CONSTR, 0, 0, 0, 0]),                   // Test with zero
+            (Decimal32(1.0), vec![DEFAULT_CONSTR, 63, 128, 0, 0]),                // Test with a positive value
+            (Decimal32(-1.0), vec![DEFAULT_CONSTR, 191, 128, 0, 0]),              // Test with a negative value
+            (Decimal32(f32::INFINITY), vec![DEFAULT_CONSTR, 127, 128, 0, 0]),     // Test with positive infinity
+            (Decimal32(f32::NEG_INFINITY), vec![DEFAULT_CONSTR, 255, 128, 0, 0]), // Test with negative infinity
+            (Decimal32(f32::NAN), vec![DEFAULT_CONSTR, 127, 192, 0, 0]),          // Test with NaN
+        ];
+
+        for (input, expected) in test_cases {
+            let encoded = input.encode();
+            assert_eq!(encoded.to_bytes(), expected, "Failed encoding for Decimal32 value: {:?}", input);
+        }
     }
 
     #[test]

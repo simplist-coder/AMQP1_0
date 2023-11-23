@@ -7,35 +7,12 @@ use crate::serde::encode::{Encode, Encoded};
 
 const DEFAULT_CONSTR: u8 = 0x72;
 
+#[derive(Debug)]
 pub struct Float(f32);
-
-impl Hash for Float {
-    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-        self.0.to_bits().hash(state)
-    }
-}
-
-impl PartialEq for Float {
-    fn eq(&self, other: &Self) -> bool {
-        self.0.to_bits() == other.0.to_bits()
-    }
-
-    fn ne(&self, other: &Self) -> bool {
-        !self.eq(other)
-    }
-}
-
-impl Eq for Float {}
 
 impl Encode for Float {
     fn encode(&self) -> Encoded {
         Encoded::new_fixed(DEFAULT_CONSTR, self.0.to_be_bytes().to_vec())
-    }
-}
-
-impl From<f32> for Float {
-    fn from(value: f32) -> Self {
-        Float(value)
     }
 }
 
@@ -64,6 +41,30 @@ fn parse_f32(iter: impl Iterator<Item = u8>) -> Result<f32, AppError> {
     Ok(f32::from_be_bytes(byte_vals))
 }
 
+impl From<f32> for Float {
+    fn from(value: f32) -> Self {
+        Float(value)
+    }
+}
+
+impl Hash for Float {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.0.to_bits().hash(state)
+    }
+}
+
+impl PartialEq for Float {
+    fn eq(&self, other: &Self) -> bool {
+        self.0.to_bits() == other.0.to_bits()
+    }
+
+    fn ne(&self, other: &Self) -> bool {
+        !self.eq(other)
+    }
+}
+
+impl Eq for Float {}
+
 #[cfg(test)]
 mod test {
     use super::*;
@@ -72,6 +73,23 @@ mod test {
     fn construct_float() {
         let val: Float = 32.0.into();
         assert_eq!(val.encode().constructor(), 0x72);
+    }
+
+    #[test]
+    fn test_encode_float() {
+        let test_cases = [
+            (Float(0.0), vec![0x72, 0, 0, 0, 0]),                   // Test with zero
+            (Float(1.0), vec![0x72, 63, 128, 0, 0]),                // Test with a positive value
+            (Float(-1.0), vec![0x72, 191, 128, 0, 0]),              // Test with a negative value
+            (Float(f32::INFINITY), vec![0x72, 127, 128, 0, 0]),     // Test with positive infinity
+            (Float(f32::NEG_INFINITY), vec![0x72, 255, 128, 0, 0]), // Test with negative infinity
+            (Float(f32::NAN), vec![0x72, 127, 192, 0, 0]),          // Test with NaN
+        ];
+
+        for (input, expected) in test_cases {
+            let encoded = input.encode();
+            assert_eq!(encoded.to_bytes(), expected, "Failed encoding for Float value: {:?}", input);
+        }
     }
 
     #[test]

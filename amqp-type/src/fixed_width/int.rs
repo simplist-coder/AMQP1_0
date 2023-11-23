@@ -57,6 +57,23 @@ mod test {
     use super::*;
 
     #[test]
+    fn test_encode_i32() {
+        let test_cases = [
+            (127_i32, vec![0x54, 0, 0, 0, 127]),         // Test with upper boundary of small int
+            (-128_i32, vec![0x54, 0xff, 0xff, 0xff, 0x80]), // Test with lower boundary of small int
+            (128_i32, vec![0x71, 0, 0, 0, 128]),         // Test just outside upper boundary
+            (-129_i32, vec![0x71, 0xff, 0xff, 0xff, 0x7f]), // Test just outside lower boundary
+            (i32::MAX, vec![0x71, 0x7f, 0xff, 0xff, 0xff]), // Test with the maximum i32 value
+            (i32::MIN, vec![0x71, 0x80, 0, 0, 0]),       // Test with the minimum i32 value
+        ];
+
+        for (input, expected) in test_cases {
+            let encoded = input.encode();
+            assert_eq!(encoded.to_bytes(), expected, "Failed encoding for i32 value: {}", input);
+        }
+    }
+
+    #[test]
     fn can_deocde_returns_true_if_constructor_is_valid() {
         let val = vec![0x71, 0x41];
         let small_val = vec![0x54, 0x41];

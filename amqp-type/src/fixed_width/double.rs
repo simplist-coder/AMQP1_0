@@ -12,9 +12,42 @@ use crate::serde::encode::{Encode, Encoded};
 /// This ensures that no information is lost.
 /// regardless of whether they mean Nan or similar things.
 /// As a result, Nan == Nan if and only if the two numbers have the exact same byte sequence.
+#[derive(Debug)]
 pub struct Double(f64);
 
 const DEFAULT_CONSTR: u8 = 0x82;
+
+impl Encode for Double {
+    fn encode(&self) -> Encoded {
+        Encoded::new_fixed(0x82, self.0.to_be_bytes().to_vec())
+    }
+}
+
+impl Decode for f64 {
+    fn can_decode(iter: impl Iterator<Item = u8>) -> bool {
+        match iter.peekable().peek() {
+            Some(&DEFAULT_CONSTR) => true,
+            _ => false,
+        }
+    }
+
+    fn try_decode(mut iter: impl Iterator<Item = u8>) -> Result<Self, AppError>
+    where
+        Self: Sized,
+    {
+        match iter.next() {
+            Some(DEFAULT_CONSTR) => Ok(parse_f64(iter)?),
+            Some(c) => Err(AppError::DeserializationIllegalConstructorError(c)),
+            None => Err(AppError::IteratorEmptyOrTooShortError),
+        }
+    }
+}
+
+fn parse_f64(iter: impl Iterator<Item = u8>) -> Result<f64, AppError> {
+    let byte_vals = read_bytes_8(iter)?;
+    Ok(f64::from_be_bytes(byte_vals))
+}
+
 
 impl Hash for Double {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
@@ -33,11 +66,6 @@ impl PartialEq for Double {
     }
 }
 
-impl Encode for Double {
-    fn encode(&self) -> Encoded {
-        Encoded::new_variable(0x82, self.0.to_be_bytes().to_vec())
-    }
-}
 
 impl From<f64> for Double {
     fn from(value: f64) -> Self {
@@ -45,30 +73,6 @@ impl From<f64> for Double {
     }
 }
 
-impl Decode for f64 {
-    fn can_decode(iter: impl Iterator<Item = u8>) -> bool {
-        match iter.peekable().peek() {
-            Some(&DEFAULT_CONSTR) => true,
-            _ => false,
-        }
-    }
-
-    fn try_decode(mut iter: impl Iterator<Item = u8>) -> Result<Self, crate::error::AppError>
-    where
-        Self: Sized,
-    {
-        match iter.next() {
-            Some(DEFAULT_CONSTR) => Ok(parse_f64(iter)?),
-            Some(c) => Err(AppError::DeserializationIllegalConstructorError(c)),
-            None => Err(AppError::IteratorEmptyOrTooShortError),
-        }
-    }
-}
-
-fn parse_f64(iter: impl Iterator<Item = u8>) -> Result<f64, AppError> {
-    let byte_vals = read_bytes_8(iter)?;
-    Ok(f64::from_be_bytes(byte_vals))
-}
 
 #[cfg(test)]
 mod test {
@@ -78,6 +82,23 @@ mod test {
     fn construct_double() {
         let val: Double = 64.0.into();
         assert_eq!(val.encode().constructor(), 0x82);
+    }
+
+    #[test]
+    fn test_encode_double() {
+        let test_cases = [
+            (Double(0.0), [0x82, 0, 0, 0, 0, 0, 0, 0, 0]),                 // Test with zero
+            (Double(1.0), [0x82, 63, 240, 0, 0, 0, 0, 0, 0]),              // Test with a positive value
+            (Double(-1.0), [0x82, 191, 240, 0, 0, 0, 0, 0, 0]),            // Test with a negative value
+            (Double(f64::INFINITY), [0x82, 127, 240, 0, 0, 0, 0, 0, 0]),   // Test with positive infinity
+            (Double(f64::NEG_INFINITY), [0x82, 255, 240, 0, 0, 0, 0, 0, 0]), // Test with negative infinity
+            (Double(f64::NAN), [0x82, 127, 248, 0, 0, 0, 0, 0, 0]),        // Test with NaN
+        ];
+
+        for (input, expected) in test_cases {
+            let encoded = input.encode();
+            assert_eq!(encoded.to_bytes(), expected, "Failed encoding for Double value: {:?}", input);
+        }
     }
 
     #[test]

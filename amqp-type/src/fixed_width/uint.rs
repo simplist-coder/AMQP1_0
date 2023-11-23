@@ -67,6 +67,22 @@ mod test {
     }
 
     #[test]
+    fn test_encode_u32() {
+        let test_cases = [
+            (0_u32, vec![0x43]),                             // Test with zero
+            (1_u32, vec![0x52, 0, 0, 0, 1]),                // Test with a small positive value
+            (255_u32, vec![0x52, 0, 0, 0, 255]),            // Test with upper boundary of small uint
+            (256_u32, vec![0x70, 0, 0, 1, 0]),              // Test just outside upper boundary
+            (u32::MAX, vec![0x70, 0xff, 0xff, 0xff, 0xff]), // Test with the maximum u32 value
+        ];
+
+        for (input, expected) in test_cases {
+            let encoded = input.encode();
+            assert_eq!(encoded.to_bytes(), expected, "Failed encoding for u32 value: {}", input);
+        }
+    }
+
+    #[test]
     fn amqp_type_encodes_uint_value_0_as_zero_length() {
         let val: u32 = 0;
         assert_eq!(val.encode().constructor(), 0x43);

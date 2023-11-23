@@ -7,6 +7,7 @@ use crate::serde::encode::{Encode, Encoded};
 
 const DEFAULT_CONSTR: u8 = 0x84;
 
+#[derive(Debug)]
 pub struct Decimal64(f64);
 
 impl Encode for Decimal64 {
@@ -70,6 +71,23 @@ mod test {
     fn construct_decimal_64() {
         let val: Decimal64 = 64.0.into();
         assert_eq!(val.encode().constructor(), 0x84);
+    }
+
+    #[test]
+    fn test_encode_decimal64() {
+        let test_cases = [
+            (Decimal64(0.0), [0x84, 0, 0, 0, 0, 0, 0, 0, 0]),                 // Test with zero
+            (Decimal64(1.0), [0x84, 63, 240, 0, 0, 0, 0, 0, 0]),              // Test with a positive value
+            (Decimal64(-1.0), [0x84, 191, 240, 0, 0, 0, 0, 0, 0]),            // Test with a negative value
+            (Decimal64(f64::INFINITY), [0x84, 127, 240, 0, 0, 0, 0, 0, 0]),   // Test with positive infinity
+            (Decimal64(f64::NEG_INFINITY), [0x84, 255, 240, 0, 0, 0, 0, 0, 0]), // Test with negative infinity
+            (Decimal64(f64::NAN), [0x84, 127, 248, 0, 0, 0, 0, 0, 0]),        // Test with NaN
+        ];
+
+        for (input, expected) in test_cases {
+            let encoded = input.encode();
+            assert_eq!(encoded.to_bytes(), expected, "Failed encoding for Decimal64 value: {:?}", input);
+        }
     }
 
     #[test]

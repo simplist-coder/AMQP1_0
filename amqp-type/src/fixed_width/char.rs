@@ -48,6 +48,20 @@ mod test {
     }
 
     #[test]
+    fn test_encode_char() {
+        let test_cases = [
+            ('a', vec![DEFAULT_CONSTR, 0x61]),            // Test with a basic ASCII character
+            ('ñ', vec![DEFAULT_CONSTR, 0xc3, 0xb1]),      // Test with a non-ASCII character
+            ('😊', vec![DEFAULT_CONSTR, 0xf0, 0x9f, 0x98, 0x8a]), // Test with an emoji (multi-byte character)
+        ];
+
+        for (input, expected) in test_cases {
+            let encoded = input.encode();
+            assert_eq!(encoded.to_bytes(), expected, "Failed encoding for char value: '{}'", input);
+        }
+    }
+
+    #[test]
     fn test_successful_deserialization() {
         let value = 'A';
         let mut data = vec![DEFAULT_CONSTR];
