@@ -14,7 +14,7 @@ impl Encode for Decimal64 {
     fn encode(&self) -> Encoded {
         Encoded::new_fixed(
             DEFAULT_CONSTR,
-            self.0.to_be_bytes().to_vec()
+            self.0.to_be_bytes().to_vec(),
         )
     }
 }
@@ -106,7 +106,7 @@ mod test {
     #[test]
     fn test_illegal_constructor_deserialization() {
         let illegal_constructor = 0xFF; // Assuming this is not DEFAULT_CONSTR
-        let bytes = vec![illegal_constructor, /* other bytes */];
+        let bytes = vec![illegal_constructor /* other bytes */];
         let mut iter = bytes.into_iter();
 
         match Decimal64::try_decode(&mut iter) {

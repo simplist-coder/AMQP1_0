@@ -6,7 +6,6 @@ use crate::serde::encode::{Encode, Encoded};
 const DEFAULT_CONSTR: u8 = 0x56;
 
 #[cfg(feature = "zero-length-bools")]
-
 const DEFAULT_CONSTR_TRUE: u8 = 0x41;
 #[cfg(feature = "zero-length-bools")]
 const DEFAULT_CONSTR_FALSE: u8 = 0x42;
@@ -33,7 +32,7 @@ impl Encode for bool {
 
 #[cfg(not(feature = "zero-length-bools"))]
 impl Decode for bool {
-    fn can_decode(data: impl Iterator<Item = u8>) -> bool {
+    fn can_decode(data: impl Iterator<Item=u8>) -> bool {
         let mut iter = data.into_iter().peekable();
         match iter.peek() {
             Some(&DEFAULT_CONSTR) => true,
@@ -41,9 +40,9 @@ impl Decode for bool {
         }
     }
 
-    fn try_decode(mut iter: impl Iterator<Item = u8>) -> Result<Self, AppError>
-    where
-        Self: Sized,
+    fn try_decode(mut iter: impl Iterator<Item=u8>) -> Result<Self, AppError>
+        where
+            Self: Sized,
     {
         let con = iter.next();
         let val = iter.next();
@@ -58,7 +57,7 @@ impl Decode for bool {
 
 #[cfg(feature = "zero-length-bools")]
 impl Decode for bool {
-    fn can_decode(data: Iterator<Item = u8>) -> bool {
+    fn can_decode(data: Iterator<Item=u8>) -> bool {
         let mut iter = data.into_iter().peekable();
         match iter.peek() {
             Some(DEFAULT_CONSTR_TRUE) => true,
@@ -67,9 +66,9 @@ impl Decode for bool {
         }
     }
 
-    fn try_decode(data: Iterator<Item = u8>) -> Result<Self, AppError>
-    where
-        Self: Sized,
+    fn try_decode(data: Iterator<Item=u8>) -> Result<Self, AppError>
+        where
+            Self: Sized,
     {
         if let Some(val) = iter.next() {
             return match val {

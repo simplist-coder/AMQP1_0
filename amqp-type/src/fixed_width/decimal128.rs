@@ -13,7 +13,7 @@ f128 implemented in
 https://github.com/rust-lang/rfcs/pull/3453
 This is already merged into rust-lang:master
 implement this when it is available in stable.
-*/
+ */
 impl Encode for Decimal128 {
     fn encode(&self) -> Encoded {
         0x94.into()
@@ -31,5 +31,4 @@ impl Decode for Decimal128 {
 }
 
 #[cfg(test)]
-mod test {
-}
+mod test {}

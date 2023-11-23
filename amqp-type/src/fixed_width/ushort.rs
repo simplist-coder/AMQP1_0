@@ -12,16 +12,16 @@ impl Encode for u16 {
 }
 
 impl Decode for u16 {
-    fn can_decode(iter: impl Iterator<Item = u8>) -> bool {
+    fn can_decode(iter: impl Iterator<Item=u8>) -> bool {
         match iter.peekable().peek() {
             Some(&DEFAULT_CONSTR) => true,
             _ => false,
         }
     }
 
-    fn try_decode(mut iter: impl Iterator<Item = u8>) -> Result<Self, crate::error::AppError>
-    where
-        Self: Sized,
+    fn try_decode(mut iter: impl Iterator<Item=u8>) -> Result<Self, crate::error::AppError>
+        where
+            Self: Sized,
     {
         match iter.next() {
             Some(DEFAULT_CONSTR) => Ok(parse_u16(iter)?),
@@ -31,7 +31,7 @@ impl Decode for u16 {
     }
 }
 
-fn parse_u16(iter: impl Iterator<Item = u8>) -> Result<u16, AppError> {
+fn parse_u16(iter: impl Iterator<Item=u8>) -> Result<u16, AppError> {
     let val_bytes = read_bytes_2(iter)?;
     Ok(u16::from_be_bytes(val_bytes))
 }

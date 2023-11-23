@@ -106,7 +106,7 @@ mod test {
     #[test]
     fn test_illegal_constructor_deserialization() {
         let illegal_constructor = 0xFF;
-        let bytes = vec![illegal_constructor, /* other bytes */];
+        let bytes = vec![illegal_constructor /* other bytes */];
         let mut iter = bytes.into_iter();
 
         match Decimal32::try_decode(&mut iter) {

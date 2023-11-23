@@ -2,7 +2,6 @@ use crate::error::AppError;
 use crate::serde::decode::Decode;
 use crate::serde::encode::{Encode, Encoded};
 
-
 const DEFAULT_CONSTR: u8 = 0x50;
 
 impl Encode for u8 {
@@ -12,7 +11,7 @@ impl Encode for u8 {
 }
 
 impl Decode for u8 {
-    fn can_decode(data: impl Iterator<Item = u8>) -> bool {
+    fn can_decode(data: impl Iterator<Item=u8>) -> bool {
         let mut iter = data.into_iter().peekable();
         match iter.peek() {
             Some(&DEFAULT_CONSTR) => true,
@@ -20,9 +19,9 @@ impl Decode for u8 {
         }
     }
 
-    fn try_decode(mut iter: impl Iterator<Item = u8>) -> Result<Self, crate::error::AppError>
-    where
-        Self: Sized,
+    fn try_decode(mut iter: impl Iterator<Item=u8>) -> Result<Self, crate::error::AppError>
+        where
+            Self: Sized,
     {
         let con = iter.next();
         let val = iter.next();

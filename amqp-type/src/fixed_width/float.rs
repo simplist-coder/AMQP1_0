@@ -17,16 +17,16 @@ impl Encode for Float {
 }
 
 impl Decode for f32 {
-    fn can_decode(iter: impl Iterator<Item = u8>) -> bool {
+    fn can_decode(iter: impl Iterator<Item=u8>) -> bool {
         match iter.peekable().peek() {
             Some(&DEFAULT_CONSTR) => true,
             _ => false,
         }
     }
 
-    fn try_decode(mut iter: impl Iterator<Item = u8>) -> Result<Self, crate::error::AppError>
-    where
-        Self: Sized,
+    fn try_decode(mut iter: impl Iterator<Item=u8>) -> Result<Self, crate::error::AppError>
+        where
+            Self: Sized,
     {
         match iter.next() {
             Some(DEFAULT_CONSTR) => Ok(parse_f32(iter)?),
@@ -36,7 +36,7 @@ impl Decode for f32 {
     }
 }
 
-fn parse_f32(iter: impl Iterator<Item = u8>) -> Result<f32, AppError> {
+fn parse_f32(iter: impl Iterator<Item=u8>) -> Result<f32, AppError> {
     let byte_vals = read_bytes_4(iter)?;
     Ok(f32::from_be_bytes(byte_vals))
 }

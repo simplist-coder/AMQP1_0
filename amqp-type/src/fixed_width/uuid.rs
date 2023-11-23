@@ -3,7 +3,6 @@ use crate::error::AppError;
 use crate::serde::decode::Decode;
 use crate::serde::encode::{Encode, Encoded};
 
-
 const DEFAULT_CONSTR: u8 = 0x98;
 
 #[derive(Hash, Eq, PartialEq)]

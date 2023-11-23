@@ -16,7 +16,7 @@ impl Encode for i64 {
 }
 
 impl Decode for i64 {
-    fn can_decode(iter: impl Iterator<Item = u8>) -> bool {
+    fn can_decode(iter: impl Iterator<Item=u8>) -> bool {
         match iter.peekable().peek() {
             Some(&DEFAULT_CONSTR) => true,
             Some(&SMALL_LONG_CONSTR) => true,
@@ -24,9 +24,9 @@ impl Decode for i64 {
         }
     }
 
-    fn try_decode(mut iter: impl Iterator<Item = u8>) -> Result<Self, crate::error::AppError>
-    where
-        Self: Sized,
+    fn try_decode(mut iter: impl Iterator<Item=u8>) -> Result<Self, crate::error::AppError>
+        where
+            Self: Sized,
     {
         match iter.next() {
             Some(DEFAULT_CONSTR) => Ok(parse_i64(iter)?),
@@ -37,12 +37,12 @@ impl Decode for i64 {
     }
 }
 
-fn parse_i64(iter: impl Iterator<Item = u8>) -> Result<i64, AppError> {
+fn parse_i64(iter: impl Iterator<Item=u8>) -> Result<i64, AppError> {
     let byte_vals = read_bytes_8(iter)?;
     Ok(i64::from_be_bytes(byte_vals))
 }
 
-fn parse_small_i64(mut iter: impl Iterator<Item = u8>) -> Result<i64, AppError> {
+fn parse_small_i64(mut iter: impl Iterator<Item=u8>) -> Result<i64, AppError> {
     if let Some(val) = iter.next() {
         Ok(val as i64)
     } else {

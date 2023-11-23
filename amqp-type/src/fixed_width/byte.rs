@@ -11,16 +11,16 @@ impl Encode for i8 {
 }
 
 impl Decode for i8 {
-    fn can_decode(iter: impl Iterator<Item = u8>) -> bool {
+    fn can_decode(iter: impl Iterator<Item=u8>) -> bool {
         match iter.peekable().peek() {
             Some(&DEFAULT_CONSTR) => true,
             _ => false,
         }
     }
 
-    fn try_decode(mut iter: impl Iterator<Item = u8>) -> Result<Self, crate::error::AppError>
-    where
-        Self: Sized,
+    fn try_decode(mut iter: impl Iterator<Item=u8>) -> Result<Self, crate::error::AppError>
+        where
+            Self: Sized,
     {
         match iter.next() {
             Some(DEFAULT_CONSTR) => Ok(parse_i8(iter)?),
@@ -30,7 +30,7 @@ impl Decode for i8 {
     }
 }
 
-fn parse_i8(mut iter: impl Iterator<Item = u8>) -> Result<i8, AppError> {
+fn parse_i8(mut iter: impl Iterator<Item=u8>) -> Result<i8, AppError> {
     if let Some(val) = iter.next() {
         Ok(val as i8)
     } else {

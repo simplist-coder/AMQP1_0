@@ -24,16 +24,16 @@ impl Encode for Double {
 }
 
 impl Decode for f64 {
-    fn can_decode(iter: impl Iterator<Item = u8>) -> bool {
+    fn can_decode(iter: impl Iterator<Item=u8>) -> bool {
         match iter.peekable().peek() {
             Some(&DEFAULT_CONSTR) => true,
             _ => false,
         }
     }
 
-    fn try_decode(mut iter: impl Iterator<Item = u8>) -> Result<Self, AppError>
-    where
-        Self: Sized,
+    fn try_decode(mut iter: impl Iterator<Item=u8>) -> Result<Self, AppError>
+        where
+            Self: Sized,
     {
         match iter.next() {
             Some(DEFAULT_CONSTR) => Ok(parse_f64(iter)?),
@@ -43,7 +43,7 @@ impl Decode for f64 {
     }
 }
 
-fn parse_f64(iter: impl Iterator<Item = u8>) -> Result<f64, AppError> {
+fn parse_f64(iter: impl Iterator<Item=u8>) -> Result<f64, AppError> {
     let byte_vals = read_bytes_8(iter)?;
     Ok(f64::from_be_bytes(byte_vals))
 }
@@ -54,6 +54,7 @@ impl Hash for Double {
         self.0.to_bits().hash(state)
     }
 }
+
 impl Eq for Double {}
 
 impl PartialEq for Double {

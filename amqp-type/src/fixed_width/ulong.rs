@@ -20,7 +20,7 @@ impl Encode for u64 {
 }
 
 impl Decode for u64 {
-    fn can_decode(iter: impl Iterator<Item = u8>) -> bool {
+    fn can_decode(iter: impl Iterator<Item=u8>) -> bool {
         match iter.peekable().peek() {
             Some(&DEFAULT_CONSTR) => true,
             Some(&SMALL_ULONG_CONSTR) => true,
@@ -29,9 +29,9 @@ impl Decode for u64 {
         }
     }
 
-    fn try_decode(mut iter: impl Iterator<Item = u8>) -> Result<Self, crate::error::AppError>
-    where
-        Self: Sized,
+    fn try_decode(mut iter: impl Iterator<Item=u8>) -> Result<Self, crate::error::AppError>
+        where
+            Self: Sized,
     {
         match iter.next() {
             Some(DEFAULT_CONSTR) => Ok(parse_ulong(iter)?),
@@ -43,12 +43,12 @@ impl Decode for u64 {
     }
 }
 
-fn parse_ulong(iter: impl Iterator<Item = u8>) -> Result<u64, AppError> {
+fn parse_ulong(iter: impl Iterator<Item=u8>) -> Result<u64, AppError> {
     let byte_vals = read_bytes_8(iter)?;
     Ok(u64::from_be_bytes(byte_vals))
 }
 
-fn parse_small_ulong(mut iter: impl Iterator<Item = u8>) -> Result<u64, AppError> {
+fn parse_small_ulong(mut iter: impl Iterator<Item=u8>) -> Result<u64, AppError> {
     if let Some(val) = iter.next() {
         Ok(val as u64)
     } else {

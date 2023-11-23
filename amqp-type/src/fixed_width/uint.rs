@@ -20,7 +20,7 @@ impl Encode for u32 {
 }
 
 impl Decode for u32 {
-    fn can_decode(iter: impl Iterator<Item = u8>) -> bool {
+    fn can_decode(iter: impl Iterator<Item=u8>) -> bool {
         match iter.peekable().peek() {
             Some(&DEFAULT_CONSTR) => true,
             Some(&SMALL_UINT_CONSTR) => true,
@@ -29,9 +29,9 @@ impl Decode for u32 {
         }
     }
 
-    fn try_decode(mut iter: impl Iterator<Item = u8>) -> Result<Self, crate::error::AppError>
-    where
-        Self: Sized,
+    fn try_decode(mut iter: impl Iterator<Item=u8>) -> Result<Self, crate::error::AppError>
+        where
+            Self: Sized,
     {
         match iter.next() {
             Some(DEFAULT_CONSTR) => Ok(parse_uint(iter)?),
@@ -43,12 +43,12 @@ impl Decode for u32 {
     }
 }
 
-fn parse_uint(iter: impl Iterator<Item = u8>) -> Result<u32, AppError> {
+fn parse_uint(iter: impl Iterator<Item=u8>) -> Result<u32, AppError> {
     let val_bytes = read_bytes_4(iter)?;
     Ok(u32::from_be_bytes(val_bytes))
 }
 
-fn parse_small_uint(mut iter: impl Iterator<Item = u8>) -> Result<u32, AppError> {
+fn parse_small_uint(mut iter: impl Iterator<Item=u8>) -> Result<u32, AppError> {
     if let Some(val) = iter.next() {
         Ok(val as u32)
     } else {
