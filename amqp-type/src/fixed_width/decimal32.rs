@@ -1,171 +1,116 @@
-use crate::serde::encode::{Encode, Encoded};
-use bigdecimal::{
-    num_bigint::{BigInt, Sign},
-    BigDecimal, Signed, Zero, num_traits::ToBytes,
-};
+use std::hash::{Hash, Hasher};
 
-const EXPONENT_BIAS: i64 = 127;
-const EXPONENT_MAX: i64 = 127;
-const EXPONENT_MIN: i64 = 1 - EXPONENT_MAX;
-const COEFFICIENT_MAX: i64 = 9_999_999; // 7 digits
+use crate::serde::encode::{Encode, Encoded};
+
+// 7 digits
 const DEFAULT_CONSTR: u8 = 0x74;
 
-#[derive(Hash, Eq, PartialEq)]
-pub struct Decimal32(BigDecimal);
+pub struct Decimal32(f32);
 
 impl Encode for Decimal32 {
     fn encode(&self) -> Encoded {
         Encoded::new_fixed(
             DEFAULT_CONSTR,
-            encode_to_bytes(&self.0).unwrap(),
+            encode_to_bytes(&self.0).to_be_bytes().to_vec(),
         )
     }
 }
 
-impl TryFrom<f32> for Decimal32 {
-    type Error = Decimal32ConversionError;
-
-    fn try_from(value: f32) -> Result<Self, Self::Error> {
-        Ok(Decimal32(BigDecimal::try_from(value)?))
+impl Hash for Decimal32 {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.0.to_bits().hash(state)
     }
 }
 
-impl TryFrom<BigDecimal> for Decimal32 {
-    type Error = ConversionError;
-
-    fn try_from(value: BigDecimal) -> Result<Self, Self::Error> {
-        todo!("implement conversion with error handling to only allow valid values according to IEEE 754")
+impl PartialEq for Decimal32 {
+    fn eq(&self, other: &Self) -> bool {
+        self.0.to_bits().eq(&other.0.to_bits())
     }
 }
 
-#[derive(thiserror::Error, Debug, PartialEq)]
-pub enum Decimal32ConversionError {
-    #[error("Failed to parse f32 value to Decimal32 value.")]
-    ParseDecimal32Error(#[from] bigdecimal::ParseBigDecimalError),
-    #[error("Coefficient is too large for Decimal32 representation.")]
-    CoefficientTooLarge,
-    #[error("Exponent overflowed in Decimal32 representation")]
-    ExponentOverflow,
-    #[error("Exponent underflowed in Decimal32 representation")]
-    ExponentUnderflow,
-    #[error("Failed to scale coefficient. Value cannot be fit into 32 bits.")]
-    CoefficientScalingFailedError,
-    #[error("The base value for setting the sign for converting the Decimal32 into bytes must be zero.")]
-    SignSettingValueIsNotZero,
-    #[error("The base value for setting the exponent was not 0x80000000 or 0x00000000.")]
-    IllegalBaseValueForExponentSetting,
+impl Eq for Decimal32 {}
 
-}
-
-type ConversionError = Decimal32ConversionError;
-
-fn encode_to_bytes(value: &BigDecimal) -> Result<Vec<u8>, Decimal32ConversionError> {    
-    // start with empty bit array of 32 bits
-    let mut result: u32 = 0;
-
-    let (mut coeff, mut exp) = value.as_bigint_and_exponent();
-
-    result = set_sign_bit(result, coeff.sign())?;
-    result = set_exponent_bits(result, exp)?;
-    result = set_significand_bits(result, coeff)?;
-
-    Ok(result.to_be_bytes().to_vec())
-}
-
-fn set_sign_bit(mut result: u32, sign: Sign) -> Result<u32, ConversionError> {
-    if result != 0 {
-        return Err(Decimal32ConversionError::SignSettingValueIsNotZero);
-    }
-    match sign {
-        Sign::Minus => {
-            result += 1; // set bit as least significant
-            result <<= 31; // shift bit to sign bit location
-            Ok(result)
-        }
-        _ => Ok(result)
+impl From<f32> for Decimal32 {
+    fn from(value: f32) -> Self {
+        Decimal32(value)
     }
 }
 
-fn set_exponent_bits(mut result: u32, exp: i64)-> Result<u32, ConversionError> {
-    if result != 0x8000_0000 && result != 0x0000_0000 {
-        return Err(Decimal32ConversionError::IllegalBaseValueForExponentSetting);
-    }
-    match exp {
-        _ if exp < EXPONENT_MIN => Err(Decimal32ConversionError::ExponentUnderflow),
-        _ if exp > EXPONENT_MAX => Err(Decimal32ConversionError::ExponentOverflow),
-        x => {
-            let mut unsigned_exponent: u32 = (exp + EXPONENT_BIAS).try_into().unwrap();
-            unsigned_exponent <<= 20;
-            result = result | unsigned_exponent;
-            Ok(result)
-        }
-    }
+fn encode_to_bytes(value: &f32) -> u32 {
+    value.to_bits()
 }
-
-fn set_significand_bits(mut result: u32, significand: BigInt) -> Result<u32, ConversionError> {
-
-
-    Ok(result)
-}
-
 
 #[cfg(test)]
 mod test {
-
     use super::*;
 
     #[test]
     fn construct_decimal_32() {
-        let val: Decimal32 = 32.0.try_into().unwrap();
+        let val: Decimal32 = 32f32.into();
         assert_eq!(val.encode().constructor(), 0x74);
     }
 
     #[test]
-    fn set_sign_bit_works_for_positive_sign() {
-        assert_eq!(set_sign_bit(0, Sign::Plus).unwrap().to_be_bytes(), [0x00, 0x00, 0x00, 0x00]);
+    fn test_positive_number() {
+        let decimal = 0.15625;
+        let encoded = encode_to_bytes(&decimal);
+        let expected = 0b00111110001000000000000000000000;
+        assert_eq!(encoded, expected);
     }
 
     #[test]
-    fn set_sign_bit_works_for_negative_sign() {
-        assert_eq!(set_sign_bit(0, Sign::Minus).unwrap().to_be_bytes(), [0x80, 0x00, 0x00, 0x00]);
-    }
-    
-    #[test]
-    fn set_sign_bit_resturns_error_on_non_zero_base_number() {
-        assert!(set_sign_bit(4, Sign::Minus).is_err());
+    fn test_negative_number() {
+        let decimal = -0.15625;
+        let encoded = encode_to_bytes(&decimal);
+        let expected = 0b10111110001000000000000000000000;
+        assert_eq!(encoded, expected);
     }
 
     #[test]
-    fn set_exponent_bits_if_exponent_too_large_returns_err() {
-        assert_eq!(set_exponent_bits(0x80000000, 128), Err(Decimal32ConversionError::ExponentOverflow));    
-        assert_eq!(set_exponent_bits(0x80000000, 139), Err(Decimal32ConversionError::ExponentOverflow));    
+    fn test_large_number() {
+        let decimal = 3.4028235e38; // Max value for f32
+        let encoded = encode_to_bytes(&decimal);
+        let expected = 0b01111111011111111111111111111111;
+        assert_eq!(encoded, expected);
     }
 
     #[test]
-    fn set_exponent_bits_if_exponent_too_small_returns_err() {
-        assert_eq!(set_exponent_bits(0x80000000, -127), Err(Decimal32ConversionError::ExponentUnderflow));        
-        assert_eq!(set_exponent_bits(0x80000000, -300), Err(Decimal32ConversionError::ExponentUnderflow));        
+    fn test_small_subnormal_number() {
+        let decimal = 1E-45; // Smallest subnormal in f32
+        let encoded = encode_to_bytes(&decimal);
+        let expected = 0b00000000000000000000000000000001;
+        assert_eq!(encoded, expected);
     }
-    
+
     #[test]
-    fn set_exponent_bits_works() {
-        assert_eq!(format!("{:#b}", set_exponent_bits(0x8000_0000, 127).unwrap()),  format!("{:#b}", 0x8C50_0000u32));
-        assert_eq!(format!("{:#b}", set_exponent_bits(0x8000_0000, 96).unwrap()),  format!("{:#b}", 0x8C50_0000u32));
-        assert_eq!(format!("{:#b}", set_exponent_bits(0x8000_0000, 64).unwrap()),  format!("{:#b}", 0x8A50_0000u32));
-        assert_eq!(format!("{:#b}", set_exponent_bits(0x8000_0000, 32).unwrap()),  format!("{:#b}", 0x8850_0000u32));
-        assert_eq!(format!("{:#b}", set_exponent_bits(0x8000_0000, 16).unwrap()),  format!("{:#b}", 0x8750_0000u32));
-        assert_eq!(format!("{:#b}", set_exponent_bits(0x8000_0000, 8).unwrap()),   format!("{:#b}", 0x86D0_0000u32));
-        assert_eq!(format!("{:#b}", set_exponent_bits(0x8000_0000, 2).unwrap()),   format!("{:#b}", 0x8670_0000u32));
-        assert_eq!(format!("{:#b}", set_exponent_bits(0x8000_0000, 1).unwrap()),   format!("{:#b}", 0x8660_0000u32));
-        assert_eq!(format!("{:#b}", set_exponent_bits(0x8000_0000, 0).unwrap()),   format!("{:#b}", 0x8650_0000u32));
-        assert_eq!(format!("{:#b}", set_exponent_bits(0x8000_0000, -1).unwrap()),  format!("{:#b}", 0x8640_0000u32));
-        assert_eq!(format!("{:#b}", set_exponent_bits(0x8000_0000, -2).unwrap()),  format!("{:#b}", 0x8630_0000u32));
-        assert_eq!(format!("{:#b}", set_exponent_bits(0x8000_0000, -8).unwrap()),  format!("{:#b}", 0x85C0_0000u32));
-        assert_eq!(format!("{:#b}", set_exponent_bits(0x8000_0000, -16).unwrap()), format!("{:#b}", 0x8550_0000u32));
-        assert_eq!(format!("{:#b}", set_exponent_bits(0x8000_0000, -32).unwrap()), format!("{:#b}", 0x8450_0000u32));
-        assert_eq!(format!("{:#b}", set_exponent_bits(0x8000_0000, -64).unwrap()), format!("{:#b}", 0x8250_0000u32));
-        assert_eq!(format!("{:#b}", set_exponent_bits(0x8000_0000, -95).unwrap()), format!("{:#b}", 0x8060_0000u32));
-        assert_eq!(format!("{:#b}", set_exponent_bits(0x8000_0000, -126).unwrap()), format!("{:#b}", 0x8060_0000u32));
+    fn test_zero() {
+        let decimal = 0f32;
+        let encoded = encode_to_bytes(&decimal);
+        let expected = 0b00000000000000000000000000000000;
+        assert_eq!(encoded, expected);
     }
-    
+
+    #[test]
+    fn test_one() {
+        let decimal = 1f32;
+        let encoded = encode_to_bytes(&decimal);
+        let expected = 0b00111111100000000000000000000000;
+        assert_eq!(encoded, expected);
+    }
+
+    #[test]
+    fn test_infinity() {
+        let decimal = f32::INFINITY; // A number too large for f32, should be infinity
+        let encoded = encode_to_bytes(&decimal);
+        let expected = 0b01111111100000000000000000000000; // Positive infinity in f32
+        assert_eq!(encoded, expected);
+    }
+
+    #[test]
+    fn test_negative_infinity() {
+        let decimal = f32::NEG_INFINITY; // A negative number too large for f32
+        let encoded = encode_to_bytes(&decimal);
+        let expected = 0b11111111100000000000000000000000; // Negative infinity in f32
+        assert_eq!(encoded, expected);
+    }
 }
