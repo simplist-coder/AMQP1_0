@@ -11,6 +11,7 @@ pub struct Decimal128(BigDecimal);
 /**
 f128 implemented in
 https://github.com/rust-lang/rfcs/pull/3453
+This is already merged into rust-lang:master
 implement this when it is available in stable.
 */
 impl Encode for Decimal128 {
