@@ -22,14 +22,14 @@ impl Decode for char {
 
     fn try_decode(mut iter: impl Iterator<Item=u8>) -> Result<Self, AppError> where Self: Sized {
         match iter.next() {
-            Some(DEFAULT_CONSTR) => Ok(parse_char(iter)?),
+            Some(DEFAULT_CONSTR) => Ok(parse_char(&mut iter)?),
             Some(c) => Err(AppError::DeserializationIllegalConstructorError(c)),
             None => Err(AppError::IteratorEmptyOrTooShortError),
         }
     }
 }
 
-fn parse_char(iter: impl Iterator<Item=u8> + Sized) -> Result<char, AppError> {
+fn parse_char(iter: &mut impl Iterator<Item=u8>) -> Result<char, AppError> {
     let byte_vals = read_bytes_4(iter)?;
     match char::from_u32(u32::from_be_bytes(byte_vals)) {
         None => Err(AppError::InvalidChar),

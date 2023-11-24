@@ -34,8 +34,8 @@ impl Decode for u64 {
             Self: Sized,
     {
         match iter.next() {
-            Some(DEFAULT_CONSTR) => Ok(parse_ulong(iter)?),
-            Some(SMALL_ULONG_CONSTR) => Ok(parse_small_ulong(iter)?),
+            Some(DEFAULT_CONSTR) => Ok(parse_ulong(&mut iter)?),
+            Some(SMALL_ULONG_CONSTR) => Ok(parse_small_ulong(&mut iter)?),
             Some(ULONG_0_CONSTR) => Ok(0),
             Some(c) => Err(AppError::DeserializationIllegalConstructorError(c)),
             None => Err(AppError::IteratorEmptyOrTooShortError),
@@ -43,12 +43,12 @@ impl Decode for u64 {
     }
 }
 
-fn parse_ulong(iter: impl Iterator<Item=u8>) -> Result<u64, AppError> {
+fn parse_ulong(iter: &mut impl Iterator<Item=u8>) -> Result<u64, AppError> {
     let byte_vals = read_bytes_8(iter)?;
     Ok(u64::from_be_bytes(byte_vals))
 }
 
-fn parse_small_ulong(mut iter: impl Iterator<Item=u8>) -> Result<u64, AppError> {
+fn parse_small_ulong(iter: &mut impl Iterator<Item=u8>) -> Result<u64, AppError> {
     if let Some(val) = iter.next() {
         Ok(val as u64)
     } else {

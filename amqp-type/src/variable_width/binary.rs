@@ -1,8 +1,7 @@
-use crate::common::{read_bytes_4, verify_bytes_read_eq};
+use crate::common::{read_bytes, read_bytes_4};
 use crate::error::AppError;
 use crate::serde::decode::Decode;
 use crate::serde::encode::{Encode, Encoded};
-
 
 const DEFAULT_CONSTR_SIZE_1: u8 = 0xa0;
 const DEFAULT_CONSTR_SIZE_4: u8 = 0xb0;
@@ -30,36 +29,24 @@ impl Decode for Binary {
 
     fn try_decode(mut iter: impl Iterator<Item=u8>) -> Result<Self, AppError> where Self: Sized {
         match iter.next() {
-            Some(DEFAULT_CONSTR_SIZE_1) => Ok(parse_small_binary(iter)?),
-            Some(DEFAULT_CONSTR_SIZE_4) => Ok(parse_large_binary(iter)?),
+            Some(DEFAULT_CONSTR_SIZE_1) => Ok(parse_small_binary(&mut iter)?),
+            Some(DEFAULT_CONSTR_SIZE_4) => Ok(parse_large_binary(&mut iter)?),
             Some(illegal) => Err(AppError::DeserializationIllegalConstructorError(illegal)),
             None => Err(AppError::IteratorEmptyOrTooShortError),
         }
     }
 }
 
-fn parse_small_binary(mut iter: impl Iterator<Item=u8>) -> Result<Binary, AppError> {
+fn parse_small_binary(iter: &mut impl Iterator<Item=u8>) -> Result<Binary, AppError> {
     match iter.next() {
-        Some(size) => Ok(Binary(read_bytes(iter, size as u32)?)),
+        Some(size) => Ok(Binary(read_bytes(iter, size as usize)?)),
         None => Err(AppError::IteratorEmptyOrTooShortError),
     }
 }
 
-fn parse_large_binary(iter: impl Iterator<Item=u8>) -> Result<Binary, AppError> {
+fn parse_large_binary(iter: &mut impl Iterator<Item=u8>) -> Result<Binary, AppError> {
     let size = u32::from_be_bytes(read_bytes_4(iter)?);
-    Ok(Binary(vec![]))
-}
-
-fn read_bytes(mut iter: impl Iterator<Item=u8>, size: u32) -> Result<Vec<u8>, AppError> {
-    let size = size as usize;
-    let mut res = Vec::with_capacity(size);
-    let mut index = 0;
-    for b in iter.take(size) {
-        res.push(b);
-        index += 1;
-    }
-    verify_bytes_read_eq(index, size)?;
-    Ok(res)
+    Ok(Binary(read_bytes(iter, size as usize)?))
 }
 
 impl From<Vec<u8>> for Binary {

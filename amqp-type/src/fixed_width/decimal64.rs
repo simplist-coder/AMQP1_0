@@ -29,14 +29,14 @@ impl Decode for Decimal64 {
 
     fn try_decode(mut iter: impl Iterator<Item=u8>) -> Result<Self, AppError> where Self: Sized {
         match iter.next() {
-            Some(DEFAULT_CONSTR) => Ok(parse_decimal64(iter)?),
+            Some(DEFAULT_CONSTR) => Ok(parse_decimal64(&mut iter)?),
             Some(c) => Err(AppError::DeserializationIllegalConstructorError(c)),
             None => Err(AppError::IteratorEmptyOrTooShortError),
         }
     }
 }
 
-fn parse_decimal64(iter: impl Iterator<Item=u8>) -> Result<Decimal64, AppError> {
+fn parse_decimal64(iter: &mut impl Iterator<Item=u8>) -> Result<Decimal64, AppError> {
     let byte_vals = read_bytes_8(iter)?;
     Ok(Decimal64(f64::from_be_bytes(byte_vals)))
 }
@@ -63,8 +63,6 @@ impl Hash for Decimal64 {
 
 #[cfg(test)]
 mod test {
-    use bytes::BufMut;
-
     use super::*;
 
     #[test]
@@ -94,7 +92,7 @@ mod test {
     fn test_successful_deserialization() {
         let value = 1.2345f64;
         let mut data = vec![DEFAULT_CONSTR];
-        data.put_f64(value); // Put an f64 into the buffer
+        data.append(&mut value.to_be_bytes().to_vec()); // Put an f64 into the buffer
         let mut iter = data.into_iter();
 
         match Decimal64::try_decode(&mut iter) {

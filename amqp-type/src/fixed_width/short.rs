@@ -25,14 +25,14 @@ impl Decode for i16 {
             Self: Sized,
     {
         match iter.next() {
-            Some(DEFAULT_CONSTR) => Ok(parse_i16(iter)?),
+            Some(DEFAULT_CONSTR) => Ok(parse_i16(&mut iter)?),
             Some(c) => Err(AppError::DeserializationIllegalConstructorError(c)),
             None => Err(AppError::IteratorEmptyOrTooShortError),
         }
     }
 }
 
-fn parse_i16(iter: impl Iterator<Item=u8>) -> Result<i16, AppError> {
+fn parse_i16(iter: &mut impl Iterator<Item=u8>) -> Result<i16, AppError> {
     let val_bytes = read_bytes_2(iter)?;
     Ok(i16::from_be_bytes(val_bytes))
 }

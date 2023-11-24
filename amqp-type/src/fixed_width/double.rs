@@ -36,14 +36,14 @@ impl Decode for f64 {
             Self: Sized,
     {
         match iter.next() {
-            Some(DEFAULT_CONSTR) => Ok(parse_f64(iter)?),
+            Some(DEFAULT_CONSTR) => Ok(parse_f64(&mut iter)?),
             Some(c) => Err(AppError::DeserializationIllegalConstructorError(c)),
             None => Err(AppError::IteratorEmptyOrTooShortError),
         }
     }
 }
 
-fn parse_f64(iter: impl Iterator<Item=u8>) -> Result<f64, AppError> {
+fn parse_f64(iter: &mut impl Iterator<Item=u8>) -> Result<f64, AppError> {
     let byte_vals = read_bytes_8(iter)?;
     Ok(f64::from_be_bytes(byte_vals))
 }

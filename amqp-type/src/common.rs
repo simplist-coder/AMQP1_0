@@ -8,47 +8,34 @@ pub fn verify_bytes_read_eq(actual: usize, expected: usize) -> Result<(), AppErr
     }
 }
 
-
-pub fn read_bytes_2(iter: impl Iterator<Item=u8> + Sized) -> Result<[u8; 2], AppError> {
-    let mut val_bytes = [0; 2];
-    let mut index = 0;
-    for b in iter.take(2) {
-        val_bytes[index] = b;
-        index += 1;
+/// reads the passed number of bytes from the passed stream.
+/// ensures that exactly the expected number of bytes is read, and returns Err otherwise
+pub fn read_bytes(iter: &mut impl Iterator<Item=u8>, size: usize) -> Result<Vec<u8>, AppError> {
+    let mut res = Vec::with_capacity(size);
+    let mut read = 0;
+    while let Some(byte) = iter.next() {
+        res.push(byte);
+        read += 1;
+        if read == size {
+            break;
+        }
     }
-    verify_bytes_read_eq(index, 2)?;
-    Ok(val_bytes)
+    verify_bytes_read_eq(read, size)?;
+    Ok(res)
 }
 
-pub fn read_bytes_4(iter: impl Iterator<Item=u8> + Sized + Sized) -> Result<[u8; 4], AppError> {
-    let mut byte_vals = [0; 4];
-    let mut index = 0;
-    for b in iter.take(4) {
-        byte_vals[index] = b;
-        index += 1;
-    }
-    verify_bytes_read_eq(index, 4)?;
-    Ok(byte_vals)
+pub fn read_bytes_2(iter: &mut impl Iterator<Item=u8>) -> Result<[u8; 2], AppError> {
+    Ok(read_bytes(iter, 2)?.try_into().unwrap())
 }
 
-pub fn read_bytes_8(iter: impl Iterator<Item=u8> + Sized) -> Result<[u8; 8], AppError> {
-    let mut byte_vals = [0; 8];
-    let mut index = 0;
-    for b in iter.take(8) {
-        byte_vals[index] = b;
-        index += 1;
-    }
-    verify_bytes_read_eq(index, 8)?;
-    Ok(byte_vals)
+pub fn read_bytes_4(iter: &mut impl Iterator<Item=u8>) -> Result<[u8; 4], AppError> {
+    Ok(read_bytes(iter, 4)?.try_into().unwrap())
 }
 
-pub fn read_bytes_16(iter: impl Iterator<Item=u8> + Sized) -> Result<[u8; 16], AppError> {
-    let mut byte_vals = [0; 16];
-    let mut index = 0;
-    for b in iter.take(16) {
-        byte_vals[index] = b;
-        index += 1;
-    }
-    verify_bytes_read_eq(index, 16)?;
-    Ok(byte_vals)
+pub fn read_bytes_8(iter: &mut impl Iterator<Item=u8>) -> Result<[u8; 8], AppError> {
+    Ok(read_bytes(iter, 8)?.try_into().unwrap())
+}
+
+pub fn read_bytes_16(iter: &mut impl Iterator<Item=u8>) -> Result<[u8; 16], AppError> {
+    Ok(read_bytes(iter, 16)?.try_into().unwrap())
 }

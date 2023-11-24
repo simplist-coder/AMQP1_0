@@ -29,20 +29,20 @@ impl Decode for i64 {
             Self: Sized,
     {
         match iter.next() {
-            Some(DEFAULT_CONSTR) => Ok(parse_i64(iter)?),
-            Some(SMALL_LONG_CONSTR) => Ok(parse_small_i64(iter)?),
+            Some(DEFAULT_CONSTR) => Ok(parse_i64(&mut iter)?),
+            Some(SMALL_LONG_CONSTR) => Ok(parse_small_i64(&mut iter)?),
             Some(c) => Err(AppError::DeserializationIllegalConstructorError(c)),
             None => Err(AppError::IteratorEmptyOrTooShortError),
         }
     }
 }
 
-fn parse_i64(iter: impl Iterator<Item=u8>) -> Result<i64, AppError> {
+fn parse_i64(iter: &mut impl Iterator<Item=u8>) -> Result<i64, AppError> {
     let byte_vals = read_bytes_8(iter)?;
     Ok(i64::from_be_bytes(byte_vals))
 }
 
-fn parse_small_i64(mut iter: impl Iterator<Item=u8>) -> Result<i64, AppError> {
+fn parse_small_i64(iter: &mut impl Iterator<Item=u8>) -> Result<i64, AppError> {
     if let Some(val) = iter.next() {
         Ok(val as i64)
     } else {

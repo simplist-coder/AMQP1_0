@@ -24,14 +24,14 @@ impl Decode for Timestamp {
 
     fn try_decode(mut iter: impl Iterator<Item=u8>) -> Result<Self, AppError> where Self: Sized {
         match iter.next() {
-            Some(DEFAULT_CONSTR) => Ok(parse_timestamp(iter)?),
+            Some(DEFAULT_CONSTR) => Ok(parse_timestamp(&mut iter)?),
             Some(c) => Err(AppError::DeserializationIllegalConstructorError(c)),
             None => Err(AppError::IteratorEmptyOrTooShortError),
         }
     }
 }
 
-fn parse_timestamp(iter: impl Iterator<Item=u8> + Sized) -> Result<Timestamp, AppError> {
+fn parse_timestamp(iter: &mut impl Iterator<Item=u8>) -> Result<Timestamp, AppError> {
     let byte_vals = read_bytes_8(iter)?;
     Ok(Timestamp(i64::from_be_bytes(byte_vals)))
 }

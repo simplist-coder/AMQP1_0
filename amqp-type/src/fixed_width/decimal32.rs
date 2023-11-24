@@ -29,14 +29,14 @@ impl Decode for Decimal32 {
 
     fn try_decode(mut iter: impl Iterator<Item=u8>) -> Result<Self, AppError> where Self: Sized {
         match iter.next() {
-            Some(DEFAULT_CONSTR) => Ok(parse_decimal32(iter)?),
+            Some(DEFAULT_CONSTR) => Ok(parse_decimal32(&mut iter)?),
             Some(c) => Err(AppError::DeserializationIllegalConstructorError(c)),
             None => Err(AppError::IteratorEmptyOrTooShortError),
         }
     }
 }
 
-fn parse_decimal32(iter: impl Iterator<Item=u8>) -> Result<Decimal32, AppError> {
+fn parse_decimal32(iter: &mut impl Iterator<Item=u8>) -> Result<Decimal32, AppError> {
     let byte_vals = read_bytes_4(iter)?;
     Ok(Decimal32(f32::from_be_bytes(byte_vals)))
 }

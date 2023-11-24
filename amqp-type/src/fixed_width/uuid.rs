@@ -24,14 +24,14 @@ impl Decode for Uuid {
 
     fn try_decode(mut iter: impl Iterator<Item=u8>) -> Result<Self, AppError> where Self: Sized {
         match iter.next() {
-            Some(DEFAULT_CONSTR) => Ok(parse_uuid(iter)?),
+            Some(DEFAULT_CONSTR) => Ok(parse_uuid(&mut iter)?),
             Some(c) => Err(AppError::DeserializationIllegalConstructorError(c)),
             None => Err(AppError::IteratorEmptyOrTooShortError),
         }
     }
 }
 
-fn parse_uuid(iter: impl Iterator<Item=u8> + Sized) -> Result<Uuid, AppError> {
+fn parse_uuid(iter: &mut impl Iterator<Item=u8>) -> Result<Uuid, AppError> {
     let byte_vals = read_bytes_16(iter)?;
     Ok(Uuid(uuid::Uuid::from_bytes(byte_vals)))
 }

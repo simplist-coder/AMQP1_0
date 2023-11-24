@@ -34,8 +34,8 @@ impl Decode for u32 {
             Self: Sized,
     {
         match iter.next() {
-            Some(DEFAULT_CONSTR) => Ok(parse_uint(iter)?),
-            Some(SMALL_UINT_CONSTR) => Ok(parse_small_uint(iter)?),
+            Some(DEFAULT_CONSTR) => Ok(parse_uint(&mut iter)?),
+            Some(SMALL_UINT_CONSTR) => Ok(parse_small_uint(&mut iter)?),
             Some(UINT_0_CONSTR) => Ok(0u32),
             Some(c) => Err(AppError::DeserializationIllegalConstructorError(c)),
             None => Err(AppError::IteratorEmptyOrTooShortError),
@@ -43,12 +43,12 @@ impl Decode for u32 {
     }
 }
 
-fn parse_uint(iter: impl Iterator<Item=u8>) -> Result<u32, AppError> {
+fn parse_uint(iter: &mut impl Iterator<Item=u8>) -> Result<u32, AppError> {
     let val_bytes = read_bytes_4(iter)?;
     Ok(u32::from_be_bytes(val_bytes))
 }
 
-fn parse_small_uint(mut iter: impl Iterator<Item=u8>) -> Result<u32, AppError> {
+fn parse_small_uint(iter: &mut impl Iterator<Item=u8>) -> Result<u32, AppError> {
     if let Some(val) = iter.next() {
         Ok(val as u32)
     } else {

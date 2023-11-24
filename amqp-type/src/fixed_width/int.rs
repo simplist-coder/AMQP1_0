@@ -31,20 +31,20 @@ impl Decode for i32 {
             Self: Sized,
     {
         match iter.next() {
-            Some(DEFAULT_CONSTR) => Ok(parse_i32(iter)?),
-            Some(SMALL_INT_CONSTR) => Ok(parse_small_i32(iter)?),
+            Some(DEFAULT_CONSTR) => Ok(parse_i32(&mut iter)?),
+            Some(SMALL_INT_CONSTR) => Ok(parse_small_i32(&mut iter)?),
             Some(c) => Err(AppError::DeserializationIllegalConstructorError(c)),
             None => Err(AppError::IteratorEmptyOrTooShortError),
         }
     }
 }
 
-fn parse_i32(iter: impl Iterator<Item=u8>) -> Result<i32, AppError> {
+fn parse_i32(iter: &mut impl Iterator<Item=u8>) -> Result<i32, AppError> {
     let val_bytes = read_bytes_4(iter)?;
     Ok(i32::from_be_bytes(val_bytes))
 }
 
-fn parse_small_i32(mut iter: impl Iterator<Item=u8>) -> Result<i32, AppError> {
+fn parse_small_i32(iter: &mut impl Iterator<Item=u8>) -> Result<i32, AppError> {
     if let Some(val) = iter.next() {
         Ok(val as i32)
     } else {
