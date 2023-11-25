@@ -10,4 +10,6 @@ pub enum AppError {
     IteratorEmptyOrTooShortError,
     #[error("Byte value was not a valid char")]
     InvalidChar,
+    #[error("Bytes cannot be transformed into valid utf8 string")]
+    FromUtf8ConversionError(#[from] std::string::FromUtf8Error),
 }
