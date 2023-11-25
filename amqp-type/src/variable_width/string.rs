@@ -55,32 +55,51 @@ mod test {
     #[test]
     fn test_encode_empty_string() {
         let empty_string = String::new();
-        let encoded = empty_string.encode();
-        assert_eq!(encoded.constructor(), DEFAULT_CONSTR_SIZE_1);
-        assert!(encoded.to_bytes().is_empty());
+        let encoded = empty_string.encode().to_bytes();
+
+        let mut expected = vec![DEFAULT_CONSTR_SIZE_1];
+        let len = empty_string.into_bytes().len() as u8;
+        expected.append(&mut len.to_be_bytes().to_vec());
+
+        assert_eq!(encoded, expected);
     }
 
     #[test]
     fn test_encode_small_string() {
         let small_string = "Test".to_string();
-        let encoded = small_string.encode();
-        assert_eq!(encoded.constructor(), DEFAULT_CONSTR_SIZE_1);
-        assert_eq!(encoded.to_bytes(), small_string.as_bytes());
+        let encoded = small_string.encode().to_bytes();
+
+        let mut expected = vec![DEFAULT_CONSTR_SIZE_1];
+        let mut bytes = small_string.into_bytes();
+        expected.append(&mut (bytes.len() as u8).to_be_bytes().to_vec());
+        expected.append(&mut bytes);
+
+        assert_eq!(encoded, expected);
     }
 
     #[test]
     fn test_encode_boundary_string() {
         let boundary_string = "a".repeat(255);
-        let encoded = boundary_string.encode();
-        assert_eq!(encoded.constructor(), DEFAULT_CONSTR_SIZE_1);
-        assert_eq!(encoded.to_bytes(), boundary_string.as_bytes());
+        let encoded = boundary_string.encode().to_bytes();
+
+        let mut expected = vec![DEFAULT_CONSTR_SIZE_1];
+        let mut bytes = boundary_string.into_bytes();
+        expected.append(&mut (bytes.len() as u8).to_be_bytes().to_vec());
+        expected.append(&mut bytes);
+
+        assert_eq!(encoded, expected);
     }
 
     #[test]
     fn test_encode_large_string() {
         let large_string = "a".repeat(256);
-        let encoded = large_string.encode();
-        assert_eq!(encoded.constructor(), DEFAULT_CONSTR_SIZE_4);
-        assert_eq!(encoded.to_bytes(), large_string.as_bytes());
+        let encoded = large_string.encode().to_bytes();
+
+        let mut expected = vec![DEFAULT_CONSTR_SIZE_4];
+        let mut bytes = large_string.into_bytes();
+        expected.append(&mut (bytes.len() as u32).to_be_bytes().to_vec());
+        expected.append(&mut bytes);
+
+        assert_eq!(encoded, expected);
     }
 }
