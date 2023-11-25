@@ -102,4 +102,48 @@ mod test {
 
         assert_eq!(encoded, expected);
     }
+
+    #[test]
+    fn test_decode_small_string() {
+        let data = vec![DEFAULT_CONSTR_SIZE_1, 5, b'H', b'e', b'l', b'l', b'o'];
+        let result = String::try_decode(data.into_iter()).unwrap();
+        assert_eq!(result, "Hello".to_string());
+    }
+
+    #[test]
+    fn test_decode_large_string() {
+        let size_bytes = (11u32).to_be_bytes();
+        let mut data = vec![
+            DEFAULT_CONSTR_SIZE_4,
+            size_bytes[0],
+            size_bytes[1],
+            size_bytes[2],
+            size_bytes[3],
+        ];
+        data.extend_from_slice(b"Hello World");
+        let result = String::try_decode(data.into_iter()).unwrap();
+        assert_eq!(result, "Hello World".to_string());
+    }
+
+    #[test]
+    fn test_illegal_constructor() {
+        let data = vec![0xFF, 5, b'E', b'r', b'r', b'o', b'r'];
+        let result = String::try_decode(data.into_iter());
+        assert!(matches!(result, Err(AppError::DeserializationIllegalConstructorError(0xFF))));
+    }
+
+    #[test]
+    fn test_iterator_empty_or_too_short() {
+        let data = vec![];
+        let result = String::try_decode(data.into_iter());
+        assert!(matches!(result, Err(AppError::IteratorEmptyOrTooShortError)));
+    }
+
+    #[test]
+    fn test_utf8_compliance() {
+        let data = vec![DEFAULT_CONSTR_SIZE_1, 2, 0xC3, 0xA9]; // 'é' in UTF-8
+        let result = String::try_decode(data.into_iter()).unwrap();
+        assert_eq!(result, "é".to_string());
+    }
+
 }

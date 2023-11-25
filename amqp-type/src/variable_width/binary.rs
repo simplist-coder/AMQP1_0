@@ -92,4 +92,40 @@ mod test {
         assert_eq!(encoded.constructor(), DEFAULT_CONSTR_SIZE_4);
         assert_eq!(encoded.to_bytes(), expected);
     }
+
+    #[test]
+    fn test_decode_small_binary() {
+        let data = vec![DEFAULT_CONSTR_SIZE_1, 3, 0x01, 0x02, 0x03];
+        let result = Binary::try_decode(data.into_iter()).unwrap();
+        assert_eq!(result.0, vec![0x01, 0x02, 0x03]);
+    }
+
+    #[test]
+    fn test_decode_large_binary() {
+        let size_bytes = (4u32).to_be_bytes();
+        let data = vec![
+            DEFAULT_CONSTR_SIZE_4,
+            size_bytes[0],
+            size_bytes[1],
+            size_bytes[2],
+            size_bytes[3],
+            0x01, 0x02, 0x03, 0x04
+        ];
+        let result = Binary::try_decode(data.into_iter()).unwrap();
+        assert_eq!(result.0, vec![0x01, 0x02, 0x03, 0x04]);
+    }
+
+    #[test]
+    fn test_illegal_constructor() {
+        let data = vec![0xFF, 3, 0x01, 0x02, 0x03];
+        let result = Binary::try_decode(data.into_iter());
+        assert!(matches!(result, Err(AppError::DeserializationIllegalConstructorError(0xFF))));
+    }
+
+    #[test]
+    fn test_iterator_empty_or_too_short() {
+        let data: Vec<u8> = vec![];
+        let result = Binary::try_decode(data.into_iter());
+        assert!(matches!(result, Err(AppError::IteratorEmptyOrTooShortError)));
+    }
 }
