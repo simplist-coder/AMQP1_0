@@ -77,10 +77,7 @@ impl Encode for AmqpType {
 
 impl From<Option<AmqpType>> for AmqpType {
     fn from(value: Option<AmqpType>) -> Self {
-        match value {
-            Some(val) => val,
-            None => AmqpType::Null,
-        }
+        value.unwrap_or_else(|| AmqpType::Null)
     }
 }
 
