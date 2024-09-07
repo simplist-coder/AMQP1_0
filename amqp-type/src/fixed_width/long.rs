@@ -1,16 +1,16 @@
 use crate::common::read_bytes_8;
+use crate::constants::constructors::{LONG, SMALL_LONG};
 use crate::error::AppError;
 use crate::serde::decode::Decode;
 use crate::serde::encode::{Encode, Encoded};
 
-const DEFAULT_CONSTR: u8 = 0x81;
-const SMALL_LONG_CONSTR: u8 = 0x55;
+
 
 impl Encode for i64 {
     fn encode(&self) -> Encoded {
         match self {
-            x if x >= &-128 && x <= &127 => Encoded::new_fixed(0x55, x.to_be_bytes().to_vec()),
-            _ => Encoded::new_fixed(0x81, self.to_be_bytes().to_vec()),
+            x if x >= &-128 && x <= &127 => Encoded::new_fixed(SMALL_LONG, x.to_be_bytes().to_vec()),
+            _ => Encoded::new_fixed(LONG, self.to_be_bytes().to_vec()),
         }
     }
 }
@@ -18,8 +18,8 @@ impl Encode for i64 {
 impl Decode for i64 {
     fn can_decode(iter: impl Iterator<Item=u8>) -> bool {
         match iter.peekable().peek() {
-            Some(&DEFAULT_CONSTR) => true,
-            Some(&SMALL_LONG_CONSTR) => true,
+            Some(&LONG) => true,
+            Some(&SMALL_LONG) => true,
             _ => false,
         }
     }
@@ -29,8 +29,8 @@ impl Decode for i64 {
             Self: Sized,
     {
         match iter.next() {
-            Some(DEFAULT_CONSTR) => Ok(parse_i64(&mut iter)?),
-            Some(SMALL_LONG_CONSTR) => Ok(parse_small_i64(&mut iter)?),
+            Some(LONG) => Ok(parse_i64(&mut iter)?),
+            Some(SMALL_LONG) => Ok(parse_small_i64(&mut iter)?),
             Some(c) => Err(AppError::DeserializationIllegalConstructorError(c)),
             None => Err(AppError::IteratorEmptyOrTooShortError),
         }

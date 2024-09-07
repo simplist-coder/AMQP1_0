@@ -1,12 +1,13 @@
+use crate::constants::constructors::UNSIGNED_BYTE;
 use crate::error::AppError;
 use crate::serde::decode::Decode;
 use crate::serde::encode::{Encode, Encoded};
 
-const DEFAULT_CONSTR: u8 = 0x50;
+
 
 impl Encode for u8 {
     fn encode(&self) -> Encoded {
-        Encoded::new_fixed(DEFAULT_CONSTR, self.to_be_bytes().to_vec())
+        Encoded::new_fixed(UNSIGNED_BYTE, self.to_be_bytes().to_vec())
     }
 }
 
@@ -14,7 +15,7 @@ impl Decode for u8 {
     fn can_decode(data: impl Iterator<Item=u8>) -> bool {
         let mut iter = data.into_iter().peekable();
         match iter.peek() {
-            Some(&DEFAULT_CONSTR) => true,
+            Some(&UNSIGNED_BYTE) => true,
             _ => false,
         }
     }
@@ -26,7 +27,7 @@ impl Decode for u8 {
         let con = iter.next();
         let val = iter.next();
         match (con, val) {
-            (Some(DEFAULT_CONSTR), Some(x)) => Ok(x),
+            (Some(UNSIGNED_BYTE), Some(x)) => Ok(x),
             (Some(c), _) => Err(AppError::DeserializationIllegalConstructorError(c)),
             (_, _) => Err(AppError::IteratorEmptyOrTooShortError),
         }

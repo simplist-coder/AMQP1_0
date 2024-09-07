@@ -1,5 +1,5 @@
 use crate::common::read_bytes_4;
-use crate::constants::constructors::CHAR;
+use crate::constants::constructors::{BYTE, CHAR};
 use crate::error::AppError;
 use crate::fixed_width::char;
 use crate::serde::decode::Decode;
@@ -8,7 +8,7 @@ use crate::serde::encode::{Encode, Encoded};
 
 impl Encode for char {
     fn encode(&self) -> Encoded {
-        Encoded::new_fixed(0x73, self.to_string().into_bytes())
+        Encoded::new_fixed(BYTE, self.to_string().into_bytes())
     }
 }
 

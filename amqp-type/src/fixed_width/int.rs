@@ -3,16 +3,16 @@ use crate::{
     serde::encode::{Encode, Encoded},
 };
 use crate::common::read_bytes_4;
+use crate::constants::constructors::{INTEGER, SMALL_INTEGER};
 use crate::serde::decode::Decode;
 
-const DEFAULT_CONSTR: u8 = 0x71;
-const SMALL_INT_CONSTR: u8 = 0x54;
+
 
 impl Encode for i32 {
     fn encode(&self) -> Encoded {
         match self {
-            x if x >= &-128 && x <= &127 => Encoded::new_fixed(0x54, x.to_be_bytes().to_vec()),
-            _ => Encoded::new_fixed(0x71, self.to_be_bytes().to_vec()),
+            x if x >= &-128 && x <= &127 => Encoded::new_fixed(SMALL_INTEGER, x.to_be_bytes().to_vec()),
+            _ => Encoded::new_fixed(INTEGER, self.to_be_bytes().to_vec()),
         }
     }
 }
@@ -20,8 +20,8 @@ impl Encode for i32 {
 impl Decode for i32 {
     fn can_decode(iter: impl Iterator<Item=u8>) -> bool {
         match iter.peekable().peek() {
-            Some(&DEFAULT_CONSTR) => true,
-            Some(&SMALL_INT_CONSTR) => true,
+            Some(&INTEGER) => true,
+            Some(&SMALL_INTEGER) => true,
             _ => false,
         }
     }
@@ -31,8 +31,8 @@ impl Decode for i32 {
             Self: Sized,
     {
         match iter.next() {
-            Some(DEFAULT_CONSTR) => Ok(parse_i32(&mut iter)?),
-            Some(SMALL_INT_CONSTR) => Ok(parse_small_i32(&mut iter)?),
+            Some(INTEGER) => Ok(parse_i32(&mut iter)?),
+            Some(SMALL_INTEGER) => Ok(parse_small_i32(&mut iter)?),
             Some(c) => Err(AppError::DeserializationIllegalConstructorError(c)),
             None => Err(AppError::IteratorEmptyOrTooShortError),
         }

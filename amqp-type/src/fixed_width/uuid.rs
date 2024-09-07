@@ -1,30 +1,30 @@
 use crate::common::read_bytes_16;
+use crate::constants::constructors::UUID;
 use crate::error::AppError;
 use crate::serde::decode::Decode;
 use crate::serde::encode::{Encode, Encoded};
 
-const DEFAULT_CONSTR: u8 = 0x98;
 
 #[derive(Hash, Eq, PartialEq)]
 pub struct Uuid(uuid::Uuid);
 
 impl Encode for Uuid {
     fn encode(&self) -> Encoded {
-        Encoded::new_fixed(DEFAULT_CONSTR, self.0.into_bytes().to_vec())
+        Encoded::new_fixed(UUID, self.0.into_bytes().to_vec())
     }
 }
 
 impl Decode for Uuid {
     fn can_decode(iter: impl Iterator<Item=u8>) -> bool {
         match iter.peekable().peek() {
-            Some(&DEFAULT_CONSTR) => true,
+            Some(&UUID) => true,
             _ => false,
         }
     }
 
     fn try_decode(mut iter: impl Iterator<Item=u8>) -> Result<Self, AppError> where Self: Sized {
         match iter.next() {
-            Some(DEFAULT_CONSTR) => Ok(parse_uuid(&mut iter)?),
+            Some(UUID) => Ok(parse_uuid(&mut iter)?),
             Some(c) => Err(AppError::DeserializationIllegalConstructorError(c)),
             None => Err(AppError::IteratorEmptyOrTooShortError),
         }
@@ -38,6 +38,7 @@ fn parse_uuid(iter: &mut impl Iterator<Item=u8>) -> Result<Uuid, AppError> {
 
 #[cfg(test)]
 mod test {
+    use crate::constants::constructors::UUID;
     use super::*;
 
     #[test]
@@ -51,7 +52,7 @@ mod test {
         let uuid = Uuid(uuid::Uuid::new_v4());
         let encoded = uuid.encode();
         let mut expected_bytes = Vec::new();
-        expected_bytes.push(DEFAULT_CONSTR);
+        expected_bytes.push(UUID);
         expected_bytes.extend_from_slice(&uuid.0.into_bytes());
 
         assert_eq!(encoded.to_bytes(), expected_bytes);
@@ -61,7 +62,7 @@ mod test {
     fn test_decode_success() {
         let uuid = uuid::Uuid::new_v4();
         let bytes = uuid.into_bytes();
-        let mut iter = std::iter::once(DEFAULT_CONSTR).chain(bytes.iter().cloned());
+        let mut iter = std::iter::once(UUID).chain(bytes.iter().cloned());
         let decoded = Uuid::try_decode(&mut iter);
         assert!(decoded.is_ok());
         assert_eq!(decoded.unwrap().0, uuid)
@@ -78,7 +79,7 @@ mod test {
 
     #[test]
     fn test_decode_short_byte_sequence() {
-        let short_bytes = vec![DEFAULT_CONSTR];  // Not enough bytes for a UUID
+        let short_bytes = vec![UUID];  // Not enough bytes for a UUID
         let mut iter = short_bytes.into_iter();
         let decoded = Uuid::try_decode(&mut iter);
         assert!(matches!(decoded, Err(AppError::IteratorEmptyOrTooShortError)));

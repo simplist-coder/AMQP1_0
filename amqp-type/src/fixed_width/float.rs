@@ -1,25 +1,26 @@
 use std::hash::Hash;
 
 use crate::common::read_bytes_4;
+use crate::constants::constructors::FLOAT;
 use crate::error::AppError;
 use crate::serde::decode::Decode;
 use crate::serde::encode::{Encode, Encoded};
 
-const DEFAULT_CONSTR: u8 = 0x72;
+
 
 #[derive(Debug)]
 pub struct Float(f32);
 
 impl Encode for Float {
     fn encode(&self) -> Encoded {
-        Encoded::new_fixed(DEFAULT_CONSTR, self.0.to_be_bytes().to_vec())
+        Encoded::new_fixed(FLOAT, self.0.to_be_bytes().to_vec())
     }
 }
 
 impl Decode for f32 {
     fn can_decode(iter: impl Iterator<Item=u8>) -> bool {
         match iter.peekable().peek() {
-            Some(&DEFAULT_CONSTR) => true,
+            Some(&FLOAT) => true,
             _ => false,
         }
     }
@@ -29,7 +30,7 @@ impl Decode for f32 {
             Self: Sized,
     {
         match iter.next() {
-            Some(DEFAULT_CONSTR) => Ok(parse_f32(&mut iter)?),
+            Some(FLOAT) => Ok(parse_f32(&mut iter)?),
             Some(c) => Err(AppError::DeserializationIllegalConstructorError(c)),
             None => Err(AppError::IteratorEmptyOrTooShortError),
         }

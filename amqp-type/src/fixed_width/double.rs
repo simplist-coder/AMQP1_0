@@ -1,6 +1,7 @@
 use std::hash::Hash;
 
 use crate::common::read_bytes_8;
+use crate::constants::constructors::DOUBLE;
 use crate::error::AppError;
 use crate::serde::decode::Decode;
 use crate::serde::encode::{Encode, Encoded};
@@ -15,7 +16,6 @@ use crate::serde::encode::{Encode, Encoded};
 #[derive(Debug)]
 pub struct Double(f64);
 
-const DEFAULT_CONSTR: u8 = 0x82;
 
 impl Encode for Double {
     fn encode(&self) -> Encoded {
@@ -26,7 +26,7 @@ impl Encode for Double {
 impl Decode for f64 {
     fn can_decode(iter: impl Iterator<Item=u8>) -> bool {
         match iter.peekable().peek() {
-            Some(&DEFAULT_CONSTR) => true,
+            Some(&DOUBLE) => true,
             _ => false,
         }
     }
@@ -36,7 +36,7 @@ impl Decode for f64 {
             Self: Sized,
     {
         match iter.next() {
-            Some(DEFAULT_CONSTR) => Ok(parse_f64(&mut iter)?),
+            Some(DOUBLE) => Ok(parse_f64(&mut iter)?),
             Some(c) => Err(AppError::DeserializationIllegalConstructorError(c)),
             None => Err(AppError::IteratorEmptyOrTooShortError),
         }

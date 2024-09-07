@@ -1,20 +1,17 @@
 use crate::common::read_bytes_8;
+use crate::constants::constructors::{SMALL_UNSIGNED_LONG, UNSIGNED_LONG, UNSIGNED_LONG_ZERO};
 use crate::error::AppError;
 use crate::serde::decode::Decode;
 use crate::serde::encode::{Encode, Encoded};
 
-const DEFAULT_CONSTR: u8 = 0x80;
-const SMALL_ULONG_CONSTR: u8 = 0x53;
-const ULONG_0_CONSTR: u8 = 0x44;
-
 impl Encode for u64 {
     fn encode(&self) -> Encoded {
         match self {
-            0 => Encoded::new_empty(ULONG_0_CONSTR),
+            0 => Encoded::new_empty(UNSIGNED_LONG_ZERO),
             x if x > &&0 && x <= &255 => {
-                Encoded::new_fixed(SMALL_ULONG_CONSTR, x.to_be_bytes().to_vec())
+                Encoded::new_fixed(SMALL_UNSIGNED_LONG, x.to_be_bytes().to_vec())
             }
-            _ => Encoded::new_fixed(DEFAULT_CONSTR, self.to_be_bytes().to_vec()),
+            _ => Encoded::new_fixed(UNSIGNED_LONG, self.to_be_bytes().to_vec()),
         }
     }
 }
@@ -22,9 +19,9 @@ impl Encode for u64 {
 impl Decode for u64 {
     fn can_decode(iter: impl Iterator<Item=u8>) -> bool {
         match iter.peekable().peek() {
-            Some(&DEFAULT_CONSTR) => true,
-            Some(&SMALL_ULONG_CONSTR) => true,
-            Some(&ULONG_0_CONSTR) => true,
+            Some(&UNSIGNED_LONG) => true,
+            Some(&SMALL_UNSIGNED_LONG) => true,
+            Some(&UNSIGNED_LONG_ZERO) => true,
             _ => false,
         }
     }
@@ -34,9 +31,9 @@ impl Decode for u64 {
             Self: Sized,
     {
         match iter.next() {
-            Some(DEFAULT_CONSTR) => Ok(parse_ulong(&mut iter)?),
-            Some(SMALL_ULONG_CONSTR) => Ok(parse_small_ulong(&mut iter)?),
-            Some(ULONG_0_CONSTR) => Ok(0),
+            Some(UNSIGNED_LONG) => Ok(parse_ulong(&mut iter)?),
+            Some(SMALL_UNSIGNED_LONG) => Ok(parse_small_ulong(&mut iter)?),
+            Some(UNSIGNED_LONG_ZERO) => Ok(0),
             Some(c) => Err(AppError::DeserializationIllegalConstructorError(c)),
             None => Err(AppError::IteratorEmptyOrTooShortError),
         }
