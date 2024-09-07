@@ -1,10 +1,10 @@
 use crate::common::read_bytes_4;
+use crate::constants::constructors::CHAR;
 use crate::error::AppError;
 use crate::fixed_width::char;
 use crate::serde::decode::Decode;
 use crate::serde::encode::{Encode, Encoded};
 
-const DEFAULT_CONSTR: u8 = 0x73;
 
 impl Encode for char {
     fn encode(&self) -> Encoded {
@@ -15,14 +15,14 @@ impl Encode for char {
 impl Decode for char {
     fn can_decode(iter: impl Iterator<Item=u8>) -> bool {
         match iter.peekable().peek() {
-            Some(&DEFAULT_CONSTR) => true,
+            Some(&CHAR) => true,
             _ => false,
         }
     }
 
     fn try_decode(mut iter: impl Iterator<Item=u8>) -> Result<Self, AppError> where Self: Sized {
         match iter.next() {
-            Some(DEFAULT_CONSTR) => Ok(parse_char(&mut iter)?),
+            Some(CHAR) => Ok(parse_char(&mut iter)?),
             Some(c) => Err(AppError::DeserializationIllegalConstructorError(c)),
             None => Err(AppError::IteratorEmptyOrTooShortError),
         }
@@ -39,6 +39,7 @@ fn parse_char(iter: &mut impl Iterator<Item=u8>) -> Result<char, AppError> {
 
 #[cfg(test)]
 mod test {
+    use crate::constants::constructors::CHAR;
     use super::*;
 
     #[test]
@@ -50,9 +51,9 @@ mod test {
     #[test]
     fn test_encode_char() {
         let test_cases = [
-            ('a', vec![DEFAULT_CONSTR, 0x61]),            // Test with a basic ASCII character
-            ('ñ', vec![DEFAULT_CONSTR, 0xc3, 0xb1]),      // Test with a non-ASCII character
-            ('😊', vec![DEFAULT_CONSTR, 0xf0, 0x9f, 0x98, 0x8a]), // Test with an emoji (multi-byte character)
+            ('a', vec![CHAR, 0x61]),            // Test with a basic ASCII character
+            ('ñ', vec![CHAR, 0xc3, 0xb1]),      // Test with a non-ASCII character
+            ('😊', vec![CHAR, 0xf0, 0x9f, 0x98, 0x8a]), // Test with an emoji (multi-byte character)
         ];
 
         for (input, expected) in test_cases {
@@ -64,7 +65,7 @@ mod test {
     #[test]
     fn test_successful_deserialization() {
         let value = 'A';
-        let mut data = vec![DEFAULT_CONSTR];
+        let mut data = vec![CHAR];
         data.extend_from_slice(&(value as u32).to_be_bytes());
         let mut iter = data.into_iter();
 
@@ -101,7 +102,7 @@ mod test {
 
     #[test]
     fn test_invalid_char_deserialization() {
-        let bytes = vec![DEFAULT_CONSTR, 0xFF, 0xFF, 0xFF, 0xFF]; // Invalid Unicode sequence
+        let bytes = vec![CHAR, 0xFF, 0xFF, 0xFF, 0xFF]; // Invalid Unicode sequence
         let mut iter = bytes.into_iter();
 
         match char::try_decode(&mut iter) {

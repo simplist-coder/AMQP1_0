@@ -1,11 +1,12 @@
 use std::hash::{Hash, Hasher};
 
 use crate::common::read_bytes_8;
+use crate::constants::constructors::DECIMAL_64;
 use crate::error::AppError;
 use crate::serde::decode::Decode;
 use crate::serde::encode::{Encode, Encoded};
 
-const DEFAULT_CONSTR: u8 = 0x84;
+
 
 #[derive(Debug)]
 pub struct Decimal64(f64);
@@ -13,7 +14,7 @@ pub struct Decimal64(f64);
 impl Encode for Decimal64 {
     fn encode(&self) -> Encoded {
         Encoded::new_fixed(
-            DEFAULT_CONSTR,
+            DECIMAL_64,
             self.0.to_be_bytes().to_vec(),
         )
     }
@@ -22,14 +23,14 @@ impl Encode for Decimal64 {
 impl Decode for Decimal64 {
     fn can_decode(iter: impl Iterator<Item=u8>) -> bool {
         match iter.peekable().peek() {
-            Some(&DEFAULT_CONSTR) => true,
+            Some(&DECIMAL_64) => true,
             _ => false,
         }
     }
 
     fn try_decode(mut iter: impl Iterator<Item=u8>) -> Result<Self, AppError> where Self: Sized {
         match iter.next() {
-            Some(DEFAULT_CONSTR) => Ok(parse_decimal64(&mut iter)?),
+            Some(DECIMAL_64) => Ok(parse_decimal64(&mut iter)?),
             Some(c) => Err(AppError::DeserializationIllegalConstructorError(c)),
             None => Err(AppError::IteratorEmptyOrTooShortError),
         }
@@ -91,7 +92,7 @@ mod test {
     #[test]
     fn test_successful_deserialization() {
         let value = 1.2345f64;
-        let mut data = vec![DEFAULT_CONSTR];
+        let mut data = vec![DECIMAL_64];
         data.append(&mut value.to_be_bytes().to_vec()); // Put an f64 into the buffer
         let mut iter = data.into_iter();
 
@@ -103,7 +104,7 @@ mod test {
 
     #[test]
     fn test_illegal_constructor_deserialization() {
-        let illegal_constructor = 0xFF; // Assuming this is not DEFAULT_CONSTR
+        let illegal_constructor = 0xFF; // Assuming this is not DECIMAL_64
         let bytes = vec![illegal_constructor /* other bytes */];
         let mut iter = bytes.into_iter();
 

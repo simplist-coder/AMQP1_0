@@ -1,11 +1,12 @@
 use std::hash::{Hash, Hasher};
 
 use crate::common::read_bytes_4;
+use crate::constants::constructors::DECIMAL_32;
 use crate::error::AppError;
 use crate::serde::decode::Decode;
 use crate::serde::encode::{Encode, Encoded};
 
-const DEFAULT_CONSTR: u8 = 0x74;
+
 
 #[derive(Debug)]
 pub struct Decimal32(f32);
@@ -13,7 +14,7 @@ pub struct Decimal32(f32);
 impl Encode for Decimal32 {
     fn encode(&self) -> Encoded {
         Encoded::new_fixed(
-            DEFAULT_CONSTR,
+            DECIMAL_32,
             self.0.to_be_bytes().to_vec(),
         )
     }
@@ -22,14 +23,14 @@ impl Encode for Decimal32 {
 impl Decode for Decimal32 {
     fn can_decode(iter: impl Iterator<Item=u8>) -> bool {
         match iter.peekable().peek() {
-            Some(&DEFAULT_CONSTR) => true,
+            Some(&DECIMAL_32) => true,
             _ => false,
         }
     }
 
     fn try_decode(mut iter: impl Iterator<Item=u8>) -> Result<Self, AppError> where Self: Sized {
         match iter.next() {
-            Some(DEFAULT_CONSTR) => Ok(parse_decimal32(&mut iter)?),
+            Some(DECIMAL_32) => Ok(parse_decimal32(&mut iter)?),
             Some(c) => Err(AppError::DeserializationIllegalConstructorError(c)),
             None => Err(AppError::IteratorEmptyOrTooShortError),
         }
@@ -64,7 +65,6 @@ impl From<f32> for Decimal32 {
 #[cfg(test)]
 mod test {
     use bytes::BufMut;
-
     use super::*;
 
     #[test]
@@ -76,12 +76,12 @@ mod test {
     #[test]
     fn test_encode_decimal32() {
         let test_cases = [
-            (Decimal32(0.0), vec![DEFAULT_CONSTR, 0, 0, 0, 0]),                   // Test with zero
-            (Decimal32(1.0), vec![DEFAULT_CONSTR, 63, 128, 0, 0]),                // Test with a positive value
-            (Decimal32(-1.0), vec![DEFAULT_CONSTR, 191, 128, 0, 0]),              // Test with a negative value
-            (Decimal32(f32::INFINITY), vec![DEFAULT_CONSTR, 127, 128, 0, 0]),     // Test with positive infinity
-            (Decimal32(f32::NEG_INFINITY), vec![DEFAULT_CONSTR, 255, 128, 0, 0]), // Test with negative infinity
-            (Decimal32(f32::NAN), vec![DEFAULT_CONSTR, 127, 192, 0, 0]),          // Test with NaN
+            (Decimal32(0.0), vec![DECIMAL_32, 0, 0, 0, 0]),                   // Test with zero
+            (Decimal32(1.0), vec![DECIMAL_32, 63, 128, 0, 0]),                // Test with a positive value
+            (Decimal32(-1.0), vec![DECIMAL_32, 191, 128, 0, 0]),              // Test with a negative value
+            (Decimal32(f32::INFINITY), vec![DECIMAL_32, 127, 128, 0, 0]),     // Test with positive infinity
+            (Decimal32(f32::NEG_INFINITY), vec![DECIMAL_32, 255, 128, 0, 0]), // Test with negative infinity
+            (Decimal32(f32::NAN), vec![DECIMAL_32, 127, 192, 0, 0]),          // Test with NaN
         ];
 
         for (input, expected) in test_cases {
@@ -93,7 +93,7 @@ mod test {
     #[test]
     fn test_successful_deserialization() {
         let value = 1.2345f32;
-        let mut data = vec![DEFAULT_CONSTR];
+        let mut data = vec![DECIMAL_32];
         data.put_f32(value);
         let mut iter = data.into_iter();
 
