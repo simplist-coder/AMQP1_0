@@ -3,6 +3,7 @@ use std::hash::Hash;
 use crate::array::array::Array;
 use crate::compound::list::List;
 use crate::compound::map::Map;
+use crate::constants::constructors::NULL;
 use crate::fixed_width::decimal128::Decimal128;
 use crate::fixed_width::decimal32::Decimal32;
 use crate::fixed_width::decimal64::Decimal64;
@@ -47,7 +48,7 @@ pub enum AmqpType {
 impl Encode for AmqpType {
     fn encode(&self) -> Encoded {
         match self {
-            Self::Null => 0x40.into(),
+            Self::Null => NULL.into(),
             Self::Boolean(val) => val.encode(),
             Self::Ubyte(val) => val.encode(),
             Self::Ushort(val) => val.encode(),

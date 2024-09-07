@@ -1,4 +1,3 @@
-
 #[cfg(not(feature = "zero-length-bools"))]
 pub const BOOLEAN: u8 = 0x56;
 #[cfg(feature = "zero-length-bools")]
@@ -26,3 +25,10 @@ pub const SMALL_UNSIGNED_LONG: u8 = 0x53;
 pub const UNSIGNED_LONG_ZERO: u8 = 0x44;
 pub const UNSIGNED_SHORT: u8 = 0x60;
 pub const UUID: u8 = 0x98;
+pub const NULL: u8 = 0x40;
+pub const ARRAY_SHORT: u8 = 0xe0;
+pub const ARRAY: u8 = 0xf0;
+pub const LIST_SHORT: u8 = 0xc0;
+pub const LIST: u8 = 0xd0;
+pub const MAP_SHORT: u8 = 0xc1;
+pub const MAP: u8 = 0xd1;

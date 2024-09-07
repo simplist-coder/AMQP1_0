@@ -1,5 +1,6 @@
 use crate::amqp_type::AmqpType;
 use crate::compound::encoded_vec::EncodedVec;
+use crate::constants::constructors::{LIST, LIST_SHORT};
 use crate::serde::encode::{Encode, Encoded};
 
 #[derive(Hash, Eq, PartialEq)]
@@ -13,9 +14,9 @@ impl Encode for List {
         match (encoded.len(), byte_size) {
             (0, _) => 0x45.into(),
             (len, size) if len <= 255 && size < 256 => {
-                Encoded::new_compound(0xc0, count, EncodedVec::new(encoded).into())
+                Encoded::new_compound(LIST_SHORT, count, EncodedVec::new(encoded).into())
             }
-            (_, _) => Encoded::new_compound(0xd0, count, EncodedVec::new(encoded).into()),
+            (_, _) => Encoded::new_compound(LIST, count, EncodedVec::new(encoded).into()),
         }
     }
 }

@@ -1,4 +1,5 @@
 use crate::amqp_type::AmqpType;
+use crate::constants::constructors::{ARRAY, ARRAY_SHORT};
 use crate::serde::encode::{Encode, Encoded};
 
 #[derive(Hash, Eq, PartialEq)]
@@ -9,8 +10,8 @@ impl Encode for Array {
         let encoded: Vec<Encoded> = self.0.iter().map(|x| x.encode()).collect();
         let byte_size = encoded.iter().fold(0, |acc, x| acc + x.data_len());
         match (encoded.len(), byte_size) {
-            (len, size) if len <= 255 && size < 256 => 0xe0.into(),
-            (_, _) => 0xf0.into(),
+            (len, size) if len <= 255 && size < 256 => ARRAY_SHORT.into(),
+            (_, _) => ARRAY.into(),
         }
     }
 }
