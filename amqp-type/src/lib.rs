@@ -6,3 +6,4 @@ mod fixed_width;
 mod serde;
 mod variable_width;
 mod common;
+mod constants;

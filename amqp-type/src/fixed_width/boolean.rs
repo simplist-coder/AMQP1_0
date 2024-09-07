@@ -1,21 +1,18 @@
+#[cfg(feature = "zero-length-bools")]
+use crate::constants::constructors::BOOLEAN_FALSE;
+#[cfg(feature = "zero-length-bools")]
+use crate::constants::constructors::BOOLEAN_TRUE;
+use crate::constants::constructors::BOOLEAN;
 use crate::error::AppError;
 use crate::serde::decode::Decode;
 use crate::serde::encode::{Encode, Encoded};
 
 #[cfg(not(feature = "zero-length-bools"))]
-const DEFAULT_CONSTR: u8 = 0x56;
-
-#[cfg(feature = "zero-length-bools")]
-const DEFAULT_CONSTR_TRUE: u8 = 0x41;
-#[cfg(feature = "zero-length-bools")]
-const DEFAULT_CONSTR_FALSE: u8 = 0x42;
-
-#[cfg(not(feature = "zero-length-bools"))]
 impl Encode for bool {
     fn encode(&self) -> Encoded {
         match self {
-            true => Encoded::new_fixed(DEFAULT_CONSTR, vec![0x01]),
-            false => Encoded::new_fixed(DEFAULT_CONSTR, vec![0x00]),
+            true => Encoded::new_fixed(BOOLEAN, vec![0x01]),
+            false => Encoded::new_fixed(BOOLEAN, vec![0x00]),
         }
     }
 }
@@ -24,8 +21,8 @@ impl Encode for bool {
 impl Encode for bool {
     fn encode(&self) -> Encoded {
         match self {
-            true => DEFAULT_CONSTR_TRUE.into(),
-            false => DEFAULT_CONSTR_FALSE.into(),
+            true => DEFAULT_TRUE.into(),
+            false => DEFAULT_FALSE.into(),
         }
     }
 }
@@ -35,7 +32,7 @@ impl Decode for bool {
     fn can_decode(data: impl Iterator<Item=u8>) -> bool {
         let mut iter = data.into_iter().peekable();
         match iter.peek() {
-            Some(&DEFAULT_CONSTR) => true,
+            Some(&BOOLEAN) => true,
             _ => false,
         }
     }
@@ -47,8 +44,8 @@ impl Decode for bool {
         let con = iter.next();
         let val = iter.next();
         match (con, val) {
-            (Some(c), Some(v)) if c == DEFAULT_CONSTR && v == 0x00 => Ok(false),
-            (Some(c), Some(v)) if c == DEFAULT_CONSTR && v == 0x01 => Ok(true),
+            (Some(c), Some(v)) if c == BOOLEAN && v == 0x00 => Ok(false),
+            (Some(c), Some(v)) if c == BOOLEAN && v == 0x01 => Ok(true),
             (Some(c), _) => Err(AppError::DeserializationIllegalConstructorError(c)),
             (None, _) => Err(AppError::IteratorEmptyOrTooShortError),
         }
@@ -60,8 +57,8 @@ impl Decode for bool {
     fn can_decode(data: Iterator<Item=u8>) -> bool {
         let mut iter = data.into_iter().peekable();
         match iter.peek() {
-            Some(DEFAULT_CONSTR_TRUE) => true,
-            Some(DEFAULT_CONSTR_FALSE) => true,
+            Some(BOOLEAN_TRUE) => true,
+            Some(BOOLEAN_FALSE) => true,
             _ => false,
         }
     }
@@ -72,8 +69,8 @@ impl Decode for bool {
     {
         if let Some(val) = iter.next() {
             return match val {
-                DEFAULT_CONSTR_TRUE => Ok(true),
-                DEFAULT_CONSTR_FALSE => Ok(false),
+                BOOLEAN_TRUE => Ok(true),
+                BOOLEAN_FALSE => Ok(false),
                 _ => Err(AppError::DeserializationIllegalConstructorError(val)),
             };
         }

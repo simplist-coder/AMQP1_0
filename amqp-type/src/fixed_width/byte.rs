@@ -1,19 +1,19 @@
+use crate::constants::constructors::BYTE;
 use crate::error::AppError;
 use crate::serde::decode::Decode;
 use crate::serde::encode::{Encode, Encoded};
 
-const DEFAULT_CONSTR: u8 = 0x51;
 
 impl Encode for i8 {
     fn encode(&self) -> Encoded {
-        Encoded::new_fixed(DEFAULT_CONSTR, self.to_be_bytes().to_vec())
+        Encoded::new_fixed(BYTE, self.to_be_bytes().to_vec())
     }
 }
 
 impl Decode for i8 {
     fn can_decode(iter: impl Iterator<Item=u8>) -> bool {
         match iter.peekable().peek() {
-            Some(&DEFAULT_CONSTR) => true,
+            Some(&BYTE) => true,
             _ => false,
         }
     }
@@ -23,7 +23,7 @@ impl Decode for i8 {
             Self: Sized,
     {
         match iter.next() {
-            Some(DEFAULT_CONSTR) => Ok(parse_i8(iter)?),
+            Some(BYTE) => Ok(parse_i8(iter)?),
             Some(c) => Err(AppError::DeserializationIllegalConstructorError(c)),
             None => Err(AppError::IteratorEmptyOrTooShortError),
         }
@@ -40,6 +40,7 @@ fn parse_i8(mut iter: impl Iterator<Item=u8>) -> Result<i8, AppError> {
 
 #[cfg(test)]
 mod test {
+    use crate::constants::constructors::BYTE;
     use super::*;
 
     #[test]
@@ -51,11 +52,11 @@ mod test {
     #[test]
     fn test_encode_i8() {
         let test_cases = [
-            (0_i8, vec![DEFAULT_CONSTR, 0]),          // Test with zero
-            (1_i8, vec![DEFAULT_CONSTR, 1]),          // Test with a positive value
-            (-1_i8, vec![DEFAULT_CONSTR, 0xff]),      // Test with a negative value
-            (i8::MAX, vec![DEFAULT_CONSTR, 0x7f]),    // Test with the maximum i8 value
-            (i8::MIN, vec![DEFAULT_CONSTR, 0x80]),    // Test with the minimum i8 value
+            (0_i8, vec![BYTE, 0]),          // Test with zero
+            (1_i8, vec![BYTE, 1]),          // Test with a positive value
+            (-1_i8, vec![BYTE, 0xff]),      // Test with a negative value
+            (i8::MAX, vec![BYTE, 0x7f]),    // Test with the maximum i8 value
+            (i8::MIN, vec![BYTE, 0x80]),    // Test with the minimum i8 value
         ];
 
         for (input, expected) in test_cases {
