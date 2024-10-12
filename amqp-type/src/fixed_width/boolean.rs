@@ -1,4 +1,3 @@
-
 #[cfg(not(feature = "zero-length-encoding"))]
 use crate::constants::constructors::BOOLEAN;
 #[cfg(feature = "zero-length-encoding")]
@@ -33,8 +32,7 @@ impl Encode for bool {
 
 #[cfg(not(feature = "zero-length-encoding"))]
 impl Decode for bool {
-
-    async fn try_decode(constructor: u8, mut iter: Pin<Box<impl Stream<Item=u8>>>) -> Result<Self, AppError>
+    async fn try_decode(constructor: u8, iter: &mut Pin<Box<impl Stream<Item=u8>>>) -> Result<Self, AppError>
     where
         Self: Sized,
     {
@@ -49,7 +47,6 @@ impl Decode for bool {
 
 #[cfg(feature = "zero-length-encoding")]
 impl Decode for bool {
-
     async fn try_decode(constructor: u8, mut data: Pin<Box<impl Stream<Item=u8>>>) -> Result<Self, AppError>
     where
         Self: Sized,
@@ -65,8 +62,8 @@ impl Decode for bool {
 
 #[cfg(test)]
 mod test {
-    use crate::common::tests::ByteVecExt;
     use super::*;
+    use crate::common::tests::ByteVecExt;
 
     #[test]
     #[cfg(not(feature = "zero-length-encoding"))]
@@ -82,14 +79,13 @@ mod test {
     }
 
 
-
     #[tokio::test]
     #[cfg(not(feature = "zero-length-encoding"))]
     async fn decode_returns_error_when_value_bytes_are_invalid() {
         let val_true = vec![0x34];
         let val_false = vec![0x44];
-        assert!(bool::try_decode(0x56, val_true.into_pinned_stream()).await.is_err());
-        assert!(bool::try_decode(0x56, val_false.into_pinned_stream()).await.is_err());
+        assert!(bool::try_decode(0x56, &mut val_true.into_pinned_stream()).await.is_err());
+        assert!(bool::try_decode(0x56, &mut val_false.into_pinned_stream()).await.is_err());
     }
 
     #[tokio::test]
@@ -97,8 +93,8 @@ mod test {
     async fn try_decode_returns_correct_value_if_bytes_are_valid() {
         let val_true = vec![0x01];
         let val_false = vec![0x00];
-        assert_eq!(bool::try_decode(0x56,val_true.into_pinned_stream()).await.unwrap(), true);
-        assert_eq!(bool::try_decode(0x56,val_false.into_pinned_stream()).await.unwrap(), false);
+        assert_eq!(bool::try_decode(0x56, &mut val_true.into_pinned_stream()).await.unwrap(), true);
+        assert_eq!(bool::try_decode(0x56, &mut val_false.into_pinned_stream()).await.unwrap(), false);
     }
 
     #[test]
@@ -112,7 +108,6 @@ mod test {
     fn amqp_type_constructs_bool_true_as_zero_length() {
         assert_eq!(true.encode().constructor(), 0x41)
     }
-
 
 
     #[tokio::test]

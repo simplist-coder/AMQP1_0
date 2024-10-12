@@ -18,7 +18,7 @@ impl Encode for Symbol {
 
 impl Decode for Symbol {
 
-    async fn try_decode(_constructor: u8, _iter: Pin<Box<impl Stream<Item=u8>>>) -> Result<Self, AppError>
+    async fn try_decode(_constructor: u8, _stream: &mut Pin<Box<impl Stream<Item=u8>>>) -> Result<Self, AppError>
     where
         Self: Sized
     {

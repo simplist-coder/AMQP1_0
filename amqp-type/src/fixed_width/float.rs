@@ -20,12 +20,12 @@ impl Encode for Float {
 
 impl Decode for Float {
 
-    async fn try_decode(constructor: u8, mut iter: Pin<Box<impl Stream<Item=u8>>>) -> Result<Self, AppError>
+    async fn try_decode(constructor: u8,stream: &mut Pin<Box<impl Stream<Item=u8>>>) -> Result<Self, AppError>
         where
             Self: Sized,
     {
         match constructor {
-            FLOAT => Ok(parse_f32(&mut iter).await?),
+            FLOAT => Ok(parse_f32(stream).await?),
             c => Err(AppError::DeserializationIllegalConstructorError(c)),
         }
     }
@@ -91,18 +91,18 @@ mod test {
     #[tokio::test]
     async fn try_decode_returns_correct_value() {
         let val = vec![0x41, 0x70, 0x00, 0x10];
-        assert_eq!(Float::try_decode(0x72, val.into_pinned_stream()).await.unwrap(), 15.000015.into());
+        assert_eq!(Float::try_decode(0x72, &mut val.into_pinned_stream()).await.unwrap(), 15.000015.into());
     }
 
     #[tokio::test]
     async fn try_decode_returns_error_when_value_bytes_are_invalid() {
         let val = vec![ 0x44];
-        assert!(Float::try_decode(0x66, val.into_pinned_stream()).await.is_err());
+        assert!(Float::try_decode(0x66, &mut val.into_pinned_stream()).await.is_err());
     }
 
     #[tokio::test]
     async fn try_decode_returns_error_when_bytes_are_missing() {
         let val = vec![0x72, 0x00, 0x01];
-        assert!(Float::try_decode(0x72, val.into_pinned_stream()).await.is_err());
+        assert!(Float::try_decode(0x72, &mut val.into_pinned_stream()).await.is_err());
     }
 }

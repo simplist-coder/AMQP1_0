@@ -19,9 +19,9 @@ impl Encode for Timestamp {
 
 impl Decode for Timestamp {
 
-    async fn try_decode(constructor: u8, mut iter: Pin<Box<impl Stream<Item=u8>>>) -> Result<Self, AppError> where Self: Sized {
+    async fn try_decode(constructor: u8, stream: &mut Pin<Box<impl Stream<Item=u8>>>) -> Result<Self, AppError> where Self: Sized {
         match constructor {
-            TIMESTAMP => Ok(parse_timestamp(&mut iter).await?),
+            TIMESTAMP => Ok(parse_timestamp(stream).await?),
             c => Err(AppError::DeserializationIllegalConstructorError(c)),
         }
     }
@@ -65,7 +65,7 @@ mod test {
         let mut data = vec![];
         data.extend_from_slice(&example_unix_time_ms.to_be_bytes());
 
-        match Timestamp::try_decode(TIMESTAMP, data.into_pinned_stream()).await {
+        match Timestamp::try_decode(TIMESTAMP, &mut data.into_pinned_stream()).await {
             Ok(timestamp) => assert_eq!(timestamp.0, example_unix_time_ms),
             Err(e) => panic!("Unexpected error: {:?}", e),
         }
@@ -76,7 +76,7 @@ mod test {
         let illegal_constructor = 0xFF;
         let bytes = vec![];
 
-        match Timestamp::try_decode(illegal_constructor, bytes.into_pinned_stream()).await {
+        match Timestamp::try_decode(illegal_constructor, &mut bytes.into_pinned_stream()).await {
             Ok(_) => panic!("Expected an error, but deserialization succeeded"),
             Err(AppError::DeserializationIllegalConstructorError(c)) => assert_eq!(illegal_constructor, c),
             Err(e) => panic!("Unexpected error type: {:?}", e),
@@ -87,7 +87,7 @@ mod test {
     async fn test_incomplete_iterator_timestamp_decoding() {
         let data = vec![TIMESTAMP]; // Missing the 8 bytes for the timestamp
 
-        match Timestamp::try_decode(TIMESTAMP, data.into_pinned_stream()).await {
+        match Timestamp::try_decode(TIMESTAMP, &mut data.into_pinned_stream()).await {
             Ok(_) => panic!("Expected an error, but deserialization succeeded"),
             Err(AppError::IteratorEmptyOrTooShortError) => (), // Expected outcome
             Err(e) => panic!("Unexpected error type: {:?}", e),

@@ -15,11 +15,11 @@ impl Encode for u8 {
 
 impl Decode for u8 {
 
-    async fn try_decode(constructor: u8, mut iter: Pin<Box<impl Stream<Item=u8>>>) -> Result<Self, crate::error::AppError>
+    async fn try_decode(constructor: u8, stream: &mut Pin<Box<impl Stream<Item=u8>>>) -> Result<Self, crate::error::AppError>
         where
             Self: Sized,
     {
-        let val = iter.next().await;
+        let val = stream.next().await;
         match (constructor, val) {
             (UNSIGNED_BYTE, Some(x)) => Ok(x),
             (c, _) => Err(AppError::DeserializationIllegalConstructorError(c)),
@@ -56,6 +56,6 @@ mod test {
     #[tokio::test]
     async fn try_decode_returns_correct_value() {
         let val = vec![0x10];
-        assert_eq!(u8::try_decode(0x50, val.into_pinned_stream()).await.unwrap(), 16)
+        assert_eq!(u8::try_decode(0x50, &mut val.into_pinned_stream()).await.unwrap(), 16)
     }
 }

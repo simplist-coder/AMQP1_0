@@ -24,7 +24,7 @@ impl Encode for Decimal128 {
 impl Decode for Decimal128 {
 
 
-    async fn try_decode(_constructor: u8, _iter: Pin<Box<impl Stream<Item=u8>>>) -> Result<Self, AppError> where Self: Sized {
+    async fn try_decode(_constructor: u8, _stream: &mut Pin<Box<impl Stream<Item=u8>>>) -> Result<Self, AppError> where Self: Sized {
         todo!("Decimal128  type is not implemented yet")
     }
 }

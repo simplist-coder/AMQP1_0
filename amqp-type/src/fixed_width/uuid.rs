@@ -18,9 +18,9 @@ impl Encode for Uuid {
 
 impl Decode for Uuid {
 
-    async fn try_decode(constructor: u8, mut iter: Pin<Box<impl Stream<Item=u8>>>) -> Result<Self, AppError> where Self: Sized {
+    async fn try_decode(constructor: u8, stream: &mut Pin<Box<impl Stream<Item=u8>>>) -> Result<Self, AppError> where Self: Sized {
         match constructor {
-            UUID => Ok(parse_uuid(&mut iter).await?),
+            UUID => Ok(parse_uuid(stream).await?),
             c => Err(AppError::DeserializationIllegalConstructorError(c)),
         }
     }
@@ -59,7 +59,7 @@ mod test {
         let uuid = uuid::Uuid::new_v4();
         let mut bytes = vec![];
         bytes.extend(uuid.into_bytes().to_vec());
-        let decoded = Uuid::try_decode(UUID, bytes.into_pinned_stream()).await;
+        let decoded = Uuid::try_decode(UUID, &mut bytes.into_pinned_stream()).await;
         assert!(decoded.is_ok());
         assert_eq!(decoded.unwrap().0, uuid)
     }
@@ -69,21 +69,21 @@ mod test {
         let uuid = uuid::Uuid::new_v4().into_bytes();
         let mut bytes = vec![];
         bytes.extend(uuid.to_vec());
-        let decoded = Uuid::try_decode(0x99, bytes.into_pinned_stream()).await;
+        let decoded = Uuid::try_decode(0x99, &mut bytes.into_pinned_stream()).await;
         assert!(matches!(decoded, Err(AppError::DeserializationIllegalConstructorError(_))));
     }
 
     #[tokio::test]
     async fn test_decode_short_byte_sequence() {
         let short_bytes = vec![UUID];  // Not enough bytes for a UUID
-        let decoded = Uuid::try_decode(UUID, short_bytes.into_pinned_stream()).await;
+        let decoded = Uuid::try_decode(UUID, &mut short_bytes.into_pinned_stream()).await;
         assert!(matches!(decoded, Err(AppError::IteratorEmptyOrTooShortError)));
     }
 
     #[tokio::test]
     async fn test_decode_empty_iterator() {
         let val = vec![];
-        let decoded = Uuid::try_decode(UUID, val.into_pinned_stream()).await;
+        let decoded = Uuid::try_decode(UUID, &mut val.into_pinned_stream()).await;
         assert!(matches!(decoded, Err(AppError::IteratorEmptyOrTooShortError)));
     }
 }

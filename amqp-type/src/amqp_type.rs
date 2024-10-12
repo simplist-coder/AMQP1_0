@@ -79,7 +79,7 @@ impl Encode for AmqpType {
 
 impl AmqpType {
     #[allow(dead_code)]
-    pub async fn try_decode(mut stream: Pin<Box<impl Stream<Item=u8>>>) -> Result<Self, AppError>
+    pub async fn try_decode(stream: &mut Pin<Box<impl Stream<Item=u8>>>) -> Result<Self, AppError>
     where
         Self: Sized,
     {
@@ -119,12 +119,60 @@ impl AmqpType {
             Some(STRING_SHORT) => Ok(String::try_decode(STRING_SHORT, stream).await?.into()),
             Some(STRING) => Ok(String::try_decode(STRING, stream).await?.into()),
             #[cfg(feature = "zero-length-encoding")]
-            Some(&BOOLEAN_TRUE) => Ok(Self::Boolean(true)),
+            Some(BOOLEAN_TRUE) => Ok(Self::Boolean(true)),
             #[cfg(feature = "zero-length-encoding")]
-            Some(&BOOLEAN_FALSE) => Ok(Self::Boolean(false)),
+            Some(BOOLEAN_FALSE) => Ok(Self::Boolean(false)),
             Some(other) => Err(AppError::DeserializationIllegalConstructorError(other))
         }
     }
+
+    #[allow(dead_code)]
+    pub async fn try_decode_with_constructor(constructor: u8, stream: &mut Pin<Box<impl Stream<Item=u8>>>) -> Result<Self, AppError>
+    where
+        Self: Sized,
+    {
+        match constructor {
+            NULL => Ok(Self::Null),
+            BOOLEAN => Ok(bool::try_decode(BOOLEAN, stream).await?.into()),
+            BYTE => Ok(i8::try_decode(BYTE, stream).await?.into()),
+            CHAR => Ok(char::try_decode(CHAR, stream).await?.into()),
+            DECIMAL_32 => Ok(Decimal32::try_decode(DECIMAL_32, stream).await?.into()),
+            DECIMAL_64 => Ok(Decimal64::try_decode(DECIMAL_64, stream).await?.into()),
+            DOUBLE => Ok(Double::try_decode(DOUBLE, stream).await?.into()),
+            FLOAT => Ok(Float::try_decode(FLOAT, stream).await?.into()),
+            INTEGER => Ok(i32::try_decode(INTEGER, stream).await?.into()),
+            SMALL_INTEGER => Ok(i32::try_decode(SMALL_INTEGER, stream).await?.into()),
+            LONG => Ok(i64::try_decode(LONG, stream).await?.into()),
+            SMALL_LONG => Ok(i64::try_decode(SMALL_LONG, stream).await?.into()),
+            SHORT => Ok(i16::try_decode(SHORT, stream).await?.into()),
+            TIMESTAMP => Ok(Timestamp::try_decode(TIMESTAMP, stream).await?.into()),
+            UNSIGNED_BYTE => Ok(u8::try_decode(UNSIGNED_BYTE, stream).await?.into()),
+            UNSIGNED_INTEGER => Ok(u32::try_decode(UNSIGNED_INTEGER, stream).await?.into()),
+            SMALL_UNSIGNED_INTEGER => Ok(u32::try_decode(SMALL_UNSIGNED_INTEGER, stream).await?.into()),
+            UNSIGNED_INTEGER_ZERO => Ok(u32::try_decode(UNSIGNED_INTEGER_ZERO, stream).await?.into()),
+            UNSIGNED_LONG => Ok(u64::try_decode(UNSIGNED_LONG, stream).await?.into()),
+            SMALL_UNSIGNED_LONG => Ok(u64::try_decode(SMALL_UNSIGNED_LONG, stream).await?.into()),
+            UNSIGNED_LONG_ZERO => Ok(u64::try_decode(UNSIGNED_LONG_ZERO, stream).await?.into()),
+            UNSIGNED_SHORT => Ok(u16::try_decode(UNSIGNED_SHORT, stream).await?.into()),
+            UUID => Ok(Uuid::try_decode(UUID, stream).await?.into()),
+            ARRAY_SHORT => Ok(Array::try_decode(ARRAY_SHORT, stream).await?.into()),
+            ARRAY => Ok(Array::try_decode(ARRAY, stream).await?.into()),
+            LIST_SHORT => Ok(List::try_decode(LIST_SHORT, stream).await?.into()),
+            LIST => Ok(List::try_decode(LIST, stream).await?.into()),
+            MAP_SHORT => Ok(Map::try_decode(MAP_SHORT, stream).await?.into()),
+            MAP => Ok(Map::try_decode(MAP, stream).await?.into()),
+            BINARY_SHORT => Ok(Binary::try_decode(BINARY_SHORT, stream).await?.into()),
+            BINARY => Ok(Binary::try_decode(BINARY, stream).await?.into()),
+            STRING_SHORT => Ok(String::try_decode(STRING_SHORT, stream).await?.into()),
+            STRING => Ok(String::try_decode(STRING, stream).await?.into()),
+            #[cfg(feature = "zero-length-encoding")]
+            BOOLEAN_TRUE => Ok(Self::Boolean(true)),
+            #[cfg(feature = "zero-length-encoding")]
+            BOOLEAN_FALSE => Ok(Self::Boolean(false)),
+            other => Err(AppError::DeserializationIllegalConstructorError(other))
+        }
+    }
+
 }
 
 impl From<Option<AmqpType>> for AmqpType {

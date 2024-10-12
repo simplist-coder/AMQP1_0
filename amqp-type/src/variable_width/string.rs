@@ -19,10 +19,10 @@ impl Encode for String {
 
 impl Decode for String {
 
-    async fn try_decode(constructor: u8, mut stream: Pin<Box<impl Stream<Item=u8>>>) -> Result<Self, AppError> where Self: Sized {
+    async fn try_decode(constructor: u8, stream: &mut Pin<Box<impl Stream<Item=u8>>>) -> Result<Self, AppError> where Self: Sized {
         match constructor {
-            STRING_SHORT => Ok(parse_small_string(&mut stream).await?),
-            STRING => Ok(parse_large_string(&mut stream).await?),
+            STRING_SHORT => Ok(parse_small_string(stream).await?),
+            STRING => Ok(parse_large_string(stream).await?),
             illegal => Err(AppError::DeserializationIllegalConstructorError(illegal)),
         }
     }
@@ -99,7 +99,7 @@ mod test {
     #[tokio::test]
     async fn test_decode_small_string() {
         let data = vec![5, b'H', b'e', b'l', b'l', b'o'];
-        let result = String::try_decode(STRING_SHORT, data.into_pinned_stream()).await.unwrap();
+        let result = String::try_decode(STRING_SHORT, &mut data.into_pinned_stream()).await.unwrap();
         assert_eq!(result, "Hello".to_string());
     }
 
@@ -113,28 +113,28 @@ mod test {
             size_bytes[3],
         ];
         data.extend_from_slice(b"Hello World");
-        let result = String::try_decode(STRING, data.into_pinned_stream()).await.unwrap();
+        let result = String::try_decode(STRING, &mut data.into_pinned_stream()).await.unwrap();
         assert_eq!(result, "Hello World".to_string());
     }
 
     #[tokio::test]
     async fn test_illegal_constructor() {
         let data = vec![5, b'E', b'r', b'r', b'o', b'r'];
-        let result = String::try_decode(0xFF, data.into_pinned_stream()).await;
+        let result = String::try_decode(0xFF, &mut data.into_pinned_stream()).await;
         assert!(matches!(result, Err(AppError::DeserializationIllegalConstructorError(0xFF))));
     }
 
     #[tokio::test]
     async fn test_iterator_empty_or_too_short() {
         let data = vec![];
-        let result = String::try_decode(STRING, data.into_pinned_stream()).await;
+        let result = String::try_decode(STRING, &mut data.into_pinned_stream()).await;
         assert!(matches!(result, Err(AppError::IteratorEmptyOrTooShortError)));
     }
 
     #[tokio::test]
     async fn test_utf8_compliance() {
         let data = vec![2, 0xC3, 0xA9]; // 'é' in UTF-8
-        let result = String::try_decode(STRING_SHORT, data.into_pinned_stream()).await.unwrap();
+        let result = String::try_decode(STRING_SHORT, &mut data.into_pinned_stream()).await.unwrap();
         assert_eq!(result, "é".to_string());
     }
 

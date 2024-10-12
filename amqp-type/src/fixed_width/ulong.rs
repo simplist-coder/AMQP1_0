@@ -20,13 +20,13 @@ impl Encode for u64 {
 
 impl Decode for u64 {
 
-    async fn try_decode(constructor: u8, mut iter: Pin<Box<impl Stream<Item=u8>>>) -> Result<Self, crate::error::AppError>
+    async fn try_decode(constructor: u8, stream: &mut Pin<Box<impl Stream<Item=u8>>>) -> Result<Self, crate::error::AppError>
         where
             Self: Sized,
     {
         match constructor {
-            UNSIGNED_LONG => Ok(parse_ulong(&mut iter).await?),
-            SMALL_UNSIGNED_LONG => Ok(parse_small_ulong(&mut iter).await?),
+            UNSIGNED_LONG => Ok(parse_ulong(stream).await?),
+            SMALL_UNSIGNED_LONG => Ok(parse_small_ulong(stream).await?),
             UNSIGNED_LONG_ZERO => Ok(0),
             c => Err(AppError::DeserializationIllegalConstructorError(c)),
         }
@@ -88,36 +88,36 @@ mod test {
     #[tokio::test]
     async fn try_decode_returns_correct_value() {
         let val = vec![0x01, 0x01, 0x11, 0x10, 0x10, 0x00, 0x00, 0x10];
-        assert_eq!(u64::try_decode(0x80, val.into_pinned_stream()).await.unwrap(), 72357829700222992);
+        assert_eq!(u64::try_decode(0x80, &mut val.into_pinned_stream()).await.unwrap(), 72357829700222992);
     }
 
     #[tokio::test]
     async fn decode_returns_error_when_value_bytes_are_invalid() {
         let val = vec![0x44];
-        assert!(u64::try_decode(0x66, val.into_pinned_stream()).await.is_err());
+        assert!(u64::try_decode(0x66, &mut val.into_pinned_stream()).await.is_err());
     }
 
     #[tokio::test]
     async fn decode_returns_error_when_bytes_are_missing() {
         let val = vec![0x00, 0x00, 0x01];
-        assert!(u64::try_decode(0x70, val.into_pinned_stream()).await.is_err());
+        assert!(u64::try_decode(0x70, &mut val.into_pinned_stream()).await.is_err());
     }
 
     #[tokio::test]
     async fn try_decode_can_decode_zero_length_value_zero() {
         let val = vec![];
-        assert_eq!(u64::try_decode(0x44, val.into_pinned_stream()).await.unwrap(), 0);
+        assert_eq!(u64::try_decode(0x44, &mut val.into_pinned_stream()).await.unwrap(), 0);
     }
 
     #[tokio::test]
     async fn try_decode_can_decode_smallulong_values() {
         let val = vec![0xff];
-        assert_eq!(u64::try_decode(0x53, val.into_pinned_stream()).await.unwrap(), 255);
+        assert_eq!(u64::try_decode(0x53, &mut val.into_pinned_stream()).await.unwrap(), 255);
     }
 
     #[tokio::test]
     async fn try_decode_returns_error_when_parsing_small_ulong_and_bytes_are_missing() {
         let val = vec![];
-        assert!(u64::try_decode(0x53, val.into_pinned_stream()).await.is_err());
+        assert!(u64::try_decode(0x53, &mut val.into_pinned_stream()).await.is_err());
     }
 }

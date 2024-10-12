@@ -16,9 +16,9 @@ impl Encode for char {
 
 impl Decode for char {
 
-    async fn try_decode(constructor: u8, mut iter: Pin<Box<impl Stream<Item=u8>>>) -> Result<Self, AppError> where Self: Sized {
+    async fn try_decode(constructor: u8, stream: &mut Pin<Box<impl Stream<Item=u8>>>) -> Result<Self, AppError> where Self: Sized {
         match constructor {
-            CHAR => Ok(parse_char(&mut iter).await?),
+            CHAR => Ok(parse_char(stream).await?),
             c => Err(AppError::DeserializationIllegalConstructorError(c)),
         }
     }
@@ -62,7 +62,7 @@ mod test {
     async fn test_successful_deserialization() {
         let value = ('A' as u32).to_be_bytes().to_vec();
 
-        match char::try_decode(CHAR, value.into_pinned_stream()).await {
+        match char::try_decode(CHAR, &mut value.into_pinned_stream()).await {
             Ok(decoded_char) => assert_eq!('A', decoded_char),
             Err(e) => panic!("Unexpected error: {:?}", e),
         }
@@ -73,7 +73,7 @@ mod test {
         let illegal_constructor = 0xFF;
         let bytes = vec![];
 
-        match char::try_decode(illegal_constructor, bytes.into_pinned_stream()).await {
+        match char::try_decode(illegal_constructor, &mut bytes.into_pinned_stream()).await {
             Ok(_) => panic!("Expected an error, but deserialization succeeded"),
             Err(AppError::DeserializationIllegalConstructorError(c)) => assert_eq!(illegal_constructor, c),
             Err(e) => panic!("Unexpected error type: {:?}", e),
@@ -84,7 +84,7 @@ mod test {
     async fn test_empty_iterator_deserialization() {
         let bytes = vec![]; // Empty vector
 
-        match char::try_decode(CHAR, bytes.into_pinned_stream()).await {
+        match char::try_decode(CHAR, &mut bytes.into_pinned_stream()).await {
             Ok(_) => panic!("Expected an error, but deserialization succeeded"),
             Err(AppError::IteratorEmptyOrTooShortError) => (), // Expected outcome
             Err(e) => panic!("Unexpected error type: {:?}", e),
@@ -95,7 +95,7 @@ mod test {
     async fn test_invalid_char_deserialization() {
         let bytes = vec![CHAR, 0xFF, 0xFF, 0xFF, 0xFF]; // Invalid Unicode sequence
 
-        match char::try_decode(CHAR, bytes.into_pinned_stream()).await {
+        match char::try_decode(CHAR, &mut bytes.into_pinned_stream()).await {
             Ok(_) => panic!("Expected an error, but deserialization succeeded"),
             Err(AppError::InvalidChar) => (), // Expected outcome
             Err(e) => panic!("Unexpected error type: {:?}", e),
