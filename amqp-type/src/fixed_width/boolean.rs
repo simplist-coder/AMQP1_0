@@ -31,10 +31,7 @@ impl Encode for bool {
 
 #[cfg(not(feature = "zero-length-encoding"))]
 impl Decode for bool {
-    async fn can_decode(data: Pin<Box<impl Stream<Item=u8>>>) -> bool
-    where
-        Self: Sized,
-    {
+    async fn can_decode(data: Pin<Box<impl Stream<Item=u8>>>) -> bool {
         match data.peekable().peek().await {
             Some(&BOOLEAN) => true,
             _ => false,

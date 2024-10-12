@@ -10,9 +10,7 @@ pub trait Decode {
     /// This function determines if an implementor can decode itself from the current position in the iterator
     /// by checking whether the next byte in the iterator is a valid constructor for this type.
     /// TODO: make this function async
-    async fn can_decode(iter: Pin<Box<impl Stream<Item=u8>>>) -> bool
-    where
-        Self: Sized;
+    async fn can_decode(iter: Pin<Box<impl Stream<Item=u8>>>) -> bool;
 
     /// Tries to decode the implementing type from the byte iterator. this advances the iterator until the
     /// type and its value are completely decoded.
