@@ -159,4 +159,11 @@ mod test {
         let res = List::try_decode(LIST, &mut bytes.into_pinned_stream()).await;
         assert!(matches!(res, Err(AppError::DeserializationIllegalConstructorError(0x99))));
     }
+
+    #[tokio::test]
+    async fn try_decode_list_returns_empty_list_on_empty_list_constructor() {
+        let bytes = vec![0x13, 0x05, 0x01];
+        let res = List::try_decode(LIST_EMPTY, &mut bytes.into_pinned_stream()).await.unwrap();
+        assert!(res.0.is_empty());
+    }
 }
