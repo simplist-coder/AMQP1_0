@@ -1,5 +1,6 @@
 use std::hash::{Hash, Hasher};
-
+use std::pin::Pin;
+use tokio_stream::{Stream, StreamExt};
 use crate::common::read_bytes_4;
 use crate::constants::constructors::DECIMAL_32;
 use crate::error::AppError;
@@ -21,24 +22,24 @@ impl Encode for Decimal32 {
 }
 
 impl Decode for Decimal32 {
-    fn can_decode(iter: impl Iterator<Item=u8>) -> bool {
-        match iter.peekable().peek() {
+    async fn can_decode(iter: Pin<Box<impl Stream<Item=u8>>>) -> bool {
+        match iter.peekable().peek().await {
             Some(&DECIMAL_32) => true,
             _ => false,
         }
     }
 
-    fn try_decode(mut iter: impl Iterator<Item=u8>) -> Result<Self, AppError> where Self: Sized {
-        match iter.next() {
-            Some(DECIMAL_32) => Ok(parse_decimal32(&mut iter)?),
+    async fn try_decode(mut iter: Pin<Box<impl Stream<Item=u8>>>) -> Result<Self, AppError> where Self: Sized {
+        match iter.next().await {
+            Some(DECIMAL_32) => Ok(parse_decimal32(&mut iter).await?),
             Some(c) => Err(AppError::DeserializationIllegalConstructorError(c)),
             None => Err(AppError::IteratorEmptyOrTooShortError),
         }
     }
 }
 
-fn parse_decimal32(iter: &mut impl Iterator<Item=u8>) -> Result<Decimal32, AppError> {
-    let byte_vals = read_bytes_4(iter)?;
+async fn parse_decimal32(iter: &mut Pin<Box<impl Stream<Item=u8>>>) -> Result<Decimal32, AppError> {
+    let byte_vals = read_bytes_4(iter).await?;
     Ok(Decimal32(f32::from_be_bytes(byte_vals)))
 }
 
@@ -65,6 +66,7 @@ impl From<f32> for Decimal32 {
 #[cfg(test)]
 mod test {
     use bytes::BufMut;
+    use crate::common::tests::ByteVecExt;
     use super::*;
 
     #[test]
@@ -90,38 +92,35 @@ mod test {
         }
     }
 
-    #[test]
-    fn test_successful_deserialization() {
+    #[tokio::test]
+    async fn test_successful_deserialization() {
         let value = 1.2345f32;
         let mut data = vec![DECIMAL_32];
         data.put_f32(value);
-        let mut iter = data.into_iter();
 
-        match Decimal32::try_decode(&mut iter) {
+        match Decimal32::try_decode(data.into_pinned_stream()).await {
             Ok(decimal) => assert_eq!(value, decimal.0),
             Err(e) => panic!("Unexpected error: {:?}", e),
         }
     }
 
-    #[test]
-    fn test_illegal_constructor_deserialization() {
+    #[tokio::test]
+    async fn test_illegal_constructor_deserialization() {
         let illegal_constructor = 0xFF;
         let bytes = vec![illegal_constructor /* other bytes */];
-        let mut iter = bytes.into_iter();
 
-        match Decimal32::try_decode(&mut iter) {
+        match Decimal32::try_decode(bytes.into_pinned_stream()).await {
             Ok(_) => panic!("Expected an error, but deserialization succeeded"),
             Err(AppError::DeserializationIllegalConstructorError(c)) => assert_eq!(illegal_constructor, c),
             Err(e) => panic!("Unexpected error type: {:?}", e),
         }
     }
 
-    #[test]
-    fn test_empty_iterator_deserialization() {
+    #[tokio::test]
+    async fn test_empty_iterator_deserialization() {
         let bytes = vec![]; // Empty vector
-        let mut iter = bytes.into_iter();
 
-        match Decimal32::try_decode(&mut iter) {
+        match Decimal32::try_decode(bytes.into_pinned_stream()).await {
             Ok(_) => panic!("Expected an error, but deserialization succeeded"),
             Err(AppError::IteratorEmptyOrTooShortError) => (), // Expected outcome
             Err(e) => panic!("Unexpected error type: {:?}", e),

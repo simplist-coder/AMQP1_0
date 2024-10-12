@@ -1,3 +1,5 @@
+use std::pin::Pin;
+use tokio_stream::{Stream, StreamExt};
 use crate::common::read_bytes_2;
 use crate::constants::constructors::SHORT;
 use crate::error::AppError;
@@ -14,32 +16,33 @@ impl Encode for i16 {
 
 
 impl Decode for i16 {
-    fn can_decode(iter: impl Iterator<Item=u8>) -> bool {
-        match iter.peekable().peek() {
+    async fn can_decode(iter: Pin<Box<impl Stream<Item=u8>>>) -> bool {
+        match iter.peekable().peek().await {
             Some(&SHORT) => true,
             _ => false,
         }
     }
 
-    fn try_decode(mut iter: impl Iterator<Item=u8>) -> Result<Self, crate::error::AppError>
+    async fn try_decode(mut iter: Pin<Box<impl Stream<Item=u8>>>) -> Result<Self, crate::error::AppError>
         where
             Self: Sized,
     {
-        match iter.next() {
-            Some(SHORT) => Ok(parse_i16(&mut iter)?),
+        match iter.next().await {
+            Some(SHORT) => Ok(parse_i16(&mut iter).await?),
             Some(c) => Err(AppError::DeserializationIllegalConstructorError(c)),
             None => Err(AppError::IteratorEmptyOrTooShortError),
         }
     }
 }
 
-fn parse_i16(iter: &mut impl Iterator<Item=u8>) -> Result<i16, AppError> {
-    let val_bytes = read_bytes_2(iter)?;
+async fn parse_i16(iter: &mut Pin<Box<impl Stream<Item=u8>>>) -> Result<i16, AppError> {
+    let val_bytes = read_bytes_2(iter).await?;
     Ok(i16::from_be_bytes(val_bytes))
 }
 
 #[cfg(test)]
 mod test {
+    use crate::common::tests::ByteVecExt;
     use super::*;
 
     #[test]
@@ -64,33 +67,33 @@ mod test {
         }
     }
 
-    #[test]
-    fn can_deocde_returns_true_if_constructor_is_valid() {
+    #[tokio::test]
+    async fn can_deocde_returns_true_if_constructor_is_valid() {
         let val = vec![0x61, 0x41];
-        assert_eq!(i16::can_decode(val.into_iter()), true);
+        assert_eq!(i16::can_decode(val.into_pinned_stream()).await, true);
     }
 
-    #[test]
-    fn can_decode_return_false_if_constructor_is_invalid() {
+    #[tokio::test]
+    async fn can_decode_return_false_if_constructor_is_invalid() {
         let val = vec![0x60];
-        assert_eq!(i16::can_decode(val.into_iter()), false);
+        assert_eq!(i16::can_decode(val.into_pinned_stream()).await, false);
     }
 
-    #[test]
-    fn try_decode_returns_correct_value() {
+    #[tokio::test]
+    async fn try_decode_returns_correct_value() {
         let val = vec![0x61, 0x00, 0x10];
-        assert_eq!(i16::try_decode(val.into_iter()).unwrap(), 16)
+        assert_eq!(i16::try_decode(val.into_pinned_stream()).await.unwrap(), 16)
     }
 
-    #[test]
-    fn decode_returns_error_when_value_bytes_are_invalid() {
+    #[tokio::test]
+    async fn decode_returns_error_when_value_bytes_are_invalid() {
         let val = vec![0x56, 0x44];
-        assert!(i16::try_decode(val.into_iter()).is_err());
+        assert!(i16::try_decode(val.into_pinned_stream()).await.is_err());
     }
 
-    #[test]
-    fn decode_returns_error_when_bytes_are_missing() {
+    #[tokio::test]
+    async fn decode_returns_error_when_bytes_are_missing() {
         let val = vec![0x61, 0x01];
-        assert!(i16::try_decode(val.into_iter()).is_err());
+        assert!(i16::try_decode(val.into_pinned_stream()).await.is_err());
     }
 }

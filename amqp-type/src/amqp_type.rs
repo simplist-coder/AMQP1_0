@@ -15,8 +15,6 @@ use crate::serde::encode::{Encode, Encoded};
 use crate::variable_width::binary::Binary;
 use crate::variable_width::symbol::Symbol;
 
-pub trait Hashable: Hash {}
-
 #[derive(Hash, Eq, PartialEq)]
 pub enum AmqpType {
     Null,

@@ -1,3 +1,5 @@
+use std::pin::Pin;
+use tokio_stream::{Stream, StreamExt};
 use crate::constants::constructors::UNSIGNED_BYTE;
 use crate::error::AppError;
 use crate::serde::decode::Decode;
@@ -12,20 +14,19 @@ impl Encode for u8 {
 }
 
 impl Decode for u8 {
-    fn can_decode(data: impl Iterator<Item=u8>) -> bool {
-        let mut iter = data.into_iter().peekable();
-        match iter.peek() {
+    async fn can_decode(data: Pin<Box<impl Stream<Item=u8>>>) -> bool {
+        match data.peekable().peek().await {
             Some(&UNSIGNED_BYTE) => true,
             _ => false,
         }
     }
 
-    fn try_decode(mut iter: impl Iterator<Item=u8>) -> Result<Self, crate::error::AppError>
+    async fn try_decode(mut iter: Pin<Box<impl Stream<Item=u8>>>) -> Result<Self, crate::error::AppError>
         where
             Self: Sized,
     {
-        let con = iter.next();
-        let val = iter.next();
+        let con = iter.next().await;
+        let val = iter.next().await;
         match (con, val) {
             (Some(UNSIGNED_BYTE), Some(x)) => Ok(x),
             (Some(c), _) => Err(AppError::DeserializationIllegalConstructorError(c)),
@@ -36,6 +37,7 @@ impl Decode for u8 {
 
 #[cfg(test)]
 mod test {
+    use crate::common::tests::ByteVecExt;
     use super::*;
 
     #[test]
@@ -59,21 +61,21 @@ mod test {
         }
     }
 
-    #[test]
-    fn can_deocde_returns_true_if_constructor_is_valid() {
+    #[tokio::test]
+    async fn can_deocde_returns_true_if_constructor_is_valid() {
         let val = vec![0x50, 0x41];
-        assert_eq!(u8::can_decode(val.into_iter()), true);
+        assert_eq!(u8::can_decode(val.into_pinned_stream()).await, true);
     }
 
-    #[test]
-    fn can_decode_return_false_if_constructor_is_invalid() {
+    #[tokio::test]
+    async fn can_decode_return_false_if_constructor_is_invalid() {
         let val = vec![0x51];
-        assert_eq!(u8::can_decode(val.into_iter()), false);
+        assert_eq!(u8::can_decode(val.into_pinned_stream()).await, false);
     }
 
-    #[test]
-    fn try_decode_returns_correct_value() {
+    #[tokio::test]
+    async fn try_decode_returns_correct_value() {
         let val = vec![0x50, 0x10];
-        assert_eq!(u8::try_decode(val.into_iter()).unwrap(), 16)
+        assert_eq!(u8::try_decode(val.into_pinned_stream()).await.unwrap(), 16)
     }
 }

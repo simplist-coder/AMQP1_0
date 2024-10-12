@@ -1,13 +1,15 @@
-#[cfg(feature = "zero-length-bools")]
-use crate::constants::constructors::BOOLEAN_FALSE;
-#[cfg(feature = "zero-length-bools")]
-use crate::constants::constructors::BOOLEAN_TRUE;
 use crate::constants::constructors::BOOLEAN;
+#[cfg(feature = "zero-length-encoding")]
+use crate::constants::constructors::BOOLEAN_FALSE;
+#[cfg(feature = "zero-length-encoding")]
+use crate::constants::constructors::BOOLEAN_TRUE;
 use crate::error::AppError;
 use crate::serde::decode::Decode;
 use crate::serde::encode::{Encode, Encoded};
+use std::pin::Pin;
+use tokio_stream::{Stream, StreamExt};
 
-#[cfg(not(feature = "zero-length-bools"))]
+#[cfg(not(feature = "zero-length-encoding"))]
 impl Encode for bool {
     fn encode(&self) -> Encoded {
         match self {
@@ -17,7 +19,7 @@ impl Encode for bool {
     }
 }
 
-#[cfg(feature = "zero-length-bools")]
+#[cfg(feature = "zero-length-encoding")]
 impl Encode for bool {
     fn encode(&self) -> Encoded {
         match self {
@@ -27,22 +29,25 @@ impl Encode for bool {
     }
 }
 
-#[cfg(not(feature = "zero-length-bools"))]
+#[cfg(not(feature = "zero-length-encoding"))]
 impl Decode for bool {
-    fn can_decode(data: impl Iterator<Item=u8>) -> bool {
-        let mut iter = data.into_iter().peekable();
-        match iter.peek() {
+    async fn can_decode(data: Pin<Box<impl Stream<Item=u8>>>) -> bool
+    where
+        Self: Sized,
+    {
+        match data.peekable().peek().await {
             Some(&BOOLEAN) => true,
             _ => false,
         }
     }
 
-    fn try_decode(mut iter: impl Iterator<Item=u8>) -> Result<Self, AppError>
-        where
-            Self: Sized,
+    async fn try_decode(iter: Pin<Box<impl Stream<Item=u8>>>) -> Result<Self, AppError>
+    where
+        Self: Sized,
     {
-        let con = iter.next();
-        let val = iter.next();
+        let mut iter = Box::pin(iter);
+        let con = iter.next().await;
+        let val = iter.next().await;
         match (con, val) {
             (Some(c), Some(v)) if c == BOOLEAN && v == 0x00 => Ok(false),
             (Some(c), Some(v)) if c == BOOLEAN && v == 0x01 => Ok(true),
@@ -52,7 +57,7 @@ impl Decode for bool {
     }
 }
 
-#[cfg(feature = "zero-length-bools")]
+#[cfg(feature = "zero-length-encoding")]
 impl Decode for bool {
     fn can_decode(data: Iterator<Item=u8>) -> bool {
         let mut iter = data.into_iter().peekable();
@@ -64,8 +69,8 @@ impl Decode for bool {
     }
 
     fn try_decode(data: Iterator<Item=u8>) -> Result<Self, AppError>
-        where
-            Self: Sized,
+    where
+        Self: Sized,
     {
         if let Some(val) = iter.next() {
             return match val {
@@ -81,64 +86,65 @@ impl Decode for bool {
 #[cfg(test)]
 mod test {
     use super::*;
+    use crate::common::tests::ByteVecExt;
 
     #[test]
-    #[cfg(not(feature = "zero-length-bools"))]
+    #[cfg(not(feature = "zero-length-encoding"))]
     fn construct_bool() {
         assert_eq!(true.encode().constructor(), 0x56);
     }
 
     #[test]
-    #[cfg(not(feature = "zero-length-bools"))]
+    #[cfg(not(feature = "zero-length-encoding"))]
     fn bool_gets_encoded_correctly() {
         assert_eq!(true.encode().to_bytes(), vec![0x56, 0x01]);
         assert_eq!(false.encode().to_bytes(), vec![0x56, 0x00]);
     }
 
-    #[test]
-    #[cfg(not(feature = "zero-length-bools"))]
-    fn can_decode_returns_true_if_constructor_is_valid() {
+    #[tokio::test]
+    #[cfg(not(feature = "zero-length-encoding"))]
+    async fn can_decode_returns_true_if_constructor_is_valid() {
         let val_true = vec![0x56, 0x01];
         let val_false = vec![0x56, 0x00];
-        assert_eq!(bool::can_decode(val_true.into_iter()), true);
-        assert_eq!(bool::can_decode(val_false.into_iter()), true);
+        assert_eq!(bool::can_decode(val_true.into_pinned_stream()).await, true);
+        assert_eq!(bool::can_decode(val_false.into_pinned_stream()).await, true);
     }
 
-    #[test]
-    #[cfg(not(feature = "zero-length-bools"))]
-    fn can_decode_returns_false_if_constructor_invalid() {
+    #[tokio::test]
+    #[cfg(not(feature = "zero-length-encoding"))]
+    async fn can_decode_returns_false_if_constructor_invalid() {
         let val_true = vec![0x88, 0x01];
         let val_false = vec![0x97, 0x00];
-        assert_eq!(bool::can_decode(val_true.into_iter()), false);
-        assert_eq!(bool::can_decode(val_false.into_iter()), false);
+        assert_eq!(bool::can_decode(val_true.into_pinned_stream()).await, false);
+        assert_eq!(bool::can_decode(val_false.into_pinned_stream()).await, false);
     }
 
-    #[test]
-    #[cfg(not(feature = "zero-length-bools"))]
-    fn decode_returns_error_when_value_bytes_are_invalid() {
+    #[tokio::test]
+    #[cfg(not(feature = "zero-length-encoding"))]
+    async fn decode_returns_error_when_value_bytes_are_invalid() {
         let val_true = vec![0x56, 0x34];
         let val_false = vec![0x56, 0x44];
-        assert!(bool::try_decode(val_true.into_iter()).is_err());
-        assert!(bool::try_decode(val_false.into_iter()).is_err());
+        assert!(bool::try_decode(val_true.into_pinned_stream()).await.is_err());
+        assert!(bool::try_decode(val_false.into_pinned_stream()).await.is_err());
     }
 
-    #[test]
-    #[cfg(not(feature = "zero-length-bools"))]
-    fn try_decode_returns_correct_value_if_bytes_are_valid() {
+    #[tokio::test]
+    #[cfg(not(feature = "zero-length-encoding"))]
+    async fn try_decode_returns_correct_value_if_bytes_are_valid() {
         let val_true = vec![0x56, 0x01];
         let val_false = vec![0x56, 0x00];
-        assert_eq!(bool::try_decode(val_true.into_iter()).unwrap(), true);
-        assert_eq!(bool::try_decode(val_false.into_iter()).unwrap(), false);
+        assert_eq!(bool::try_decode(val_true.into_pinned_stream()).await.unwrap(), true);
+        assert_eq!(bool::try_decode(val_false.into_pinned_stream()).await.unwrap(), false);
     }
 
     #[test]
-    #[cfg(feature = "zero-length-bools")]
+    #[cfg(feature = "zero-length-encoding")]
     fn amqp_type_constructs_bool_false_as_zero_length() {
         assert_eq!(false.encode().constructor(), 0x42);
     }
 
     #[test]
-    #[cfg(feature = "zero-length-bools")]
+    #[cfg(feature = "zero-length-encoding")]
     fn amqp_type_constructs_bool_true_as_zero_length() {
         assert_eq!(true.encode().constructor(), 0x41)
     }

@@ -1,3 +1,5 @@
+use std::pin::Pin;
+use tokio_stream::{Stream, StreamExt};
 use crate::common::read_bytes_16;
 use crate::constants::constructors::UUID;
 use crate::error::AppError;
@@ -15,29 +17,30 @@ impl Encode for Uuid {
 }
 
 impl Decode for Uuid {
-    fn can_decode(iter: impl Iterator<Item=u8>) -> bool {
-        match iter.peekable().peek() {
+    async fn can_decode(iter: Pin<Box<impl Stream<Item=u8>>>) -> bool {
+        match iter.peekable().peek().await {
             Some(&UUID) => true,
             _ => false,
         }
     }
 
-    fn try_decode(mut iter: impl Iterator<Item=u8>) -> Result<Self, AppError> where Self: Sized {
-        match iter.next() {
-            Some(UUID) => Ok(parse_uuid(&mut iter)?),
+    async fn try_decode(mut iter: Pin<Box<impl Stream<Item=u8>>>) -> Result<Self, AppError> where Self: Sized {
+        match iter.next().await {
+            Some(UUID) => Ok(parse_uuid(&mut iter).await?),
             Some(c) => Err(AppError::DeserializationIllegalConstructorError(c)),
             None => Err(AppError::IteratorEmptyOrTooShortError),
         }
     }
 }
 
-fn parse_uuid(iter: &mut impl Iterator<Item=u8>) -> Result<Uuid, AppError> {
-    let byte_vals = read_bytes_16(iter)?;
+async fn parse_uuid(iter: &mut Pin<Box<impl Stream<Item=u8>>>) -> Result<Uuid, AppError> {
+    let byte_vals = read_bytes_16(iter).await?;
     Ok(Uuid(uuid::Uuid::from_bytes(byte_vals)))
 }
 
 #[cfg(test)]
 mod test {
+    use crate::common::tests::ByteVecExt;
     use crate::constants::constructors::UUID;
     use super::*;
 
@@ -58,37 +61,36 @@ mod test {
         assert_eq!(encoded.to_bytes(), expected_bytes);
     }
 
-    #[test]
-    fn test_decode_success() {
+    #[tokio::test]
+    async fn test_decode_success() {
         let uuid = uuid::Uuid::new_v4();
-        let bytes = uuid.into_bytes();
-        let mut iter = std::iter::once(UUID).chain(bytes.iter().cloned());
-        let decoded = Uuid::try_decode(&mut iter);
+        let mut bytes = vec![UUID];
+        bytes.extend(uuid.into_bytes().to_vec());
+        let decoded = Uuid::try_decode(bytes.into_pinned_stream()).await;
         assert!(decoded.is_ok());
         assert_eq!(decoded.unwrap().0, uuid)
     }
 
-    #[test]
-    fn test_decode_incorrect_constructor() {
-        let uuid_bytes = uuid::Uuid::new_v4().into_bytes();
-        let incorrect_constructor = 0x99;
-        let mut iter = std::iter::once(incorrect_constructor).chain(uuid_bytes.iter().cloned());
-        let decoded = Uuid::try_decode(&mut iter);
+    #[tokio::test]
+    async fn test_decode_incorrect_constructor() {
+        let uuid = uuid::Uuid::new_v4().into_bytes();
+        let mut bytes = vec![0x99];
+        bytes.extend(uuid.to_vec());
+        let decoded = Uuid::try_decode(bytes.into_pinned_stream()).await;
         assert!(matches!(decoded, Err(AppError::DeserializationIllegalConstructorError(_))));
     }
 
-    #[test]
-    fn test_decode_short_byte_sequence() {
+    #[tokio::test]
+    async fn test_decode_short_byte_sequence() {
         let short_bytes = vec![UUID];  // Not enough bytes for a UUID
-        let mut iter = short_bytes.into_iter();
-        let decoded = Uuid::try_decode(&mut iter);
+        let decoded = Uuid::try_decode(short_bytes.into_pinned_stream()).await;
         assert!(matches!(decoded, Err(AppError::IteratorEmptyOrTooShortError)));
     }
 
-    #[test]
-    fn test_decode_empty_iterator() {
-        let mut iter = std::iter::empty();
-        let decoded = Uuid::try_decode(&mut iter);
+    #[tokio::test]
+    async fn test_decode_empty_iterator() {
+        let val = vec![];
+        let decoded = Uuid::try_decode(val.into_pinned_stream()).await;
         assert!(matches!(decoded, Err(AppError::IteratorEmptyOrTooShortError)));
     }
 }

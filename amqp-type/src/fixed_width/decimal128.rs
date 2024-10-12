@@ -1,5 +1,6 @@
+use std::pin::Pin;
 use bigdecimal::BigDecimal;
-
+use tokio_stream::Stream;
 use crate::error::AppError;
 use crate::serde::decode::Decode;
 use crate::serde::encode::{Encode, Encoded};
@@ -21,11 +22,11 @@ impl Encode for Decimal128 {
 }
 
 impl Decode for Decimal128 {
-    fn can_decode(_iter: impl Iterator<Item=u8>) -> bool {
+    async fn can_decode(_iter: Pin<Box<impl Stream<Item=u8>>>) -> bool {
         false // Not implemented yet
     }
 
-    fn try_decode(_iter: impl Iterator<Item=u8>) -> Result<Self, AppError> where Self: Sized {
+    async fn try_decode(_iter: Pin<Box<impl Stream<Item=u8>>>) -> Result<Self, AppError> where Self: Sized {
         todo!("Decimal128  type is not implemented yet")
     }
 }

@@ -1,5 +1,6 @@
 use std::hash::{Hash, Hasher};
-
+use std::pin::Pin;
+use tokio_stream::{Stream, StreamExt};
 use crate::common::read_bytes_8;
 use crate::constants::constructors::DECIMAL_64;
 use crate::error::AppError;
@@ -21,24 +22,24 @@ impl Encode for Decimal64 {
 }
 
 impl Decode for Decimal64 {
-    fn can_decode(iter: impl Iterator<Item=u8>) -> bool {
-        match iter.peekable().peek() {
+    async fn can_decode(iter: Pin<Box<impl Stream<Item=u8>>>) -> bool {
+        match iter.peekable().peek().await {
             Some(&DECIMAL_64) => true,
             _ => false,
         }
     }
 
-    fn try_decode(mut iter: impl Iterator<Item=u8>) -> Result<Self, AppError> where Self: Sized {
-        match iter.next() {
-            Some(DECIMAL_64) => Ok(parse_decimal64(&mut iter)?),
+    async fn try_decode(mut iter: Pin<Box<impl Stream<Item=u8>>>) -> Result<Self, AppError> where Self: Sized {
+        match iter.next().await {
+            Some(DECIMAL_64) => Ok(parse_decimal64(&mut iter).await?),
             Some(c) => Err(AppError::DeserializationIllegalConstructorError(c)),
             None => Err(AppError::IteratorEmptyOrTooShortError),
         }
     }
 }
 
-fn parse_decimal64(iter: &mut impl Iterator<Item=u8>) -> Result<Decimal64, AppError> {
-    let byte_vals = read_bytes_8(iter)?;
+async fn parse_decimal64(iter: &mut Pin<Box<impl Stream<Item=u8>>>) -> Result<Decimal64, AppError> {
+    let byte_vals = read_bytes_8(iter).await?;
     Ok(Decimal64(f64::from_be_bytes(byte_vals)))
 }
 
@@ -64,6 +65,7 @@ impl Hash for Decimal64 {
 
 #[cfg(test)]
 mod test {
+    use crate::common::tests::ByteVecExt;
     use super::*;
 
     #[test]
@@ -89,38 +91,35 @@ mod test {
         }
     }
 
-    #[test]
-    fn test_successful_deserialization() {
+    #[tokio::test]
+    async fn test_successful_deserialization() {
         let value = 1.2345f64;
         let mut data = vec![DECIMAL_64];
         data.append(&mut value.to_be_bytes().to_vec()); // Put an f64 into the buffer
-        let mut iter = data.into_iter();
 
-        match Decimal64::try_decode(&mut iter) {
+        match Decimal64::try_decode(data.into_pinned_stream()).await {
             Ok(decimal) => assert_eq!(value, decimal.0),
             Err(e) => panic!("Unexpected error: {:?}", e),
         }
     }
 
-    #[test]
-    fn test_illegal_constructor_deserialization() {
+    #[tokio::test]
+    async fn test_illegal_constructor_deserialization() {
         let illegal_constructor = 0xFF; // Assuming this is not DECIMAL_64
         let bytes = vec![illegal_constructor /* other bytes */];
-        let mut iter = bytes.into_iter();
 
-        match Decimal64::try_decode(&mut iter) {
+        match Decimal64::try_decode(bytes.into_pinned_stream()).await {
             Ok(_) => panic!("Expected an error, but deserialization succeeded"),
             Err(AppError::DeserializationIllegalConstructorError(c)) => assert_eq!(illegal_constructor, c),
             Err(e) => panic!("Unexpected error type: {:?}", e),
         }
     }
 
-    #[test]
-    fn test_empty_iterator_deserialization() {
+    #[tokio::test]
+    async fn test_empty_iterator_deserialization() {
         let bytes = vec![]; // Empty vector
-        let mut iter = bytes.into_iter();
 
-        match Decimal64::try_decode(&mut iter) {
+        match Decimal64::try_decode(bytes.into_pinned_stream()).await {
             Ok(_) => panic!("Expected an error, but deserialization succeeded"),
             Err(AppError::IteratorEmptyOrTooShortError) => (), // Expected outcome
             Err(e) => panic!("Unexpected error type: {:?}", e),
