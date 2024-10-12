@@ -33,39 +33,24 @@ impl Encode for bool {
 
 #[cfg(not(feature = "zero-length-encoding"))]
 impl Decode for bool {
-    async fn can_decode(data: Pin<Box<impl Stream<Item=u8>>>) -> bool {
-        match data.peekable().peek().await {
-            Some(&BOOLEAN) => true,
-            _ => false,
-        }
-    }
 
-    async fn try_decode(mut iter: Pin<Box<impl Stream<Item=u8>>>) -> Result<Self, AppError>
+    async fn try_decode(constructor: u8, mut iter: Pin<Box<impl Stream<Item=u8>>>) -> Result<Self, AppError>
     where
         Self: Sized,
     {
-        let con = iter.next().await;
         let val = iter.next().await;
-        match (con, val) {
-            (Some(c), Some(v)) if c == BOOLEAN && v == 0x00 => Ok(false),
-            (Some(c), Some(v)) if c == BOOLEAN && v == 0x01 => Ok(true),
-            (Some(c), _) => Err(AppError::DeserializationIllegalConstructorError(c)),
-            (None, _) => Err(AppError::IteratorEmptyOrTooShortError),
+        match (constructor, val) {
+            (BOOLEAN, Some(v)) if v == 0x00 => Ok(false),
+            (BOOLEAN, Some(v)) if v == 0x01 => Ok(true),
+            (c, _) => Err(AppError::DeserializationIllegalConstructorError(c)),
         }
     }
 }
 
 #[cfg(feature = "zero-length-encoding")]
 impl Decode for bool {
-    async fn can_decode(data: Pin<Box<impl Stream<Item=u8>>>) -> bool {
-        match data.peekable().peek().await {
-            Some(&BOOLEAN_TRUE) => true,
-            Some(&BOOLEAN_FALSE) => true,
-            _ => false,
-        }
-    }
 
-    async fn try_decode(mut data: Pin<Box<impl Stream<Item=u8>>>) -> Result<Self, AppError>
+    async fn try_decode(constructor: u8, mut data: Pin<Box<impl Stream<Item=u8>>>) -> Result<Self, AppError>
     where
         Self: Sized,
     {
@@ -96,40 +81,24 @@ mod test {
         assert_eq!(false.encode().to_bytes(), vec![0x56, 0x00]);
     }
 
-    #[tokio::test]
-    #[cfg(not(feature = "zero-length-encoding"))]
-    async fn can_decode_returns_true_if_constructor_is_valid() {
-        let val_true = vec![0x56, 0x01];
-        let val_false = vec![0x56, 0x00];
-        assert_eq!(bool::can_decode(val_true.into_pinned_stream()).await, true);
-        assert_eq!(bool::can_decode(val_false.into_pinned_stream()).await, true);
-    }
 
-    #[tokio::test]
-    #[cfg(not(feature = "zero-length-encoding"))]
-    async fn can_decode_returns_false_if_constructor_invalid() {
-        let val_true = vec![0x88, 0x01];
-        let val_false = vec![0x97, 0x00];
-        assert_eq!(bool::can_decode(val_true.into_pinned_stream()).await, false);
-        assert_eq!(bool::can_decode(val_false.into_pinned_stream()).await, false);
-    }
 
     #[tokio::test]
     #[cfg(not(feature = "zero-length-encoding"))]
     async fn decode_returns_error_when_value_bytes_are_invalid() {
-        let val_true = vec![0x56, 0x34];
-        let val_false = vec![0x56, 0x44];
-        assert!(bool::try_decode(val_true.into_pinned_stream()).await.is_err());
-        assert!(bool::try_decode(val_false.into_pinned_stream()).await.is_err());
+        let val_true = vec![0x34];
+        let val_false = vec![0x44];
+        assert!(bool::try_decode(0x56, val_true.into_pinned_stream()).await.is_err());
+        assert!(bool::try_decode(0x56, val_false.into_pinned_stream()).await.is_err());
     }
 
     #[tokio::test]
     #[cfg(not(feature = "zero-length-encoding"))]
     async fn try_decode_returns_correct_value_if_bytes_are_valid() {
-        let val_true = vec![0x56, 0x01];
-        let val_false = vec![0x56, 0x00];
-        assert_eq!(bool::try_decode(val_true.into_pinned_stream()).await.unwrap(), true);
-        assert_eq!(bool::try_decode(val_false.into_pinned_stream()).await.unwrap(), false);
+        let val_true = vec![0x01];
+        let val_false = vec![0x00];
+        assert_eq!(bool::try_decode(0x56,val_true.into_pinned_stream()).await.unwrap(), true);
+        assert_eq!(bool::try_decode(0x56,val_false.into_pinned_stream()).await.unwrap(), false);
     }
 
     #[test]
@@ -144,23 +113,7 @@ mod test {
         assert_eq!(true.encode().constructor(), 0x41)
     }
 
-    #[tokio::test]
-    #[cfg(feature = "zero-length-encoding")]
-    async fn can_decode_returns_true_if_constructor_is_valid() {
-        let val_true = vec![0x41];
-        let val_false = vec![0x42];
-        assert_eq!(bool::can_decode(val_true.into_pinned_stream()).await, true);
-        assert_eq!(bool::can_decode(val_false.into_pinned_stream()).await, true);
-    }
 
-    #[tokio::test]
-    #[cfg(feature = "zero-length-encoding")]
-    async fn can_decode_returns_false_if_constructor_invalid() {
-        let val_true = vec![0x88];
-        let val_false = vec![0x97];
-        assert_eq!(bool::can_decode(val_true.into_pinned_stream()).await, false);
-        assert_eq!(bool::can_decode(val_false.into_pinned_stream()).await, false);
-    }
 
     #[tokio::test]
     #[cfg(feature = "zero-length-encoding")]

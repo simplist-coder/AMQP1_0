@@ -77,50 +77,47 @@ impl Encode for AmqpType {
     }
 }
 
-impl Decode for AmqpType {
-    async fn can_decode(_iter: Pin<Box<impl Stream<Item=u8>>>) -> bool {
-        true
-    }
-
-    async fn try_decode(mut stream: Pin<Box<impl Stream<Item=u8>>>) -> Result<Self, AppError>
+impl AmqpType {
+    #[allow(dead_code)]
+    pub async fn try_decode(mut stream: Pin<Box<impl Stream<Item=u8>>>) -> Result<Self, AppError>
     where
         Self: Sized,
     {
         match stream.next().await {
             None => Err(AppError::IteratorEmptyOrTooShortError),
             Some(NULL) => Ok(Self::Null),
-            Some(BOOLEAN) => Ok(bool::try_decode(stream).await?.into()),
-            Some(BYTE) => Ok(i8::try_decode(stream).await?.into()),
-            Some(CHAR) => Ok(char::try_decode(stream).await?.into()),
-            Some(DECIMAL_32) => Ok(Decimal32::try_decode(stream).await?.into()),
-            Some(DECIMAL_64) => Ok(Decimal64::try_decode(stream).await?.into()),
-            Some(DOUBLE) => Ok(Double::try_decode(stream).await?.into()),
-            Some(FLOAT) => Ok(Float::try_decode(stream).await?.into()),
-            Some(INTEGER) => Ok(i32::try_decode(stream).await?.into()),
-            Some(SMALL_INTEGER) => Ok(i32::try_decode(stream).await?.into()),
-            Some(LONG) => Ok(i64::try_decode(stream).await?.into()),
-            Some(SMALL_LONG) => Ok(i64::try_decode(stream).await?.into()),
-            Some(SHORT) => Ok(i16::try_decode(stream).await?.into()),
-            Some(TIMESTAMP) => Ok(Timestamp::try_decode(stream).await?.into()),
-            Some(UNSIGNED_BYTE) => Ok(u8::try_decode(stream).await?.into()),
-            Some(UNSIGNED_INTEGER) => Ok(u32::try_decode(stream).await?.into()),
-            Some(SMALL_UNSIGNED_INTEGER) => Ok(u32::try_decode(stream).await?.into()),
-            Some(UNSIGNED_INTEGER_ZERO) => Ok(u32::try_decode(stream).await?.into()),
-            Some(UNSIGNED_LONG) => Ok(u64::try_decode(stream).await?.into()),
-            Some(SMALL_UNSIGNED_LONG) => Ok(u64::try_decode(stream).await?.into()),
-            Some(UNSIGNED_LONG_ZERO) => Ok(u64::try_decode(stream).await?.into()),
-            Some(UNSIGNED_SHORT) => Ok(u16::try_decode(stream).await?.into()),
-            Some(UUID) => Ok(Uuid::try_decode(stream).await?.into()),
-            Some(ARRAY_SHORT) => Ok(Array::try_decode(stream).await?.into()),
-            Some(ARRAY) => Ok(Array::try_decode(stream).await?.into()),
-            Some(LIST_SHORT) => Ok(List::try_decode(stream).await?.into()),
-            Some(LIST) => Ok(List::try_decode(stream).await?.into()),
-            Some(MAP_SHORT) => Ok(Map::try_decode(stream).await?.into()),
-            Some(MAP) => Ok(Map::try_decode(stream).await?.into()),
-            Some(BINARY_SHORT) => Ok(Binary::try_decode(stream).await?.into()),
-            Some(BINARY) => Ok(Binary::try_decode(stream).await?.into()),
-            Some(STRING_SHORT) => Ok(String::try_decode(stream).await?.into()),
-            Some(STRING) => Ok(String::try_decode(stream).await?.into()),
+            Some(BOOLEAN) => Ok(bool::try_decode(BOOLEAN, stream).await?.into()),
+            Some(BYTE) => Ok(i8::try_decode(BYTE, stream).await?.into()),
+            Some(CHAR) => Ok(char::try_decode(CHAR, stream).await?.into()),
+            Some(DECIMAL_32) => Ok(Decimal32::try_decode(DECIMAL_32, stream).await?.into()),
+            Some(DECIMAL_64) => Ok(Decimal64::try_decode(DECIMAL_64, stream).await?.into()),
+            Some(DOUBLE) => Ok(Double::try_decode(DOUBLE, stream).await?.into()),
+            Some(FLOAT) => Ok(Float::try_decode(FLOAT, stream).await?.into()),
+            Some(INTEGER) => Ok(i32::try_decode(INTEGER, stream).await?.into()),
+            Some(SMALL_INTEGER) => Ok(i32::try_decode(SMALL_INTEGER, stream).await?.into()),
+            Some(LONG) => Ok(i64::try_decode(LONG, stream).await?.into()),
+            Some(SMALL_LONG) => Ok(i64::try_decode(SMALL_LONG, stream).await?.into()),
+            Some(SHORT) => Ok(i16::try_decode(SHORT, stream).await?.into()),
+            Some(TIMESTAMP) => Ok(Timestamp::try_decode(TIMESTAMP, stream).await?.into()),
+            Some(UNSIGNED_BYTE) => Ok(u8::try_decode(UNSIGNED_BYTE, stream).await?.into()),
+            Some(UNSIGNED_INTEGER) => Ok(u32::try_decode(UNSIGNED_INTEGER, stream).await?.into()),
+            Some(SMALL_UNSIGNED_INTEGER) => Ok(u32::try_decode(SMALL_UNSIGNED_INTEGER, stream).await?.into()),
+            Some(UNSIGNED_INTEGER_ZERO) => Ok(u32::try_decode(UNSIGNED_INTEGER_ZERO, stream).await?.into()),
+            Some(UNSIGNED_LONG) => Ok(u64::try_decode(UNSIGNED_LONG, stream).await?.into()),
+            Some(SMALL_UNSIGNED_LONG) => Ok(u64::try_decode(SMALL_UNSIGNED_LONG, stream).await?.into()),
+            Some(UNSIGNED_LONG_ZERO) => Ok(u64::try_decode(UNSIGNED_LONG_ZERO, stream).await?.into()),
+            Some(UNSIGNED_SHORT) => Ok(u16::try_decode(UNSIGNED_SHORT, stream).await?.into()),
+            Some(UUID) => Ok(Uuid::try_decode(UUID, stream).await?.into()),
+            Some(ARRAY_SHORT) => Ok(Array::try_decode(ARRAY_SHORT, stream).await?.into()),
+            Some(ARRAY) => Ok(Array::try_decode(ARRAY, stream).await?.into()),
+            Some(LIST_SHORT) => Ok(List::try_decode(LIST_SHORT, stream).await?.into()),
+            Some(LIST) => Ok(List::try_decode(LIST, stream).await?.into()),
+            Some(MAP_SHORT) => Ok(Map::try_decode(MAP_SHORT, stream).await?.into()),
+            Some(MAP) => Ok(Map::try_decode(MAP, stream).await?.into()),
+            Some(BINARY_SHORT) => Ok(Binary::try_decode(BINARY_SHORT, stream).await?.into()),
+            Some(BINARY) => Ok(Binary::try_decode(BINARY, stream).await?.into()),
+            Some(STRING_SHORT) => Ok(String::try_decode(STRING_SHORT, stream).await?.into()),
+            Some(STRING) => Ok(String::try_decode(STRING, stream).await?.into()),
             #[cfg(feature = "zero-length-encoding")]
             Some(&BOOLEAN_TRUE) => Ok(Self::Boolean(true)),
             #[cfg(feature = "zero-length-encoding")]

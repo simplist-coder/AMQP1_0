@@ -20,20 +20,12 @@ impl Encode for Binary {
 }
 
 impl Decode for Binary {
-    async fn can_decode(iter: Pin<Box<impl Stream<Item=u8>>>) -> bool {
-        match iter.peekable().peek().await {
-            Some(&BINARY_SHORT) => true,
-            Some(&BINARY) => true,
-            _ => false,
-        }
-    }
 
-    async fn try_decode(mut iter: Pin<Box<impl Stream<Item=u8>>>) -> Result<Self, AppError> where Self: Sized {
-        match iter.next().await {
-            Some(BINARY_SHORT) => Ok(parse_small_binary(&mut iter).await?),
-            Some(BINARY) => Ok(parse_large_binary(&mut iter).await?),
-            Some(illegal) => Err(AppError::DeserializationIllegalConstructorError(illegal)),
-            None => Err(AppError::IteratorEmptyOrTooShortError),
+    async fn try_decode(constructor: u8, mut iter: Pin<Box<impl Stream<Item=u8>>>) -> Result<Self, AppError> where Self: Sized {
+        match constructor {
+            BINARY_SHORT => Ok(parse_small_binary(&mut iter).await?),
+            BINARY => Ok(parse_large_binary(&mut iter).await?),
+            illegal => Err(AppError::DeserializationIllegalConstructorError(illegal)),
         }
     }
 }
@@ -97,8 +89,8 @@ mod test {
 
     #[tokio::test]
     async fn test_decode_small_binary() {
-        let data = vec![BINARY_SHORT, 3, 0x01, 0x02, 0x03];
-        let result = Binary::try_decode(data.into_pinned_stream()).await.unwrap();
+        let data = vec![3, 0x01, 0x02, 0x03];
+        let result = Binary::try_decode(BINARY_SHORT, data.into_pinned_stream()).await.unwrap();
         assert_eq!(result.0, vec![0x01, 0x02, 0x03]);
     }
 
@@ -106,28 +98,27 @@ mod test {
     async fn test_decode_large_binary() {
         let size_bytes = (4u32).to_be_bytes();
         let data = vec![
-            BINARY,
             size_bytes[0],
             size_bytes[1],
             size_bytes[2],
             size_bytes[3],
             0x01, 0x02, 0x03, 0x04
         ];
-        let result = Binary::try_decode(data.into_pinned_stream()).await.unwrap();
+        let result = Binary::try_decode(BINARY, data.into_pinned_stream()).await.unwrap();
         assert_eq!(result.0, vec![0x01, 0x02, 0x03, 0x04]);
     }
 
     #[tokio::test]
     async fn test_illegal_constructor() {
-        let data = vec![0xFF, 3, 0x01, 0x02, 0x03];
-        let result = Binary::try_decode(data.into_pinned_stream()).await;
+        let data = vec![3, 0x01, 0x02, 0x03];
+        let result = Binary::try_decode(0xFF, data.into_pinned_stream()).await;
         assert!(matches!(result, Err(AppError::DeserializationIllegalConstructorError(0xFF))));
     }
 
     #[tokio::test]
     async fn test_iterator_empty_or_too_short() {
         let data: Vec<u8> = vec![];
-        let result = Binary::try_decode(data.into_pinned_stream()).await;
+        let result = Binary::try_decode(BINARY_SHORT, data.into_pinned_stream()).await;
         assert!(matches!(result, Err(AppError::IteratorEmptyOrTooShortError)));
     }
 }

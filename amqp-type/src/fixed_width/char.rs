@@ -1,11 +1,11 @@
-use std::pin::Pin;
-use tokio_stream::{Stream, StreamExt};
 use crate::common::read_bytes_4;
 use crate::constants::constructors::CHAR;
 use crate::error::AppError;
 use crate::fixed_width::char;
 use crate::serde::decode::Decode;
 use crate::serde::encode::{Encode, Encoded};
+use std::pin::Pin;
+use tokio_stream::Stream;
 
 
 impl Encode for char {
@@ -15,18 +15,11 @@ impl Encode for char {
 }
 
 impl Decode for char {
-    async fn can_decode(iter: Pin<Box<impl Stream<Item=u8>>>) -> bool {
-        match iter.peekable().peek().await {
-            Some(&CHAR) => true,
-            _ => false,
-        }
-    }
 
-    async fn try_decode(mut iter: Pin<Box<impl Stream<Item=u8>>>) -> Result<Self, AppError> where Self: Sized {
-        match iter.next().await {
-            Some(CHAR) => Ok(parse_char(&mut iter).await?),
-            Some(c) => Err(AppError::DeserializationIllegalConstructorError(c)),
-            None => Err(AppError::IteratorEmptyOrTooShortError),
+    async fn try_decode(constructor: u8, mut iter: Pin<Box<impl Stream<Item=u8>>>) -> Result<Self, AppError> where Self: Sized {
+        match constructor {
+            CHAR => Ok(parse_char(&mut iter).await?),
+            c => Err(AppError::DeserializationIllegalConstructorError(c)),
         }
     }
 }
@@ -41,9 +34,9 @@ async fn parse_char(iter: &mut Pin<Box<impl Stream<Item=u8>>>) -> Result<char, A
 
 #[cfg(test)]
 mod test {
+    use super::*;
     use crate::common::tests::ByteVecExt;
     use crate::constants::constructors::CHAR;
-    use super::*;
 
     #[test]
     fn construct_char() {
@@ -67,12 +60,10 @@ mod test {
 
     #[tokio::test]
     async fn test_successful_deserialization() {
-        let value = 'A';
-        let mut data = vec![CHAR];
-        data.extend_from_slice(&(value as u32).to_be_bytes());
+        let value = ('A' as u32).to_be_bytes().to_vec();
 
-        match char::try_decode(data.into_pinned_stream()).await {
-            Ok(decoded_char) => assert_eq!(value, decoded_char),
+        match char::try_decode(CHAR, value.into_pinned_stream()).await {
+            Ok(decoded_char) => assert_eq!('A', decoded_char),
             Err(e) => panic!("Unexpected error: {:?}", e),
         }
     }
@@ -80,9 +71,9 @@ mod test {
     #[tokio::test]
     async fn test_illegal_constructor_deserialization() {
         let illegal_constructor = 0xFF;
-        let bytes = vec![illegal_constructor];
+        let bytes = vec![];
 
-        match char::try_decode(bytes.into_pinned_stream()).await {
+        match char::try_decode(illegal_constructor, bytes.into_pinned_stream()).await {
             Ok(_) => panic!("Expected an error, but deserialization succeeded"),
             Err(AppError::DeserializationIllegalConstructorError(c)) => assert_eq!(illegal_constructor, c),
             Err(e) => panic!("Unexpected error type: {:?}", e),
@@ -93,7 +84,7 @@ mod test {
     async fn test_empty_iterator_deserialization() {
         let bytes = vec![]; // Empty vector
 
-        match char::try_decode(bytes.into_pinned_stream()).await {
+        match char::try_decode(CHAR, bytes.into_pinned_stream()).await {
             Ok(_) => panic!("Expected an error, but deserialization succeeded"),
             Err(AppError::IteratorEmptyOrTooShortError) => (), // Expected outcome
             Err(e) => panic!("Unexpected error type: {:?}", e),
@@ -104,7 +95,7 @@ mod test {
     async fn test_invalid_char_deserialization() {
         let bytes = vec![CHAR, 0xFF, 0xFF, 0xFF, 0xFF]; // Invalid Unicode sequence
 
-        match char::try_decode(bytes.into_pinned_stream()).await {
+        match char::try_decode(CHAR, bytes.into_pinned_stream()).await {
             Ok(_) => panic!("Expected an error, but deserialization succeeded"),
             Err(AppError::InvalidChar) => (), // Expected outcome
             Err(e) => panic!("Unexpected error type: {:?}", e),

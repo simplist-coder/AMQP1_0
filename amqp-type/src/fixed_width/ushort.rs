@@ -1,5 +1,5 @@
 use std::pin::Pin;
-use tokio_stream::{Stream, StreamExt};
+use tokio_stream::{Stream, };
 use crate::common::read_bytes_2;
 use crate::constants::constructors::UNSIGNED_SHORT;
 use crate::error::AppError;
@@ -14,21 +14,14 @@ impl Encode for u16 {
 }
 
 impl Decode for u16 {
-    async fn can_decode(iter: Pin<Box<impl Stream<Item=u8>>>) -> bool {
-        match iter.peekable().peek().await {
-            Some(&UNSIGNED_SHORT) => true,
-            _ => false,
-        }
-    }
 
-    async fn try_decode(mut iter: Pin<Box<impl Stream<Item=u8>>>) -> Result<Self, AppError>
+    async fn try_decode(constructor: u8, mut iter: Pin<Box<impl Stream<Item=u8>>>) -> Result<Self, AppError>
         where
             Self: Sized,
     {
-        match iter.next().await {
-            Some(UNSIGNED_SHORT) => Ok(parse_u16(&mut iter).await?),
-            Some(c) => Err(AppError::DeserializationIllegalConstructorError(c)),
-            None => Err(AppError::IteratorEmptyOrTooShortError),
+        match constructor {
+            UNSIGNED_SHORT => Ok(parse_u16(&mut iter).await?),
+            c => Err(AppError::DeserializationIllegalConstructorError(c)),
         }
     }
 }
@@ -65,32 +58,20 @@ mod test {
     }
 
     #[tokio::test]
-    async fn can_deocde_returns_true_if_constructor_is_valid() {
-        let val = vec![0x60, 0x41];
-        assert_eq!(u16::can_decode(val.into_pinned_stream()).await, true);
-    }
-
-    #[tokio::test]
-    async fn can_decode_return_false_if_constructor_is_invalid() {
-        let val = vec![0x61];
-        assert_eq!(u16::can_decode(val.into_pinned_stream()).await, false);
-    }
-
-    #[tokio::test]
     async fn try_decode_returns_correct_value() {
-        let val = vec![0x60, 0x00, 0x10];
-        assert_eq!(u16::try_decode(val.into_pinned_stream()).await.unwrap(), 16)
+        let val = vec![0x00, 0x10];
+        assert_eq!(u16::try_decode(0x60, val.into_pinned_stream()).await.unwrap(), 16)
     }
 
     #[tokio::test]
     async fn decode_returns_error_when_value_bytes_are_invalid() {
-        let val = vec![0x56, 0x44];
-        assert!(u16::try_decode(val.into_pinned_stream()).await.is_err());
+        let val = vec![0x44];
+        assert!(u16::try_decode(0x56, val.into_pinned_stream()).await.is_err());
     }
 
     #[tokio::test]
     async fn decode_returns_error_when_bytes_are_missing() {
-        let val = vec![0x60, 0x01];
-        assert!(u16::try_decode(val.into_pinned_stream()).await.is_err());
+        let val = vec![0x01];
+        assert!(u16::try_decode(0x60, val.into_pinned_stream()).await.is_err());
     }
 }

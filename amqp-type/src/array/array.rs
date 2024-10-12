@@ -21,11 +21,8 @@ impl Encode for Array {
 }
 
 impl Decode for Array {
-    async fn can_decode(iter: Pin<Box<impl Stream<Item=u8>>>) -> bool {
-        todo!()
-    }
 
-    async fn try_decode(iter: Pin<Box<impl Stream<Item=u8>>>) -> Result<Self, AppError>
+    async fn try_decode(_constructor: u8, _iter: Pin<Box<impl Stream<Item=u8>>>) -> Result<Self, AppError>
     where
         Self: Sized
     {

@@ -13,21 +13,14 @@ impl Encode for i8 {
 }
 
 impl Decode for i8 {
-    async fn can_decode(iter: Pin<Box<impl Stream<Item=u8>>>) -> bool {
-        match iter.peekable().peek().await {
-            Some(&BYTE) => true,
-            _ => false,
-        }
-    }
 
-    async fn try_decode(mut iter: Pin<Box<impl Stream<Item=u8>>>) -> Result<Self, crate::error::AppError>
+    async fn try_decode(constructor: u8, iter: Pin<Box<impl Stream<Item=u8>>>) -> Result<Self, AppError>
         where
             Self: Sized,
     {
-        match iter.next().await {
-            Some(BYTE) => Ok(parse_i8(iter).await?),
-            Some(c) => Err(AppError::DeserializationIllegalConstructorError(c)),
-            None => Err(AppError::IteratorEmptyOrTooShortError),
+        match constructor {
+            BYTE => Ok(parse_i8(iter).await?),
+            other => Err(AppError::DeserializationIllegalConstructorError(other)),
         }
     }
 }
@@ -68,33 +61,23 @@ mod test {
         }
     }
 
-    #[tokio::test]
-    async fn can_decode_returns_true_if_constructor_is_valid() {
-        let val = vec![0x51];
-        assert_eq!(i8::can_decode(val.into_pinned_stream()).await, true);
-    }
 
-    #[tokio::test]
-    async fn can_decode_return_false_if_constructor_is_invalid() {
-        let val = vec![0x71];
-        assert_eq!(i8::can_decode(val.into_pinned_stream()).await, false);
-    }
 
     #[tokio::test]
     async fn try_decode_returns_correct_value() {
-        let val = vec![0x51, 0x10];
-        assert_eq!(i8::try_decode(val.into_pinned_stream()).await.unwrap(), 16);
+        let val = vec![0x10];
+        assert_eq!(i8::try_decode(0x51, val.into_pinned_stream()).await.unwrap(), 16);
     }
 
     #[tokio::test]
     async fn decode_returns_error_when_value_bytes_are_invalid() {
-        let val = vec![0x66, 0x44];
-        assert!(i8::try_decode(val.into_pinned_stream()).await.is_err());
+        let val = vec![0x44];
+        assert!(i8::try_decode(0x66, val.into_pinned_stream()).await.is_err());
     }
 
     #[tokio::test]
     async fn decode_returns_error_when_bytes_are_missing() {
-        let val = vec![0x51];
-        assert!(i8::try_decode(val.into_pinned_stream()).await.is_err());
+        let val = vec![];
+        assert!(i8::try_decode(0x51, val.into_pinned_stream()).await.is_err());
     }
 }

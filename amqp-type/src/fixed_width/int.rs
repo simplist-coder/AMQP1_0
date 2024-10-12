@@ -20,23 +20,16 @@ impl Encode for i32 {
 }
 
 impl Decode for i32 {
-    async fn can_decode(iter: Pin<Box<impl Stream<Item=u8>>>) -> bool {
-        match iter.peekable().peek().await {
-            Some(&INTEGER) => true,
-            Some(&SMALL_INTEGER) => true,
-            _ => false,
-        }
-    }
 
-    async fn try_decode(mut iter: Pin<Box<impl Stream<Item=u8>>>) -> Result<Self, crate::error::AppError>
+
+    async fn try_decode(constructor: u8, mut iter: Pin<Box<impl Stream<Item=u8>>>) -> Result<Self, crate::error::AppError>
         where
             Self: Sized,
     {
-        match iter.next().await {
-            Some(INTEGER) => Ok(parse_i32(&mut iter).await?),
-            Some(SMALL_INTEGER) => Ok(parse_small_i32(&mut iter).await?),
-            Some(c) => Err(AppError::DeserializationIllegalConstructorError(c)),
-            None => Err(AppError::IteratorEmptyOrTooShortError),
+        match constructor {
+            INTEGER => Ok(parse_i32(&mut iter).await?),
+            SMALL_INTEGER => Ok(parse_small_i32(&mut iter).await?),
+            c => Err(AppError::DeserializationIllegalConstructorError(c)),
         }
     }
 }
@@ -77,47 +70,33 @@ mod test {
     }
 
     #[tokio::test]
-    async fn can_deocde_returns_true_if_constructor_is_valid() {
-        let val = vec![0x71, 0x41];
-        let small_val = vec![0x54, 0x41];
-        assert_eq!(i32::can_decode(val.into_pinned_stream()).await, true);
-        assert_eq!(i32::can_decode(small_val.into_pinned_stream()).await, true);
-    }
-
-    #[tokio::test]
-    async fn can_decode_return_false_if_constructor_is_invalid() {
-        let val = vec![0x70];
-        assert_eq!(i32::can_decode(val.into_pinned_stream()).await, false);
-    }
-
-    #[tokio::test]
     async fn try_decode_returns_correct_value() {
-        let val = vec![0x71, 0x00, 0x00, 0x00, 0x10];
-        assert_eq!(i32::try_decode(val.into_pinned_stream()).await.unwrap(), 16)
+        let val = vec![0x00, 0x00, 0x00, 0x10];
+        assert_eq!(i32::try_decode(0x71, val.into_pinned_stream()).await.unwrap(), 16)
     }
 
     #[tokio::test]
     async fn decode_returns_error_when_value_bytes_are_invalid() {
-        let val = vec![0x56, 0x44];
-        assert!(i32::try_decode(val.into_pinned_stream()).await.is_err());
+        let val = vec![0x44];
+        assert!(i32::try_decode(0x56, val.into_pinned_stream()).await.is_err());
     }
 
     #[tokio::test]
     async fn decode_returns_error_when_bytes_are_missing() {
-        let val = vec![0x71, 0x01];
-        assert!(i32::try_decode(val.into_pinned_stream()).await.is_err());
+        let val = vec![ 0x01];
+        assert!(i32::try_decode(0x71, val.into_pinned_stream()).await.is_err());
     }
 
     #[tokio::test]
     async fn try_decode_can_decode_smallulong_values() {
-        let val = vec![0x54, 0xff];
-        assert_eq!(i32::try_decode(val.into_pinned_stream()).await.unwrap(), 255);
+        let val = vec![0xff];
+        assert_eq!(i32::try_decode(0x54, val.into_pinned_stream()).await.unwrap(), 255);
     }
 
     #[tokio::test]
     async fn try_decode_returns_error_when_parsing_small_ulong_and_bytes_are_missing() {
-        let val = vec![0x54];
-        assert!(i32::try_decode(val.into_pinned_stream()).await.is_err());
+        let val = vec![];
+        assert!(i32::try_decode(0x54, val.into_pinned_stream()).await.is_err());
     }
 
     #[tokio::test]

@@ -14,23 +14,15 @@ impl Encode for u8 {
 }
 
 impl Decode for u8 {
-    async fn can_decode(data: Pin<Box<impl Stream<Item=u8>>>) -> bool {
-        match data.peekable().peek().await {
-            Some(&UNSIGNED_BYTE) => true,
-            _ => false,
-        }
-    }
 
-    async fn try_decode(mut iter: Pin<Box<impl Stream<Item=u8>>>) -> Result<Self, crate::error::AppError>
+    async fn try_decode(constructor: u8, mut iter: Pin<Box<impl Stream<Item=u8>>>) -> Result<Self, crate::error::AppError>
         where
             Self: Sized,
     {
-        let con = iter.next().await;
         let val = iter.next().await;
-        match (con, val) {
-            (Some(UNSIGNED_BYTE), Some(x)) => Ok(x),
-            (Some(c), _) => Err(AppError::DeserializationIllegalConstructorError(c)),
-            (_, _) => Err(AppError::IteratorEmptyOrTooShortError),
+        match (constructor, val) {
+            (UNSIGNED_BYTE, Some(x)) => Ok(x),
+            (c, _) => Err(AppError::DeserializationIllegalConstructorError(c)),
         }
     }
 }
@@ -62,20 +54,8 @@ mod test {
     }
 
     #[tokio::test]
-    async fn can_deocde_returns_true_if_constructor_is_valid() {
-        let val = vec![0x50, 0x41];
-        assert_eq!(u8::can_decode(val.into_pinned_stream()).await, true);
-    }
-
-    #[tokio::test]
-    async fn can_decode_return_false_if_constructor_is_invalid() {
-        let val = vec![0x51];
-        assert_eq!(u8::can_decode(val.into_pinned_stream()).await, false);
-    }
-
-    #[tokio::test]
     async fn try_decode_returns_correct_value() {
-        let val = vec![0x50, 0x10];
-        assert_eq!(u8::try_decode(val.into_pinned_stream()).await.unwrap(), 16)
+        let val = vec![0x10];
+        assert_eq!(u8::try_decode(0x50, val.into_pinned_stream()).await.unwrap(), 16)
     }
 }

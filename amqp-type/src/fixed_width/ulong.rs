@@ -19,25 +19,16 @@ impl Encode for u64 {
 }
 
 impl Decode for u64 {
-    async fn can_decode(iter: Pin<Box<impl Stream<Item=u8>>>) -> bool {
-        match iter.peekable().peek().await {
-            Some(&UNSIGNED_LONG) => true,
-            Some(&SMALL_UNSIGNED_LONG) => true,
-            Some(&UNSIGNED_LONG_ZERO) => true,
-            _ => false,
-        }
-    }
 
-    async fn try_decode(mut iter: Pin<Box<impl Stream<Item=u8>>>) -> Result<Self, crate::error::AppError>
+    async fn try_decode(constructor: u8, mut iter: Pin<Box<impl Stream<Item=u8>>>) -> Result<Self, crate::error::AppError>
         where
             Self: Sized,
     {
-        match iter.next().await {
-            Some(UNSIGNED_LONG) => Ok(parse_ulong(&mut iter).await?),
-            Some(SMALL_UNSIGNED_LONG) => Ok(parse_small_ulong(&mut iter).await?),
-            Some(UNSIGNED_LONG_ZERO) => Ok(0),
-            Some(c) => Err(AppError::DeserializationIllegalConstructorError(c)),
-            None => Err(AppError::IteratorEmptyOrTooShortError),
+        match constructor {
+            UNSIGNED_LONG => Ok(parse_ulong(&mut iter).await?),
+            SMALL_UNSIGNED_LONG => Ok(parse_small_ulong(&mut iter).await?),
+            UNSIGNED_LONG_ZERO => Ok(0),
+            c => Err(AppError::DeserializationIllegalConstructorError(c)),
         }
     }
 }
@@ -95,54 +86,38 @@ mod test {
     }
 
     #[tokio::test]
-    async fn can_deocde_returns_true_if_constructor_is_valid() {
-        let val_norm = vec![0x80];
-        let val_small = vec![0x53];
-        let val_zero = vec![0x44];
-        assert_eq!(u64::can_decode(val_norm.into_pinned_stream()).await, true);
-        assert_eq!(u64::can_decode(val_small.into_pinned_stream()).await, true);
-        assert_eq!(u64::can_decode(val_zero.into_pinned_stream()).await, true);
-    }
-
-    #[tokio::test]
-    async fn can_decode_return_false_if_constructor_is_invalid() {
-        let val = vec![0x71];
-        assert_eq!(u64::can_decode(val.into_pinned_stream()).await, false);
-    }
-
-    #[tokio::test]
     async fn try_decode_returns_correct_value() {
-        let val = vec![0x80, 0x01, 0x01, 0x11, 0x10, 0x10, 0x00, 0x00, 0x10];
-        assert_eq!(u64::try_decode(val.into_pinned_stream()).await.unwrap(), 72357829700222992);
+        let val = vec![0x01, 0x01, 0x11, 0x10, 0x10, 0x00, 0x00, 0x10];
+        assert_eq!(u64::try_decode(0x80, val.into_pinned_stream()).await.unwrap(), 72357829700222992);
     }
 
     #[tokio::test]
     async fn decode_returns_error_when_value_bytes_are_invalid() {
-        let val = vec![0x66, 0x44];
-        assert!(u64::try_decode(val.into_pinned_stream()).await.is_err());
+        let val = vec![0x44];
+        assert!(u64::try_decode(0x66, val.into_pinned_stream()).await.is_err());
     }
 
     #[tokio::test]
     async fn decode_returns_error_when_bytes_are_missing() {
-        let val = vec![0x70, 0x00, 0x00, 0x01];
-        assert!(u64::try_decode(val.into_pinned_stream()).await.is_err());
+        let val = vec![0x00, 0x00, 0x01];
+        assert!(u64::try_decode(0x70, val.into_pinned_stream()).await.is_err());
     }
 
     #[tokio::test]
     async fn try_decode_can_decode_zero_length_value_zero() {
-        let val = vec![0x44];
-        assert_eq!(u64::try_decode(val.into_pinned_stream()).await.unwrap(), 0);
+        let val = vec![];
+        assert_eq!(u64::try_decode(0x44, val.into_pinned_stream()).await.unwrap(), 0);
     }
 
     #[tokio::test]
     async fn try_decode_can_decode_smallulong_values() {
-        let val = vec![0x53, 0xff];
-        assert_eq!(u64::try_decode(val.into_pinned_stream()).await.unwrap(), 255);
+        let val = vec![0xff];
+        assert_eq!(u64::try_decode(0x53, val.into_pinned_stream()).await.unwrap(), 255);
     }
 
     #[tokio::test]
     async fn try_decode_returns_error_when_parsing_small_ulong_and_bytes_are_missing() {
-        let val = vec![0x53];
-        assert!(u64::try_decode(val.into_pinned_stream()).await.is_err());
+        let val = vec![];
+        assert!(u64::try_decode(0x53, val.into_pinned_stream()).await.is_err());
     }
 }
