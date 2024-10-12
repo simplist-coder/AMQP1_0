@@ -71,7 +71,7 @@ impl Decode for bool {
     {
         match data.next().await {
             Some(BOOLEAN_TRUE) => Ok(true),
-            Some(BOOLEAN_FALSE) => Ok(true),
+            Some(BOOLEAN_FALSE) => Ok(false),
             Some(val) => Err(AppError::DeserializationIllegalConstructorError(val)),
             None => Err(AppError::IteratorEmptyOrTooShortError),
         }
@@ -80,6 +80,7 @@ impl Decode for bool {
 
 #[cfg(test)]
 mod test {
+    use crate::common::tests::ByteVecExt;
     use super::*;
 
     #[test]
@@ -141,5 +142,41 @@ mod test {
     #[cfg(feature = "zero-length-encoding")]
     fn amqp_type_constructs_bool_true_as_zero_length() {
         assert_eq!(true.encode().constructor(), 0x41)
+    }
+
+    #[tokio::test]
+    #[cfg(feature = "zero-length-encoding")]
+    async fn can_decode_returns_true_if_constructor_is_valid() {
+        let val_true = vec![0x41];
+        let val_false = vec![0x42];
+        assert_eq!(bool::can_decode(val_true.into_pinned_stream()).await, true);
+        assert_eq!(bool::can_decode(val_false.into_pinned_stream()).await, true);
+    }
+
+    #[tokio::test]
+    #[cfg(feature = "zero-length-encoding")]
+    async fn can_decode_returns_false_if_constructor_invalid() {
+        let val_true = vec![0x88];
+        let val_false = vec![0x97];
+        assert_eq!(bool::can_decode(val_true.into_pinned_stream()).await, false);
+        assert_eq!(bool::can_decode(val_false.into_pinned_stream()).await, false);
+    }
+
+    #[tokio::test]
+    #[cfg(feature = "zero-length-encoding")]
+    async fn decode_returns_error_when_value_bytes_are_invalid() {
+        let val_true = vec![0x56, 0x34];
+        let val_false = vec![0x56, 0x44];
+        assert!(bool::try_decode(val_true.into_pinned_stream()).await.is_err());
+        assert!(bool::try_decode(val_false.into_pinned_stream()).await.is_err());
+    }
+
+    #[tokio::test]
+    #[cfg(feature = "zero-length-encoding")]
+    async fn try_decode_returns_correct_value_if_bytes_are_valid() {
+        let val_true = vec![0x41];
+        let val_false = vec![0x42];
+        assert_eq!(bool::try_decode(val_true.into_pinned_stream()).await.unwrap(), true);
+        assert_eq!(bool::try_decode(val_false.into_pinned_stream()).await.unwrap(), false);
     }
 }
