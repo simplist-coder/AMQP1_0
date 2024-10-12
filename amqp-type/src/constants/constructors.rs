@@ -28,6 +28,7 @@ pub const UUID: u8 = 0x98;
 pub const NULL: u8 = 0x40;
 pub const ARRAY_SHORT: u8 = 0xe0;
 pub const ARRAY: u8 = 0xf0;
+pub const LIST_EMPTY: u8 = 0x45;
 pub const LIST_SHORT: u8 = 0xc0;
 pub const LIST: u8 = 0xd0;
 pub const MAP_SHORT: u8 = 0xc1;
