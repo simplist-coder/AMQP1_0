@@ -18,7 +18,7 @@ impl Encode for Float {
     }
 }
 
-impl Decode for f32 {
+impl Decode for Float {
     async fn can_decode(iter: Pin<Box<impl Stream<Item=u8>>>) -> bool {
         match iter.peekable().peek().await {
             Some(&FLOAT) => true,
@@ -26,7 +26,7 @@ impl Decode for f32 {
         }
     }
 
-    async fn try_decode(mut iter: Pin<Box<impl Stream<Item=u8>>>) -> Result<Self, crate::error::AppError>
+    async fn try_decode(mut iter: Pin<Box<impl Stream<Item=u8>>>) -> Result<Self, AppError>
         where
             Self: Sized,
     {
@@ -38,9 +38,9 @@ impl Decode for f32 {
     }
 }
 
-async fn parse_f32(iter: &mut Pin<Box<impl Stream<Item=u8>>>) -> Result<f32, AppError> {
+async fn parse_f32(iter: &mut Pin<Box<impl Stream<Item=u8>>>) -> Result<Float, AppError> {
     let byte_vals = read_bytes_4(iter).await?;
-    Ok(f32::from_be_bytes(byte_vals))
+    Ok(Float(f32::from_be_bytes(byte_vals)))
 }
 
 impl From<f32> for Float {
@@ -98,30 +98,30 @@ mod test {
     #[tokio::test]
     async fn can_deocde_returns_true_if_constructor_is_valid() {
         let val = vec![0x72];
-        assert_eq!(f32::can_decode(val.into_pinned_stream()).await, true);
+        assert_eq!(Float::can_decode(val.into_pinned_stream()).await, true);
     }
 
     #[tokio::test]
     async fn can_decode_return_false_if_constructor_is_invalid() {
         let val = vec![0x75];
-        assert_eq!(f32::can_decode(val.into_pinned_stream()).await, false);
+        assert_eq!(Float::can_decode(val.into_pinned_stream()).await, false);
     }
 
     #[tokio::test]
     async fn try_decode_returns_correct_value() {
         let val = vec![0x72, 0x41, 0x70, 0x00, 0x10];
-        assert_eq!(f32::try_decode(val.into_pinned_stream()).await.unwrap(), 15.000015);
+        assert_eq!(Float::try_decode(val.into_pinned_stream()).await.unwrap(), 15.000015.into());
     }
 
     #[tokio::test]
     async fn try_decode_returns_error_when_value_bytes_are_invalid() {
         let val = vec![0x66, 0x44];
-        assert!(f32::try_decode(val.into_pinned_stream()).await.is_err());
+        assert!(Float::try_decode(val.into_pinned_stream()).await.is_err());
     }
 
     #[tokio::test]
     async fn try_decode_returns_error_when_bytes_are_missing() {
         let val = vec![0x72, 0x00, 0x01];
-        assert!(f32::try_decode(val.into_pinned_stream()).await.is_err());
+        assert!(Float::try_decode(val.into_pinned_stream()).await.is_err());
     }
 }

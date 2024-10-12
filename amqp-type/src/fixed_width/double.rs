@@ -24,7 +24,7 @@ impl Encode for Double {
     }
 }
 
-impl Decode for f64 {
+impl Decode for Double {
     async fn can_decode(iter: Pin<Box<impl Stream<Item=u8>>>) -> bool {
         match iter.peekable().peek().await {
             Some(&DOUBLE) => true,
@@ -44,9 +44,9 @@ impl Decode for f64 {
     }
 }
 
-async fn parse_f64(iter: &mut Pin<Box<impl Stream<Item=u8>>>) -> Result<f64, AppError> {
+async fn parse_f64(iter: &mut Pin<Box<impl Stream<Item=u8>>>) -> Result<Double, AppError> {
     let byte_vals = read_bytes_8(iter).await?;
-    Ok(f64::from_be_bytes(byte_vals))
+    Ok(Double(f64::from_be_bytes(byte_vals)))
 }
 
 
@@ -107,30 +107,30 @@ mod test {
     #[tokio::test]
     async fn can_deocde_returns_true_if_constructor_is_valid() {
         let val_norm = vec![0x82];
-        assert_eq!(f64::can_decode(val_norm.into_pinned_stream()).await, true);
+        assert_eq!(Double::can_decode(val_norm.into_pinned_stream()).await, true);
     }
 
     #[tokio::test]
     async fn can_decode_return_false_if_constructor_is_invalid() {
         let val = vec![0x75];
-        assert_eq!(f64::can_decode(val.into_pinned_stream()).await, false);
+        assert_eq!(Double::can_decode(val.into_pinned_stream()).await, false);
     }
 
     #[tokio::test]
     async fn try_decode_returns_correct_value() {
         let val = vec![0x82, 0x40, 0x20, 0x00, 0x00, 0x41, 0x70, 0x00, 0x10];
-        assert_eq!(f64::try_decode(val.into_pinned_stream()).await.unwrap(), 8.0000019501895);
+        assert_eq!(Double::try_decode(val.into_pinned_stream()).await.unwrap(), 8.0000019501895.into());
     }
 
     #[tokio::test]
     async fn try_decode_returns_error_when_value_bytes_are_invalid() {
         let val = vec![0x66, 0x44];
-        assert!(f64::try_decode(val.into_pinned_stream()).await.is_err());
+        assert!(Double::try_decode(val.into_pinned_stream()).await.is_err());
     }
 
     #[tokio::test]
     async fn try_decode_returns_error_when_bytes_are_missing() {
         let val = vec![0x82, 0x00, 0x01];
-        assert!(f64::try_decode(val.into_pinned_stream()).await.is_err());
+        assert!(Double::try_decode(val.into_pinned_stream()).await.is_err());
     }
 }

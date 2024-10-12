@@ -1,9 +1,8 @@
-use std::hash::Hash;
-
 use crate::array::array::Array;
 use crate::compound::list::List;
 use crate::compound::map::Map;
-use crate::constants::constructors::NULL;
+use crate::constants::constructors::*;
+use crate::error::AppError;
 use crate::fixed_width::decimal128::Decimal128;
 use crate::fixed_width::decimal32::Decimal32;
 use crate::fixed_width::decimal64::Decimal64;
@@ -11,9 +10,13 @@ use crate::fixed_width::double::*;
 use crate::fixed_width::float::Float;
 use crate::fixed_width::timestamp::Timestamp;
 use crate::fixed_width::uuid::Uuid;
+use crate::serde::decode::Decode;
 use crate::serde::encode::{Encode, Encoded};
 use crate::variable_width::binary::Binary;
 use crate::variable_width::symbol::Symbol;
+use std::hash::Hash;
+use std::pin::Pin;
+use tokio_stream::{Stream, StreamExt};
 
 #[derive(Hash, Eq, PartialEq)]
 pub enum AmqpType {
@@ -70,6 +73,59 @@ impl Encode for AmqpType {
             Self::List(val) => val.encode(),
             Self::Map(val) => val.encode(),
             Self::Array(val) => val.encode(),
+        }
+    }
+}
+
+impl Decode for AmqpType {
+    async fn can_decode(_iter: Pin<Box<impl Stream<Item=u8>>>) -> bool {
+        true
+    }
+
+    async fn try_decode(mut stream: Pin<Box<impl Stream<Item=u8>>>) -> Result<Self, AppError>
+    where
+        Self: Sized,
+    {
+        match stream.next().await {
+            None => Err(AppError::IteratorEmptyOrTooShortError),
+            Some(NULL) => Ok(Self::Null),
+            Some(BOOLEAN) => Ok(bool::try_decode(stream).await?.into()),
+            Some(BYTE) => Ok(i8::try_decode(stream).await?.into()),
+            Some(CHAR) => Ok(char::try_decode(stream).await?.into()),
+            Some(DECIMAL_32) => Ok(Decimal32::try_decode(stream).await?.into()),
+            Some(DECIMAL_64) => Ok(Decimal64::try_decode(stream).await?.into()),
+            Some(DOUBLE) => Ok(Double::try_decode(stream).await?.into()),
+            Some(FLOAT) => Ok(Float::try_decode(stream).await?.into()),
+            Some(INTEGER) => Ok(i32::try_decode(stream).await?.into()),
+            Some(SMALL_INTEGER) => Ok(i32::try_decode(stream).await?.into()),
+            Some(LONG) => Ok(i64::try_decode(stream).await?.into()),
+            Some(SMALL_LONG) => Ok(i64::try_decode(stream).await?.into()),
+            Some(SHORT) => Ok(i16::try_decode(stream).await?.into()),
+            Some(TIMESTAMP) => Ok(Timestamp::try_decode(stream).await?.into()),
+            Some(UNSIGNED_BYTE) => Ok(u8::try_decode(stream).await?.into()),
+            Some(UNSIGNED_INTEGER) => Ok(u32::try_decode(stream).await?.into()),
+            Some(SMALL_UNSIGNED_INTEGER) => Ok(u32::try_decode(stream).await?.into()),
+            Some(UNSIGNED_INTEGER_ZERO) => Ok(u32::try_decode(stream).await?.into()),
+            Some(UNSIGNED_LONG) => Ok(u64::try_decode(stream).await?.into()),
+            Some(SMALL_UNSIGNED_LONG) => Ok(u64::try_decode(stream).await?.into()),
+            Some(UNSIGNED_LONG_ZERO) => Ok(u64::try_decode(stream).await?.into()),
+            Some(UNSIGNED_SHORT) => Ok(u16::try_decode(stream).await?.into()),
+            Some(UUID) => Ok(Uuid::try_decode(stream).await?.into()),
+            Some(ARRAY_SHORT) => Ok(Array::try_decode(stream).await?.into()),
+            Some(ARRAY) => Ok(Array::try_decode(stream).await?.into()),
+            Some(LIST_SHORT) => Ok(List::try_decode(stream).await?.into()),
+            Some(LIST) => Ok(List::try_decode(stream).await?.into()),
+            Some(MAP_SHORT) => Ok(Map::try_decode(stream).await?.into()),
+            Some(MAP) => Ok(Map::try_decode(stream).await?.into()),
+            Some(BINARY_SHORT) => Ok(Binary::try_decode(stream).await?.into()),
+            Some(BINARY) => Ok(Binary::try_decode(stream).await?.into()),
+            Some(STRING_SHORT) => Ok(String::try_decode(stream).await?.into()),
+            Some(STRING) => Ok(String::try_decode(stream).await?.into()),
+            #[cfg(feature = "zero-length-encoding")]
+            Some(&BOOLEAN_TRUE) => Ok(Self::Boolean(true)),
+            #[cfg(feature = "zero-length-encoding")]
+            Some(&BOOLEAN_FALSE) => Ok(Self::Boolean(false)),
+            Some(other) => Err(AppError::DeserializationIllegalConstructorError(other))
         }
     }
 }

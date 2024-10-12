@@ -1,3 +1,7 @@
+use std::pin::Pin;
+use tokio_stream::Stream;
+use crate::error::AppError;
+use crate::serde::decode::Decode;
 use crate::serde::encode::{Encode, Encoded};
 
 #[derive(Hash, Eq, PartialEq)]
@@ -9,6 +13,19 @@ impl Encode for Symbol {
             x if x <= 255 => Encoded::new_variable(0xa3, self.0.as_bytes().to_vec()),
             _ => Encoded::new_variable(0xb1, self.0.as_bytes().to_vec()),
         }
+    }
+}
+
+impl Decode for Symbol {
+    async fn can_decode(iter: Pin<Box<impl Stream<Item=u8>>>) -> bool {
+        todo!()
+    }
+
+    async fn try_decode(iter: Pin<Box<impl Stream<Item=u8>>>) -> Result<Self, AppError>
+    where
+        Self: Sized
+    {
+        todo!()
     }
 }
 

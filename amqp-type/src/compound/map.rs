@@ -3,7 +3,11 @@ use crate::compound::encoded_vec::EncodedVec;
 use crate::serde::encode::{Encode, Encoded};
 use indexmap::IndexMap;
 use std::hash::Hash;
+use std::pin::Pin;
+use tokio_stream::Stream;
 use crate::constants::constructors::{MAP, MAP_SHORT};
+use crate::error::AppError;
+use crate::serde::decode::Decode;
 
 #[derive(Eq, PartialEq)]
 pub struct Map(IndexMap<AmqpType, AmqpType>);
@@ -25,6 +29,19 @@ impl Encode for Map {
             x if x <= 255 => Encoded::new_compound(MAP_SHORT, count, EncodedVec::new(res).into()),
             _ => Encoded::new_compound(MAP, count, EncodedVec::new(res).into()),
         }
+    }
+}
+
+impl Decode for Map {
+    async fn can_decode(iter: Pin<Box<impl Stream<Item=u8>>>) -> bool {
+        todo!()
+    }
+
+    async fn try_decode(iter: Pin<Box<impl Stream<Item=u8>>>) -> Result<Self, AppError>
+    where
+        Self: Sized
+    {
+        todo!()
     }
 }
 

@@ -1,6 +1,10 @@
+use std::pin::Pin;
+use tokio_stream::Stream;
 use crate::amqp_type::AmqpType;
 use crate::compound::encoded_vec::EncodedVec;
 use crate::constants::constructors::{LIST, LIST_SHORT};
+use crate::error::AppError;
+use crate::serde::decode::Decode;
 use crate::serde::encode::{Encode, Encoded};
 
 #[derive(Hash, Eq, PartialEq)]
@@ -18,6 +22,19 @@ impl Encode for List {
             }
             (_, _) => Encoded::new_compound(LIST, count, EncodedVec::new(encoded).into()),
         }
+    }
+}
+
+impl Decode for List {
+    async fn can_decode(iter: Pin<Box<impl Stream<Item=u8>>>) -> bool {
+        todo!()
+    }
+
+    async fn try_decode(iter: Pin<Box<impl Stream<Item=u8>>>) -> Result<Self, AppError>
+    where
+        Self: Sized
+    {
+        todo!()
     }
 }
 

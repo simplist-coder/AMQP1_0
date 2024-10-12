@@ -1,5 +1,9 @@
+use std::pin::Pin;
+use tokio_stream::Stream;
 use crate::amqp_type::AmqpType;
 use crate::constants::constructors::{ARRAY, ARRAY_SHORT};
+use crate::error::AppError;
+use crate::serde::decode::Decode;
 use crate::serde::encode::{Encode, Encoded};
 
 #[derive(Hash, Eq, PartialEq)]
@@ -15,6 +19,20 @@ impl Encode for Array {
         }
     }
 }
+
+impl Decode for Array {
+    async fn can_decode(iter: Pin<Box<impl Stream<Item=u8>>>) -> bool {
+        todo!()
+    }
+
+    async fn try_decode(iter: Pin<Box<impl Stream<Item=u8>>>) -> Result<Self, AppError>
+    where
+        Self: Sized
+    {
+        todo!()
+    }
+}
+
 impl From<Vec<AmqpType>> for Array {
     fn from(value: Vec<AmqpType>) -> Self {
         Array(value)
