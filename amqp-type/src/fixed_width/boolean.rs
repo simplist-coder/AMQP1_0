@@ -1,3 +1,5 @@
+
+#[cfg(not(feature = "zero-length-encoding"))]
 use crate::constants::constructors::BOOLEAN;
 #[cfg(feature = "zero-length-encoding")]
 use crate::constants::constructors::BOOLEAN_FALSE;
@@ -23,8 +25,8 @@ impl Encode for bool {
 impl Encode for bool {
     fn encode(&self) -> Encoded {
         match self {
-            true => DEFAULT_TRUE.into(),
-            false => DEFAULT_FALSE.into(),
+            true => BOOLEAN_TRUE.into(),
+            false => BOOLEAN_FALSE.into(),
         }
     }
 }
@@ -38,11 +40,10 @@ impl Decode for bool {
         }
     }
 
-    async fn try_decode(iter: Pin<Box<impl Stream<Item=u8>>>) -> Result<Self, AppError>
+    async fn try_decode(mut iter: Pin<Box<impl Stream<Item=u8>>>) -> Result<Self, AppError>
     where
         Self: Sized,
     {
-        let mut iter = Box::pin(iter);
         let con = iter.next().await;
         let val = iter.next().await;
         match (con, val) {
@@ -56,34 +57,30 @@ impl Decode for bool {
 
 #[cfg(feature = "zero-length-encoding")]
 impl Decode for bool {
-    fn can_decode(data: Iterator<Item=u8>) -> bool {
-        let mut iter = data.into_iter().peekable();
-        match iter.peek() {
-            Some(BOOLEAN_TRUE) => true,
-            Some(BOOLEAN_FALSE) => true,
+    async fn can_decode(data: Pin<Box<impl Stream<Item=u8>>>) -> bool {
+        match data.peekable().peek().await {
+            Some(&BOOLEAN_TRUE) => true,
+            Some(&BOOLEAN_FALSE) => true,
             _ => false,
         }
     }
 
-    fn try_decode(data: Iterator<Item=u8>) -> Result<Self, AppError>
+    async fn try_decode(mut data: Pin<Box<impl Stream<Item=u8>>>) -> Result<Self, AppError>
     where
         Self: Sized,
     {
-        if let Some(val) = iter.next() {
-            return match val {
-                BOOLEAN_TRUE => Ok(true),
-                BOOLEAN_FALSE => Ok(false),
-                _ => Err(AppError::DeserializationIllegalConstructorError(val)),
-            };
+        match data.next().await {
+            Some(BOOLEAN_TRUE) => Ok(true),
+            Some(BOOLEAN_FALSE) => Ok(true),
+            Some(val) => Err(AppError::DeserializationIllegalConstructorError(val)),
+            None => Err(AppError::IteratorEmptyOrTooShortError),
         }
-        Err(AppError::IteratorEmptyOrTooShortError)
     }
 }
 
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::common::tests::ByteVecExt;
 
     #[test]
     #[cfg(not(feature = "zero-length-encoding"))]
