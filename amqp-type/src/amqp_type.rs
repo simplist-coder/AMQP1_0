@@ -18,7 +18,7 @@ use std::hash::Hash;
 use std::pin::Pin;
 use tokio_stream::{Stream, StreamExt};
 
-#[derive(Hash, Eq, PartialEq)]
+#[derive(Debug, Hash, Eq, PartialEq)]
 pub enum AmqpType {
     Null,
     Boolean(bool),

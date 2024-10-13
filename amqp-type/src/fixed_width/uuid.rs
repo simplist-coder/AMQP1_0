@@ -7,7 +7,7 @@ use std::pin::Pin;
 use tokio_stream::Stream;
 
 
-#[derive(Hash, Eq, PartialEq)]
+#[derive(Debug, Hash, Eq, PartialEq)]
 pub struct Uuid(uuid::Uuid);
 
 impl Encode for Uuid {

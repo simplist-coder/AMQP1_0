@@ -12,4 +12,6 @@ pub enum AppError {
     InvalidChar,
     #[error("Bytes cannot be transformed into valid utf8 string")]
     FromUtf8ConversionError(#[from] std::string::FromUtf8Error),
+    #[error("Map contained an odd number of elements. Maps must always contain an even number of elements.")]
+    DeserializationMapContainsOddAmountOfElementsError,
 }

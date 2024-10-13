@@ -8,7 +8,7 @@ use crate::error::AppError;
 use crate::serde::decode::Decode;
 use crate::serde::encode::{Encode, Encoded};
 
-#[derive(Hash, Eq, PartialEq)]
+#[derive(Debug, Hash, Eq, PartialEq)]
 pub struct List(Vec<AmqpType>);
 
 impl Encode for List {
@@ -111,14 +111,8 @@ mod test {
         let bytes = vec![8, 2, INTEGER, 0x00, 0x00, 0x00, 21, UNSIGNED_SHORT, 0x00, 16];
         let res = List::try_decode(LIST_SHORT, &mut bytes.into_pinned_stream()).await.unwrap();
         assert_eq!(res.0.len(), 2);
-        match res.0[0] {
-            AmqpType::Int(value) => assert_eq!(value, 21),
-            _ => panic!("Could not destructure expected int value"),
-        }
-        match res.0[1] {
-            AmqpType::Ushort(value) => assert_eq!(value, 16),
-            _ => panic!("Could not destructure expected short value"),
-        }
+        assert!(matches!(res.0[0], AmqpType::Int(21)));
+        assert!(matches!(res.0[1], AmqpType::Ushort(16)));
     }
 
     #[tokio::test]
@@ -126,10 +120,7 @@ mod test {
         let bytes = vec![0x00, 0x00, 0x00, 5, 0x00, 0x00, 0x00, 1, INTEGER, 0x00, 0x00, 0x00, 21];
         let res = List::try_decode(LIST, &mut bytes.into_pinned_stream()).await.unwrap();
         assert_eq!(res.0.len(), 1);
-        match res.0[0] {
-            AmqpType::Int(value) => assert_eq!(value, 21),
-            _ => panic!("Could not destructure expected int value"),
-        }
+        assert!(matches!(res.0[0], AmqpType::Int(21)));
     }
 
     #[tokio::test]

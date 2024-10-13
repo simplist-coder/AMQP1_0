@@ -8,7 +8,7 @@ use crate::serde::encode::{Encode, Encoded};
 
 
 
-#[derive(Hash, Eq, PartialEq)]
+#[derive(Debug, Hash, Eq, PartialEq)]
 pub struct Timestamp(i64);
 
 impl Encode for Timestamp {

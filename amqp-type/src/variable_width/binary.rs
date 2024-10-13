@@ -7,7 +7,7 @@ use crate::serde::decode::Decode;
 use crate::serde::encode::{Encode, Encoded};
 
 
-#[derive(Hash, Eq, PartialEq)]
+#[derive(Debug, Hash, Eq, PartialEq)]
 pub struct Binary(Vec<u8>);
 
 impl Encode for Binary {
