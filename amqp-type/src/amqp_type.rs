@@ -1,4 +1,4 @@
-use crate::array::array::Array;
+use crate::compound::array::Array;
 use crate::compound::list::List;
 use crate::compound::map::Map;
 use crate::constants::constructors::*;

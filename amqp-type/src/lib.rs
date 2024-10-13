@@ -1,5 +1,4 @@
 mod amqp_type;
-mod array;
 mod common;
 mod compound;
 mod constants;
