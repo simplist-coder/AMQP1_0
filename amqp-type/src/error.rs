@@ -14,4 +14,6 @@ pub enum AppError {
     FromUtf8ConversionError(#[from] std::string::FromUtf8Error),
     #[error("Map contained an odd number of elements. Maps must always contain an even number of elements.")]
     DeserializationMapContainsOddAmountOfElementsError,
+    #[error("Symbols must only contain ASCII Characters")]
+    IllegalNonASCIICharacterInSymbol,
 }

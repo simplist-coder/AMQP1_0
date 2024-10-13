@@ -28,6 +28,30 @@ impl Decode for Symbol {
     }
 }
 
+fn verify_ascii_char_set(string: &String) -> Result<(), AppError> {
+    let mut chars = string.chars();
+    match chars.all(|c| c.is_ascii()) {
+        true => Ok(()),
+        false => Err(AppError::IllegalNonASCIICharacterInSymbol),
+    }
+}
+
+#[allow(dead_code)]
+impl Symbol {
+    pub fn new(string: String) -> Result<Self, AppError> {
+        verify_ascii_char_set(&string)?;
+        Ok(Symbol(string))
+    }
+}
+
+impl TryFrom<String> for Symbol {
+    type Error = AppError;
+
+    fn try_from(value: String) -> Result<Self, Self::Error> {
+        Symbol::new(value)
+    }
+}
+
 #[cfg(test)]
 mod test {
     use super::*;
