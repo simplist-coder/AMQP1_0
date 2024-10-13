@@ -1,3 +1,4 @@
+use crate::constants::constructors::{SYMBOL, SYMBOL_SHORT};
 use crate::error::AppError;
 use crate::serde::decode::Decode;
 use crate::serde::encode::{Encode, Encoded};
@@ -10,8 +11,8 @@ pub struct Symbol(String);
 impl Encode for Symbol {
     fn encode(&self) -> Encoded {
         match self.0.len() {
-            x if x <= 255 => Encoded::new_variable(0xa3, self.0.as_bytes().to_vec()),
-            _ => Encoded::new_variable(0xb1, self.0.as_bytes().to_vec()),
+            x if x <= 255 => Encoded::new_variable(SYMBOL_SHORT, self.0.as_bytes().to_vec()),
+            _ => Encoded::new_variable(SYMBOL, self.0.as_bytes().to_vec()),
         }
     }
 }
@@ -59,6 +60,32 @@ mod test {
     #[test]
     fn construct_symbol() {
         let val = Symbol("".to_string());
-        assert_eq!(val.encode().constructor(), 0xa3);
+        assert_eq!(val.encode().constructor(), SYMBOL_SHORT);
+    }
+
+    #[test]
+    fn test_encode_short_symbol_255() {
+        let symbol = Symbol::new("a".repeat(255).to_string()).unwrap();
+        let encoded = symbol.encode().to_bytes();
+
+        let mut expected = vec![SYMBOL_SHORT];
+        let mut bytes = symbol.0.into_bytes();
+        expected.append(&mut (bytes.len() as u8).to_be_bytes().to_vec());
+        expected.append(&mut bytes);
+
+        assert_eq!(encoded, expected);
+    }
+
+    #[test]
+    fn test_encode_large_symbol_256() {
+        let large_string = Symbol::new("a".repeat(256)).unwrap();
+        let encoded = large_string.encode().to_bytes();
+
+        let mut expected = vec![SYMBOL];
+        let mut bytes = large_string.0.into_bytes();
+        expected.append(&mut (bytes.len() as u32).to_be_bytes().to_vec());
+        expected.append(&mut bytes);
+
+        assert_eq!(encoded, expected);
     }
 }
