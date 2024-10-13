@@ -1,12 +1,10 @@
-use std::pin::Pin;
-use tokio_stream::{Stream, };
 use crate::common::read_bytes_8;
 use crate::constants::constructors::TIMESTAMP;
 use crate::error::AppError;
 use crate::serde::decode::Decode;
 use crate::serde::encode::{Encode, Encoded};
-
-
+use std::pin::Pin;
+use tokio_stream::Stream;
 
 #[derive(Debug, Hash, Eq, PartialEq)]
 pub struct Timestamp(i64);
@@ -18,8 +16,13 @@ impl Encode for Timestamp {
 }
 
 impl Decode for Timestamp {
-
-    async fn try_decode(constructor: u8, stream: &mut Pin<Box<impl Stream<Item=u8>>>) -> Result<Self, AppError> where Self: Sized {
+    async fn try_decode(
+        constructor: u8,
+        stream: &mut Pin<Box<impl Stream<Item = u8>>>,
+    ) -> Result<Self, AppError>
+    where
+        Self: Sized,
+    {
         match constructor {
             TIMESTAMP => Ok(parse_timestamp(stream).await?),
             c => Err(AppError::DeserializationIllegalConstructorError(c)),
@@ -27,16 +30,18 @@ impl Decode for Timestamp {
     }
 }
 
-async fn parse_timestamp(iter: &mut Pin<Box<impl Stream<Item=u8>>>) -> Result<Timestamp, AppError> {
+async fn parse_timestamp(
+    iter: &mut Pin<Box<impl Stream<Item = u8>>>,
+) -> Result<Timestamp, AppError> {
     let byte_vals = read_bytes_8(iter).await?;
     Ok(Timestamp(i64::from_be_bytes(byte_vals)))
 }
 
 #[cfg(test)]
 mod test {
+    use super::*;
     use crate::common::tests::ByteVecExt;
     use crate::constants::constructors::TIMESTAMP;
-    use super::*;
 
     #[test]
     fn construct_timestamp() {
@@ -51,7 +56,8 @@ mod test {
         let timestamp = Timestamp(example_unix_time_ms);
 
         let encoded = timestamp.encode();
-        let expected_bytes = [TIMESTAMP].into_iter()
+        let expected_bytes = [TIMESTAMP]
+            .into_iter()
             .chain(example_unix_time_ms.to_be_bytes())
             .collect::<Vec<_>>();
 
@@ -78,7 +84,9 @@ mod test {
 
         match Timestamp::try_decode(illegal_constructor, &mut bytes.into_pinned_stream()).await {
             Ok(_) => panic!("Expected an error, but deserialization succeeded"),
-            Err(AppError::DeserializationIllegalConstructorError(c)) => assert_eq!(illegal_constructor, c),
+            Err(AppError::DeserializationIllegalConstructorError(c)) => {
+                assert_eq!(illegal_constructor, c)
+            }
             Err(e) => panic!("Unexpected error type: {:?}", e),
         }
     }

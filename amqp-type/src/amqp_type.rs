@@ -79,7 +79,7 @@ impl Encode for AmqpType {
 
 impl AmqpType {
     #[allow(dead_code)]
-    pub async fn try_decode(stream: &mut Pin<Box<impl Stream<Item=u8>>>) -> Result<Self, AppError>
+    pub async fn try_decode(stream: &mut Pin<Box<impl Stream<Item = u8>>>) -> Result<Self, AppError>
     where
         Self: Sized,
     {
@@ -90,7 +90,10 @@ impl AmqpType {
     }
 
     #[allow(dead_code)]
-    pub async fn try_decode_with_constructor(constructor: u8, stream: &mut Pin<Box<impl Stream<Item=u8>>>) -> Result<Self, AppError>
+    pub async fn try_decode_with_constructor(
+        constructor: u8,
+        stream: &mut Pin<Box<impl Stream<Item = u8>>>,
+    ) -> Result<Self, AppError>
     where
         Self: Sized,
     {
@@ -107,17 +110,23 @@ impl AmqpType {
             UNSIGNED_BYTE => Ok(u8::try_decode(UNSIGNED_BYTE, stream).await?.into()),
             UNSIGNED_SHORT => Ok(u16::try_decode(UNSIGNED_SHORT, stream).await?.into()),
             UUID => Ok(Uuid::try_decode(UUID, stream).await?.into()),
-            x @ (BOOLEAN | BOOLEAN_TRUE | BOOLEAN_FALSE) => Ok(bool::try_decode(x, stream).await?.into()),
+            x @ (BOOLEAN | BOOLEAN_TRUE | BOOLEAN_FALSE) => {
+                Ok(bool::try_decode(x, stream).await?.into())
+            }
             x @ (SMALL_INTEGER | INTEGER) => Ok(i32::try_decode(x, stream).await?.into()),
             x @ (SMALL_LONG | LONG) => Ok(i64::try_decode(x, stream).await?.into()),
-            x @ (UNSIGNED_INTEGER | SMALL_UNSIGNED_INTEGER | UNSIGNED_INTEGER_ZERO) => Ok(u32::try_decode(x, stream).await?.into()),
-            x @ (UNSIGNED_LONG | SMALL_UNSIGNED_LONG | UNSIGNED_LONG_ZERO) => Ok(u64::try_decode(x, stream).await?.into()),
+            x @ (UNSIGNED_INTEGER | SMALL_UNSIGNED_INTEGER | UNSIGNED_INTEGER_ZERO) => {
+                Ok(u32::try_decode(x, stream).await?.into())
+            }
+            x @ (UNSIGNED_LONG | SMALL_UNSIGNED_LONG | UNSIGNED_LONG_ZERO) => {
+                Ok(u64::try_decode(x, stream).await?.into())
+            }
             x @ (ARRAY_SHORT | ARRAY) => Ok(Array::try_decode(x, stream).await?.into()),
             x @ (LIST_SHORT | LIST) => Ok(List::try_decode(x, stream).await?.into()),
             x @ (MAP_SHORT | MAP) => Ok(Map::try_decode(x, stream).await?.into()),
             x @ (BINARY_SHORT | BINARY) => Ok(Binary::try_decode(x, stream).await?.into()),
             x @ (STRING_SHORT | STRING) => Ok(String::try_decode(x, stream).await?.into()),
-            other => Err(AppError::DeserializationIllegalConstructorError(other))
+            other => Err(AppError::DeserializationIllegalConstructorError(other)),
         }
     }
 }

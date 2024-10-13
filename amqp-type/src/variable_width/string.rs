@@ -1,25 +1,30 @@
-use std::pin::Pin;
-use tokio_stream::{Stream, StreamExt};
 use crate::common::{read_bytes, read_bytes_4};
 use crate::constants::constructors::{STRING, STRING_SHORT};
 use crate::error::AppError;
 use crate::serde::decode::Decode;
 use crate::serde::encode::{Encode, Encoded};
-
-
+use std::pin::Pin;
+use tokio_stream::{Stream, StreamExt};
 
 impl Encode for String {
     fn encode(&self) -> Encoded {
         match self.len() as i32 {
-            x if x >= 0 && x <= 255 => Encoded::new_variable(STRING_SHORT, self.as_bytes().to_vec()),
+            x if x >= 0 && x <= 255 => {
+                Encoded::new_variable(STRING_SHORT, self.as_bytes().to_vec())
+            }
             _ => Encoded::new_variable(STRING, self.as_bytes().to_vec()),
         }
     }
 }
 
 impl Decode for String {
-
-    async fn try_decode(constructor: u8, stream: &mut Pin<Box<impl Stream<Item=u8>>>) -> Result<Self, AppError> where Self: Sized {
+    async fn try_decode(
+        constructor: u8,
+        stream: &mut Pin<Box<impl Stream<Item = u8>>>,
+    ) -> Result<Self, AppError>
+    where
+        Self: Sized,
+    {
         match constructor {
             STRING_SHORT => Ok(parse_small_string(stream).await?),
             STRING => Ok(parse_large_string(stream).await?),
@@ -28,22 +33,26 @@ impl Decode for String {
     }
 }
 
-async fn parse_small_string(iter: &mut Pin<Box<impl Stream<Item=u8>>>) -> Result<String, AppError> {
+async fn parse_small_string(
+    iter: &mut Pin<Box<impl Stream<Item = u8>>>,
+) -> Result<String, AppError> {
     match iter.next().await {
         Some(size) => Ok(String::from_utf8(read_bytes(iter, size as usize).await?)?),
         None => Err(AppError::IteratorEmptyOrTooShortError),
     }
 }
 
-async fn parse_large_string(iter: &mut Pin<Box<impl Stream<Item=u8>>>) -> Result<String, AppError> {
+async fn parse_large_string(
+    iter: &mut Pin<Box<impl Stream<Item = u8>>>,
+) -> Result<String, AppError> {
     let size = u32::from_be_bytes(read_bytes_4(iter).await?);
     Ok(String::from_utf8(read_bytes(iter, size as usize).await?)?)
 }
 
 #[cfg(test)]
 mod test {
-    use crate::common::tests::ByteVecExt;
     use super::*;
+    use crate::common::tests::ByteVecExt;
 
     #[test]
     fn test_encode_empty_string() {
@@ -99,21 +108,20 @@ mod test {
     #[tokio::test]
     async fn test_decode_small_string() {
         let data = vec![5, b'H', b'e', b'l', b'l', b'o'];
-        let result = String::try_decode(STRING_SHORT, &mut data.into_pinned_stream()).await.unwrap();
+        let result = String::try_decode(STRING_SHORT, &mut data.into_pinned_stream())
+            .await
+            .unwrap();
         assert_eq!(result, "Hello".to_string());
     }
 
     #[tokio::test]
     async fn test_decode_large_string() {
         let size_bytes = 11u32.to_be_bytes();
-        let mut data = vec![
-            size_bytes[0],
-            size_bytes[1],
-            size_bytes[2],
-            size_bytes[3],
-        ];
+        let mut data = vec![size_bytes[0], size_bytes[1], size_bytes[2], size_bytes[3]];
         data.extend_from_slice(b"Hello World");
-        let result = String::try_decode(STRING, &mut data.into_pinned_stream()).await.unwrap();
+        let result = String::try_decode(STRING, &mut data.into_pinned_stream())
+            .await
+            .unwrap();
         assert_eq!(result, "Hello World".to_string());
     }
 
@@ -121,21 +129,28 @@ mod test {
     async fn test_illegal_constructor() {
         let data = vec![5, b'E', b'r', b'r', b'o', b'r'];
         let result = String::try_decode(0xFF, &mut data.into_pinned_stream()).await;
-        assert!(matches!(result, Err(AppError::DeserializationIllegalConstructorError(0xFF))));
+        assert!(matches!(
+            result,
+            Err(AppError::DeserializationIllegalConstructorError(0xFF))
+        ));
     }
 
     #[tokio::test]
     async fn test_iterator_empty_or_too_short() {
         let data = vec![];
         let result = String::try_decode(STRING, &mut data.into_pinned_stream()).await;
-        assert!(matches!(result, Err(AppError::IteratorEmptyOrTooShortError)));
+        assert!(matches!(
+            result,
+            Err(AppError::IteratorEmptyOrTooShortError)
+        ));
     }
 
     #[tokio::test]
     async fn test_utf8_compliance() {
         let data = vec![2, 0xC3, 0xA9]; // 'é' in UTF-8
-        let result = String::try_decode(STRING_SHORT, &mut data.into_pinned_stream()).await.unwrap();
+        let result = String::try_decode(STRING_SHORT, &mut data.into_pinned_stream())
+            .await
+            .unwrap();
         assert_eq!(result, "é".to_string());
     }
-
 }

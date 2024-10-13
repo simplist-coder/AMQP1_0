@@ -1,9 +1,9 @@
 mod amqp_type;
 mod array;
+mod common;
 mod compound;
+mod constants;
 mod error;
 mod fixed_width;
 mod serde;
 mod variable_width;
-mod common;
-mod constants;

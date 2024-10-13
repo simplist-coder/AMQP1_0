@@ -1,11 +1,11 @@
-use std::hash::Hash;
-use std::pin::Pin;
-use tokio_stream::{Stream, };
 use crate::common::read_bytes_8;
 use crate::constants::constructors::DOUBLE;
 use crate::error::AppError;
 use crate::serde::decode::Decode;
 use crate::serde::encode::{Encode, Encoded};
+use std::hash::Hash;
+use std::pin::Pin;
+use tokio_stream::Stream;
 
 /// Crate assumes nothing about the values being passed to it.
 /// Any kind of f64 value is handled as is.
@@ -17,7 +17,6 @@ use crate::serde::encode::{Encode, Encoded};
 #[derive(Debug)]
 pub struct Double(f64);
 
-
 impl Encode for Double {
     fn encode(&self) -> Encoded {
         Encoded::new_fixed(0x82, self.0.to_be_bytes().to_vec())
@@ -25,10 +24,12 @@ impl Encode for Double {
 }
 
 impl Decode for Double {
-
-    async fn try_decode(constructor: u8, stream: &mut Pin<Box<impl Stream<Item=u8>>>) -> Result<Self, AppError>
-        where
-            Self: Sized,
+    async fn try_decode(
+        constructor: u8,
+        stream: &mut Pin<Box<impl Stream<Item = u8>>>,
+    ) -> Result<Self, AppError>
+    where
+        Self: Sized,
     {
         match constructor {
             DOUBLE => Ok(parse_f64(stream).await?),
@@ -37,11 +38,10 @@ impl Decode for Double {
     }
 }
 
-async fn parse_f64(iter: &mut Pin<Box<impl Stream<Item=u8>>>) -> Result<Double, AppError> {
+async fn parse_f64(iter: &mut Pin<Box<impl Stream<Item = u8>>>) -> Result<Double, AppError> {
     let byte_vals = read_bytes_8(iter).await?;
     Ok(Double(f64::from_be_bytes(byte_vals)))
 }
-
 
 impl Hash for Double {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
@@ -61,18 +61,16 @@ impl PartialEq for Double {
     }
 }
 
-
 impl From<f64> for Double {
     fn from(value: f64) -> Self {
         Double(value)
     }
 }
 
-
 #[cfg(test)]
 mod test {
-    use crate::common::tests::ByteVecExt;
     use super::*;
+    use crate::common::tests::ByteVecExt;
 
     #[test]
     fn construct_double() {
@@ -83,35 +81,52 @@ mod test {
     #[test]
     fn test_encode_double() {
         let test_cases = [
-            (Double(0.0), [0x82, 0, 0, 0, 0, 0, 0, 0, 0]),                 // Test with zero
-            (Double(1.0), [0x82, 63, 240, 0, 0, 0, 0, 0, 0]),              // Test with a positive value
-            (Double(-1.0), [0x82, 191, 240, 0, 0, 0, 0, 0, 0]),            // Test with a negative value
-            (Double(f64::INFINITY), [0x82, 127, 240, 0, 0, 0, 0, 0, 0]),   // Test with positive infinity
-            (Double(f64::NEG_INFINITY), [0x82, 255, 240, 0, 0, 0, 0, 0, 0]), // Test with negative infinity
-            (Double(f64::NAN), [0x82, 127, 248, 0, 0, 0, 0, 0, 0]),        // Test with NaN
+            (Double(0.0), [0x82, 0, 0, 0, 0, 0, 0, 0, 0]), // Test with zero
+            (Double(1.0), [0x82, 63, 240, 0, 0, 0, 0, 0, 0]), // Test with a positive value
+            (Double(-1.0), [0x82, 191, 240, 0, 0, 0, 0, 0, 0]), // Test with a negative value
+            (Double(f64::INFINITY), [0x82, 127, 240, 0, 0, 0, 0, 0, 0]), // Test with positive infinity
+            (
+                Double(f64::NEG_INFINITY),
+                [0x82, 255, 240, 0, 0, 0, 0, 0, 0],
+            ), // Test with negative infinity
+            (Double(f64::NAN), [0x82, 127, 248, 0, 0, 0, 0, 0, 0]),      // Test with NaN
         ];
 
         for (input, expected) in test_cases {
             let encoded = input.encode();
-            assert_eq!(encoded.to_bytes(), expected, "Failed encoding for Double value: {:?}", input);
+            assert_eq!(
+                encoded.to_bytes(),
+                expected,
+                "Failed encoding for Double value: {:?}",
+                input
+            );
         }
     }
 
     #[tokio::test]
     async fn try_decode_returns_correct_value() {
         let val = vec![0x40, 0x20, 0x00, 0x00, 0x41, 0x70, 0x00, 0x10];
-        assert_eq!(Double::try_decode(DOUBLE, &mut val.into_pinned_stream()).await.unwrap(), 8.0000019501895.into());
+        assert_eq!(
+            Double::try_decode(DOUBLE, &mut val.into_pinned_stream())
+                .await
+                .unwrap(),
+            8.0000019501895.into()
+        );
     }
 
     #[tokio::test]
     async fn try_decode_returns_error_when_value_bytes_are_invalid() {
         let val = vec![0x44];
-        assert!(Double::try_decode(0x66, &mut val.into_pinned_stream()).await.is_err());
+        assert!(Double::try_decode(0x66, &mut val.into_pinned_stream())
+            .await
+            .is_err());
     }
 
     #[tokio::test]
     async fn try_decode_returns_error_when_bytes_are_missing() {
         let val = vec![0x00, 0x01];
-        assert!(Double::try_decode(DOUBLE, &mut val.into_pinned_stream()).await.is_err());
+        assert!(Double::try_decode(DOUBLE, &mut val.into_pinned_stream())
+            .await
+            .is_err());
     }
 }

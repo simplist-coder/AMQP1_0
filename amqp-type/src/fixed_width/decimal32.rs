@@ -1,29 +1,29 @@
-use std::hash::{Hash, Hasher};
-use std::pin::Pin;
-use tokio_stream::Stream;
 use crate::common::read_bytes_4;
 use crate::constants::constructors::DECIMAL_32;
 use crate::error::AppError;
 use crate::serde::decode::Decode;
 use crate::serde::encode::{Encode, Encoded};
-
-
+use std::hash::{Hash, Hasher};
+use std::pin::Pin;
+use tokio_stream::Stream;
 
 #[derive(Debug)]
 pub struct Decimal32(f32);
 
 impl Encode for Decimal32 {
     fn encode(&self) -> Encoded {
-        Encoded::new_fixed(
-            DECIMAL_32,
-            self.0.to_be_bytes().to_vec(),
-        )
+        Encoded::new_fixed(DECIMAL_32, self.0.to_be_bytes().to_vec())
     }
 }
 
 impl Decode for Decimal32 {
-
-    async fn try_decode(constructor: u8, stream: &mut Pin<Box<impl Stream<Item=u8>>>) -> Result<Self, AppError> where Self: Sized {
+    async fn try_decode(
+        constructor: u8,
+        stream: &mut Pin<Box<impl Stream<Item = u8>>>,
+    ) -> Result<Self, AppError>
+    where
+        Self: Sized,
+    {
         match constructor {
             DECIMAL_32 => Ok(parse_decimal32(stream).await?),
             c => Err(AppError::DeserializationIllegalConstructorError(c)),
@@ -31,7 +31,9 @@ impl Decode for Decimal32 {
     }
 }
 
-async fn parse_decimal32(iter: &mut Pin<Box<impl Stream<Item=u8>>>) -> Result<Decimal32, AppError> {
+async fn parse_decimal32(
+    iter: &mut Pin<Box<impl Stream<Item = u8>>>,
+) -> Result<Decimal32, AppError> {
     let byte_vals = read_bytes_4(iter).await?;
     Ok(Decimal32(f32::from_be_bytes(byte_vals)))
 }
@@ -58,9 +60,9 @@ impl From<f32> for Decimal32 {
 
 #[cfg(test)]
 mod test {
-    use bytes::BufMut;
-    use crate::common::tests::ByteVecExt;
     use super::*;
+    use crate::common::tests::ByteVecExt;
+    use bytes::BufMut;
 
     #[test]
     fn construct_decimal_32() {
@@ -71,17 +73,25 @@ mod test {
     #[test]
     fn test_encode_decimal32() {
         let test_cases = [
-            (Decimal32(0.0), vec![DECIMAL_32, 0, 0, 0, 0]),                   // Test with zero
-            (Decimal32(1.0), vec![DECIMAL_32, 63, 128, 0, 0]),                // Test with a positive value
-            (Decimal32(-1.0), vec![DECIMAL_32, 191, 128, 0, 0]),              // Test with a negative value
-            (Decimal32(f32::INFINITY), vec![DECIMAL_32, 127, 128, 0, 0]),     // Test with positive infinity
-            (Decimal32(f32::NEG_INFINITY), vec![DECIMAL_32, 255, 128, 0, 0]), // Test with negative infinity
-            (Decimal32(f32::NAN), vec![DECIMAL_32, 127, 192, 0, 0]),          // Test with NaN
+            (Decimal32(0.0), vec![DECIMAL_32, 0, 0, 0, 0]), // Test with zero
+            (Decimal32(1.0), vec![DECIMAL_32, 63, 128, 0, 0]), // Test with a positive value
+            (Decimal32(-1.0), vec![DECIMAL_32, 191, 128, 0, 0]), // Test with a negative value
+            (Decimal32(f32::INFINITY), vec![DECIMAL_32, 127, 128, 0, 0]), // Test with positive infinity
+            (
+                Decimal32(f32::NEG_INFINITY),
+                vec![DECIMAL_32, 255, 128, 0, 0],
+            ), // Test with negative infinity
+            (Decimal32(f32::NAN), vec![DECIMAL_32, 127, 192, 0, 0]),      // Test with NaN
         ];
 
         for (input, expected) in test_cases {
             let encoded = input.encode();
-            assert_eq!(encoded.to_bytes(), expected, "Failed encoding for Decimal32 value: {:?}", input);
+            assert_eq!(
+                encoded.to_bytes(),
+                expected,
+                "Failed encoding for Decimal32 value: {:?}",
+                input
+            );
         }
     }
 
@@ -104,7 +114,9 @@ mod test {
 
         match Decimal32::try_decode(illegal_constructor, &mut bytes.into_pinned_stream()).await {
             Ok(_) => panic!("Expected an error, but deserialization succeeded"),
-            Err(AppError::DeserializationIllegalConstructorError(c)) => assert_eq!(illegal_constructor, c),
+            Err(AppError::DeserializationIllegalConstructorError(c)) => {
+                assert_eq!(illegal_constructor, c)
+            }
             Err(e) => panic!("Unexpected error type: {:?}", e),
         }
     }

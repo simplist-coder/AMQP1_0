@@ -1,5 +1,3 @@
-use std::pin::Pin;
-use tokio_stream::{iter, Stream, StreamExt};
 use crate::amqp_type::AmqpType;
 use crate::common::{read_bytes, read_bytes_4};
 use crate::compound::encoded_vec::EncodedVec;
@@ -7,6 +5,8 @@ use crate::constants::constructors::{LIST, LIST_EMPTY, LIST_SHORT};
 use crate::error::AppError;
 use crate::serde::decode::Decode;
 use crate::serde::encode::{Encode, Encoded};
+use std::pin::Pin;
+use tokio_stream::{iter, Stream, StreamExt};
 
 #[derive(Debug, Hash, Eq, PartialEq)]
 pub struct List(Vec<AmqpType>);
@@ -27,32 +27,49 @@ impl Encode for List {
 }
 
 impl Decode for List {
-    async fn try_decode(constructor: u8, stream: &mut Pin<Box<impl Stream<Item=u8>>>) -> Result<Self, AppError>
+    async fn try_decode(
+        constructor: u8,
+        stream: &mut Pin<Box<impl Stream<Item = u8>>>,
+    ) -> Result<Self, AppError>
     where
-        Self: Sized
+        Self: Sized,
     {
         match constructor {
             LIST_EMPTY => Ok(List(vec![])),
             LIST_SHORT => Ok(parse_short_list(stream).await?),
             LIST => Ok(parse_list(stream).await?),
-            illegal => Err(AppError::DeserializationIllegalConstructorError(illegal))
+            illegal => Err(AppError::DeserializationIllegalConstructorError(illegal)),
         }
     }
 }
 
-async fn parse_short_list(stream: &mut Pin<Box<impl Stream<Item=u8>>>) -> Result<List, AppError> {
-    let size = stream.next().await.ok_or(AppError::IteratorEmptyOrTooShortError)?;
-    let count = stream.next().await.ok_or(AppError::IteratorEmptyOrTooShortError)?;
-    Ok(List(parse_list_to_vec(stream, size as usize, count as usize).await?))
+async fn parse_short_list(stream: &mut Pin<Box<impl Stream<Item = u8>>>) -> Result<List, AppError> {
+    let size = stream
+        .next()
+        .await
+        .ok_or(AppError::IteratorEmptyOrTooShortError)?;
+    let count = stream
+        .next()
+        .await
+        .ok_or(AppError::IteratorEmptyOrTooShortError)?;
+    Ok(List(
+        parse_list_to_vec(stream, size as usize, count as usize).await?,
+    ))
 }
 
-async fn parse_list(stream: &mut Pin<Box<impl Stream<Item=u8>>>) -> Result<List, AppError> {
+async fn parse_list(stream: &mut Pin<Box<impl Stream<Item = u8>>>) -> Result<List, AppError> {
     let size = u32::from_be_bytes(read_bytes_4(stream).await?);
     let count = u32::from_be_bytes(read_bytes_4(stream).await?);
-    Ok(List(parse_list_to_vec(stream, size as usize, count as usize).await?))
+    Ok(List(
+        parse_list_to_vec(stream, size as usize, count as usize).await?,
+    ))
 }
 
-async fn parse_list_to_vec(stream: &mut Pin<Box<impl Stream<Item=u8>>>, size: usize, count: usize) -> Result<Vec<AmqpType>, AppError> {
+async fn parse_list_to_vec(
+    stream: &mut Pin<Box<impl Stream<Item = u8>>>,
+    size: usize,
+    count: usize,
+) -> Result<Vec<AmqpType>, AppError> {
     let mut buffer = Box::pin(iter(read_bytes(stream, size).await?));
     let mut result = Vec::with_capacity(count);
     for _ in 0..count {
@@ -71,9 +88,9 @@ impl From<Vec<AmqpType>> for List {
 
 #[cfg(test)]
 mod test {
+    use super::*;
     use crate::common::tests::ByteVecExt;
     use crate::constants::constructors::{INTEGER, UNSIGNED_SHORT};
-    use super::*;
     #[test]
     fn construct_empty_list() {
         let val = List(vec![]);
@@ -108,8 +125,21 @@ mod test {
 
     #[tokio::test]
     async fn try_decode_short_list_returns_correct_value() {
-        let bytes = vec![8, 2, INTEGER, 0x00, 0x00, 0x00, 21, UNSIGNED_SHORT, 0x00, 16];
-        let res = List::try_decode(LIST_SHORT, &mut bytes.into_pinned_stream()).await.unwrap();
+        let bytes = vec![
+            8,
+            2,
+            INTEGER,
+            0x00,
+            0x00,
+            0x00,
+            21,
+            UNSIGNED_SHORT,
+            0x00,
+            16,
+        ];
+        let res = List::try_decode(LIST_SHORT, &mut bytes.into_pinned_stream())
+            .await
+            .unwrap();
         assert_eq!(res.0.len(), 2);
         assert!(matches!(res.0[0], AmqpType::Int(21)));
         assert!(matches!(res.0[1], AmqpType::Ushort(16)));
@@ -117,8 +147,12 @@ mod test {
 
     #[tokio::test]
     async fn try_decode_list_returns_correct_value() {
-        let bytes = vec![0x00, 0x00, 0x00, 5, 0x00, 0x00, 0x00, 1, INTEGER, 0x00, 0x00, 0x00, 21];
-        let res = List::try_decode(LIST, &mut bytes.into_pinned_stream()).await.unwrap();
+        let bytes = vec![
+            0x00, 0x00, 0x00, 5, 0x00, 0x00, 0x00, 1, INTEGER, 0x00, 0x00, 0x00, 21,
+        ];
+        let res = List::try_decode(LIST, &mut bytes.into_pinned_stream())
+            .await
+            .unwrap();
         assert_eq!(res.0.len(), 1);
         assert!(matches!(res.0[0], AmqpType::Int(21)));
     }
@@ -127,34 +161,56 @@ mod test {
     async fn try_decode_short_list_returns_error_if_constructor_is_wrong() {
         let bytes = vec![4, 1, INTEGER, 0x00, 0x00, 0x00, 21];
         let res = List::try_decode(0x99, &mut bytes.into_pinned_stream()).await;
-        assert!(matches!(res, Err(AppError::DeserializationIllegalConstructorError(0x99))));
+        assert!(matches!(
+            res,
+            Err(AppError::DeserializationIllegalConstructorError(0x99))
+        ));
     }
 
     #[tokio::test]
     async fn try_decode_short_list_returns_error_if_element_constructor_is_wrong() {
-        let bytes = vec![4, 1, 0x99 /*<---wrong element constructor*/, 0x00, 0x00, 0x00, 0x15];
+        let bytes = vec![
+            4, 1, 0x99, /*<---wrong element constructor*/
+            0x00, 0x00, 0x00, 0x15,
+        ];
         let res = List::try_decode(LIST_SHORT, &mut bytes.into_pinned_stream()).await;
-        assert!(matches!(res, Err(AppError::DeserializationIllegalConstructorError(0x99))));
+        assert!(matches!(
+            res,
+            Err(AppError::DeserializationIllegalConstructorError(0x99))
+        ));
     }
 
     #[tokio::test]
     async fn try_decode_list_returns_error_if_constructor_is_wrong() {
-        let bytes = vec![0x00, 0x00, 0x00, 4, 0x00, 0x00, 0x00, 1, INTEGER, 0x00, 0x00, 0x00, 0x15];
+        let bytes = vec![
+            0x00, 0x00, 0x00, 4, 0x00, 0x00, 0x00, 1, INTEGER, 0x00, 0x00, 0x00, 0x15,
+        ];
         let res = List::try_decode(0x98, &mut bytes.into_pinned_stream()).await;
-        assert!(matches!(res, Err(AppError::DeserializationIllegalConstructorError(0x98))));
+        assert!(matches!(
+            res,
+            Err(AppError::DeserializationIllegalConstructorError(0x98))
+        ));
     }
 
     #[tokio::test]
     async fn try_decode_list_returns_error_if_element_constructor_is_wrong() {
-        let bytes = vec![0x00, 0x00, 0x00, 4, 0x00, 0x00, 0x00, 1, 0x99 /*<---wrong element constructor*/, 0x00, 0x00, 0x00, 0x15];
+        let bytes = vec![
+            0x00, 0x00, 0x00, 4, 0x00, 0x00, 0x00, 1, 0x99, /*<---wrong element constructor*/
+            0x00, 0x00, 0x00, 0x15,
+        ];
         let res = List::try_decode(LIST, &mut bytes.into_pinned_stream()).await;
-        assert!(matches!(res, Err(AppError::DeserializationIllegalConstructorError(0x99))));
+        assert!(matches!(
+            res,
+            Err(AppError::DeserializationIllegalConstructorError(0x99))
+        ));
     }
 
     #[tokio::test]
     async fn try_decode_list_returns_empty_list_on_empty_list_constructor() {
         let bytes = vec![0x13, 0x05, 0x01];
-        let res = List::try_decode(LIST_EMPTY, &mut bytes.into_pinned_stream()).await.unwrap();
+        let res = List::try_decode(LIST_EMPTY, &mut bytes.into_pinned_stream())
+            .await
+            .unwrap();
         assert!(res.0.is_empty());
     }
 }

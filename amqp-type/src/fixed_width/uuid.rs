@@ -6,7 +6,6 @@ use crate::serde::encode::{Encode, Encoded};
 use std::pin::Pin;
 use tokio_stream::Stream;
 
-
 #[derive(Debug, Hash, Eq, PartialEq)]
 pub struct Uuid(uuid::Uuid);
 
@@ -17,8 +16,13 @@ impl Encode for Uuid {
 }
 
 impl Decode for Uuid {
-
-    async fn try_decode(constructor: u8, stream: &mut Pin<Box<impl Stream<Item=u8>>>) -> Result<Self, AppError> where Self: Sized {
+    async fn try_decode(
+        constructor: u8,
+        stream: &mut Pin<Box<impl Stream<Item = u8>>>,
+    ) -> Result<Self, AppError>
+    where
+        Self: Sized,
+    {
         match constructor {
             UUID => Ok(parse_uuid(stream).await?),
             c => Err(AppError::DeserializationIllegalConstructorError(c)),
@@ -26,7 +30,7 @@ impl Decode for Uuid {
     }
 }
 
-async fn parse_uuid(iter: &mut Pin<Box<impl Stream<Item=u8>>>) -> Result<Uuid, AppError> {
+async fn parse_uuid(iter: &mut Pin<Box<impl Stream<Item = u8>>>) -> Result<Uuid, AppError> {
     let byte_vals = read_bytes_16(iter).await?;
     Ok(Uuid(uuid::Uuid::from_bytes(byte_vals)))
 }
@@ -70,20 +74,29 @@ mod test {
         let mut bytes = vec![];
         bytes.extend(uuid.to_vec());
         let decoded = Uuid::try_decode(0x99, &mut bytes.into_pinned_stream()).await;
-        assert!(matches!(decoded, Err(AppError::DeserializationIllegalConstructorError(_))));
+        assert!(matches!(
+            decoded,
+            Err(AppError::DeserializationIllegalConstructorError(_))
+        ));
     }
 
     #[tokio::test]
     async fn test_decode_short_byte_sequence() {
-        let short_bytes = vec![UUID];  // Not enough bytes for a UUID
+        let short_bytes = vec![UUID]; // Not enough bytes for a UUID
         let decoded = Uuid::try_decode(UUID, &mut short_bytes.into_pinned_stream()).await;
-        assert!(matches!(decoded, Err(AppError::IteratorEmptyOrTooShortError)));
+        assert!(matches!(
+            decoded,
+            Err(AppError::IteratorEmptyOrTooShortError)
+        ));
     }
 
     #[tokio::test]
     async fn test_decode_empty_iterator() {
         let val = vec![];
         let decoded = Uuid::try_decode(UUID, &mut val.into_pinned_stream()).await;
-        assert!(matches!(decoded, Err(AppError::IteratorEmptyOrTooShortError)));
+        assert!(matches!(
+            decoded,
+            Err(AppError::IteratorEmptyOrTooShortError)
+        ));
     }
 }
