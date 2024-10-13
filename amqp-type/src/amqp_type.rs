@@ -122,7 +122,7 @@ impl AmqpType {
                 Ok(u64::try_decode(x, stream).await?.into())
             }
             x @ (ARRAY_SHORT | ARRAY) => Ok(Array::try_decode(x, stream).await?.into()),
-            x @ (LIST_SHORT | LIST) => Ok(List::try_decode(x, stream).await?.into()),
+            x @ (LIST_EMPTY | LIST_SHORT | LIST) => Ok(List::try_decode(x, stream).await?.into()),
             x @ (MAP_SHORT | MAP) => Ok(Map::try_decode(x, stream).await?.into()),
             x @ (BINARY_SHORT | BINARY) => Ok(Binary::try_decode(x, stream).await?.into()),
             x @ (STRING_SHORT | STRING) => Ok(String::try_decode(x, stream).await?.into()),

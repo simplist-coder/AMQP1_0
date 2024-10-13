@@ -213,4 +213,17 @@ mod test {
             .unwrap();
         assert!(res.0.is_empty());
     }
+
+    #[tokio::test]
+    async fn try_decode_empty_list_does_not_advance_stream() {
+        let bytes = vec![1, 2, 3];
+        let mut stream = bytes.into_pinned_stream();
+        let res = List::try_decode(LIST_EMPTY, &mut stream).await.unwrap();
+        assert!(res.0.is_empty());
+        assert_eq!(stream.next().await, Some(1));
+        assert_eq!(stream.next().await, Some(2));
+        assert_eq!(stream.next().await, Some(3));
+        assert_eq!(stream.next().await, None);
+        assert_eq!(stream.next().await, None);
+    }
 }
