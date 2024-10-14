@@ -21,13 +21,13 @@ impl Encode for Array {
                 match (len, byte_size) {
                     (len, size) if len <= 255 && size < 256 => Encoded::new_array(
                         ARRAY_SHORT,
-                        len as u32,
+                        len,
                         encoded[0].constructor(),
                         EncodedVec::new(encoded).serialize_without_constructors(),
                     ),
                     (_, _) => Encoded::new_array(
                         ARRAY,
-                        len as u32,
+                        len,
                         encoded[0].constructor(),
                         EncodedVec::new(encoded).serialize_without_constructors(),
                     ),
@@ -155,19 +155,21 @@ mod test {
 
         let encoded: Vec<u8> = array.encode().into();
 
-        let size = u32::from_be_bytes(encoded.get(0..1).unwrap().try_into().unwrap());
-        let count = u32::from_be_bytes(encoded.get(1..2).unwrap().try_into().unwrap());
-        let element_constructor = encoded.get(3).unwrap();
-        assert_eq!(encoded.len(), 3); // 1 byte size, 1 byte count, 1 byte element constructor, 0 bytes data
+        let constructor = encoded.get(0).unwrap().clone();
+        let size = encoded.get(1).unwrap().clone();
+        let count = encoded.get(2).unwrap().clone();
+        let element_constructor = encoded.get(3).unwrap().clone();
+        assert_eq!(encoded.len(), 4); //1 byte constructor, 1 byte size, 1 byte count, 1 byte element constructor, 0 bytes data
+        assert_eq!(constructor, ARRAY_SHORT);
         assert_eq!(size, 0);
         assert_eq!(count, 0);
-        assert_eq!(element_constructor, &NULL);
+        assert_eq!(element_constructor, NULL);
     }
 
     #[test]
     fn test_encode_long_array() {
         // using Vec<u8> because it makes the result easier to reason about
-        let raw_data = vec![5u8].repeat(1000);
+        let raw_data = vec![5; 1000];
         let values = raw_data
             .clone()
             .into_iter()
@@ -177,20 +179,22 @@ mod test {
 
         let encoded: Vec<u8> = array.encode().into();
 
-        let size = u32::from_be_bytes(encoded.get(0..4).unwrap().try_into().unwrap());
-        let count = u32::from_be_bytes(encoded.get(4..8).unwrap().try_into().unwrap());
-        let element_constructor = encoded.get(9).unwrap();
-        assert_eq!(encoded.len(), 1009); // 4 bytes size, 4 bytes count, 1 byte element constructor, 1000 bytes data
+        let constructor = encoded.get(0).unwrap().clone();
+        let size = u32::from_be_bytes(encoded.get(1..5).unwrap().try_into().unwrap());
+        let count = u32::from_be_bytes(encoded.get(5..9).unwrap().try_into().unwrap());
+        let element_constructor = encoded.get(9).unwrap().clone();
+        assert_eq!(constructor, ARRAY);
+        assert_eq!(encoded.len(), 1010); // 1 byte constructor, 4 bytes size, 4 bytes count, 1 byte element constructor, 1000 bytes data
         assert_eq!(size, 1000);
         assert_eq!(count, 1000);
-        assert_eq!(element_constructor, &UNSIGNED_BYTE);
+        assert_eq!(element_constructor, UNSIGNED_BYTE);
         assert!(encoded.ends_with(raw_data.as_slice()));
     }
 
     #[test]
     fn test_encode_short_array() {
         // using Vec<u8> because it makes the result easier to reason about
-        let raw_data = vec![5u8].repeat(100);
+        let raw_data = vec![5; 100];
         let values = raw_data
             .clone()
             .into_iter()
@@ -200,13 +204,15 @@ mod test {
 
         let encoded: Vec<u8> = array.encode().into();
 
-        let size = u8::from_be_bytes(encoded.get(0..1).unwrap().try_into().unwrap());
-        let count = u8::from_be_bytes(encoded.get(1..2).unwrap().try_into().unwrap());
-        let element_constructor = encoded.get(3).unwrap();
-        assert_eq!(encoded.len(), 103); // 1 byte size, 1 byte count, 1 byte element constructor, 100 bytes data
+        let constructor = encoded.get(0).unwrap().clone();
+        let size = encoded.get(1).unwrap().clone();
+        let count = encoded.get(2).unwrap().clone();
+        let element_constructor = encoded.get(3).unwrap().clone();
+        assert_eq!(encoded.len(), 104); // 1 byte constructor, 1 byte size, 1 byte count, 1 byte element constructor, 100 bytes data
+        assert_eq!(constructor, ARRAY_SHORT);
         assert_eq!(size, 100);
         assert_eq!(count, 100);
-        assert_eq!(element_constructor, &UNSIGNED_BYTE);
+        assert_eq!(element_constructor, UNSIGNED_BYTE);
         assert!(encoded.ends_with(raw_data.as_slice()));
     }
 

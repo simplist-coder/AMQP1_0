@@ -14,7 +14,7 @@ pub struct List(Vec<AmqpType>);
 impl Encode for List {
     fn encode(&self) -> Encoded {
         let encoded: Vec<Encoded> = self.0.iter().map(|x| x.encode()).collect();
-        let count = encoded.len() as u32;
+        let count = encoded.len();
         let byte_size = encoded.iter().fold(0, |acc, x| acc + x.data_len());
         match (encoded.len(), byte_size) {
             (0, _) => LIST_EMPTY.into(),
