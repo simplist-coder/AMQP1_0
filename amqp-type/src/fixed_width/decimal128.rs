@@ -9,10 +9,8 @@ use tokio_stream::Stream;
 pub struct Decimal128(BigDecimal);
 
 /**
-f128 implemented in
-https://github.com/rust-lang/rfcs/pull/3453
-This is already merged into rust-lang:master
-implement this when it is available in stable.
+f128 is not yet supported by rust, see https://github.com/rust-lang/rust/issues/116909
+Implement this when f128 it is available in stable.
  */
 impl Encode for Decimal128 {
     fn encode(&self) -> Encoded {
