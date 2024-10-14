@@ -62,7 +62,6 @@ fn verify_ascii_char_set(string: &String) -> Result<(), AppError> {
     }
 }
 
-#[allow(dead_code)]
 impl Symbol {
     pub fn new(string: String) -> Result<Self, AppError> {
         verify_ascii_char_set(&string)?;

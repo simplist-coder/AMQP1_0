@@ -1,4 +1,4 @@
-mod amqp_type;
+pub mod amqp_type;
 mod common;
 mod compound;
 mod constants;

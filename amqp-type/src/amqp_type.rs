@@ -78,7 +78,6 @@ impl Encode for AmqpType {
 }
 
 impl AmqpType {
-    #[allow(dead_code)]
     pub async fn try_decode(stream: &mut Pin<Box<impl Stream<Item = u8>>>) -> Result<Self, AppError>
     where
         Self: Sized,
@@ -89,7 +88,6 @@ impl AmqpType {
         }
     }
 
-    #[allow(dead_code)]
     pub async fn try_decode_with_constructor(
         constructor: u8,
         stream: &mut Pin<Box<impl Stream<Item = u8>>>,
