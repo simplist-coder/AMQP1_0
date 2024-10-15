@@ -35,6 +35,12 @@ async fn parse_uuid(iter: &mut Pin<Box<impl Stream<Item = u8>>>) -> Result<Uuid,
     Ok(Uuid(uuid::Uuid::from_bytes(byte_vals)))
 }
 
+impl From<uuid::Uuid> for Uuid {
+    fn from(value: uuid::Uuid) -> Self {
+        Uuid(value)
+    }
+}
+
 #[cfg(test)]
 mod test {
     use super::*;

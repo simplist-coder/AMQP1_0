@@ -282,10 +282,255 @@ impl From<Decimal128> for AmqpType {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::common::tests::ByteVecExt;
+    use bigdecimal::BigDecimal;
+    use indexmap::IndexMap;
 
     #[test]
     fn construct_null() {
         let val = AmqpType::Null;
         assert_eq!(val.encode().constructor(), 0x40);
+    }
+
+    #[tokio::test]
+    async fn test_encode_decode_round_trip_null() {
+        let before = AmqpType::Null;
+        let encoded: Vec<u8> = before.encode().into();
+        let decoded = AmqpType::try_decode(&mut encoded.into_pinned_stream())
+            .await
+            .unwrap();
+        assert_eq!(decoded, before);
+    }
+    #[tokio::test]
+    async fn test_encode_decode_round_trip_boolean() {
+        let before = AmqpType::Boolean(false);
+        let encoded: Vec<u8> = before.encode().into();
+        let decoded = AmqpType::try_decode(&mut encoded.into_pinned_stream())
+            .await
+            .unwrap();
+        assert_eq!(decoded, before);
+    }
+    #[tokio::test]
+    async fn test_encode_decode_round_trip_ubyte() {
+        let before = AmqpType::Ubyte(10);
+        let encoded: Vec<u8> = before.encode().into();
+        let decoded = AmqpType::try_decode(&mut encoded.into_pinned_stream())
+            .await
+            .unwrap();
+        assert_eq!(decoded, before);
+    }
+    #[tokio::test]
+    async fn test_encode_decode_round_trip_ushort() {
+        let before = AmqpType::Ushort(100);
+        let encoded: Vec<u8> = before.encode().into();
+        let decoded = AmqpType::try_decode(&mut encoded.into_pinned_stream())
+            .await
+            .unwrap();
+        assert_eq!(decoded, before);
+    }
+    #[tokio::test]
+    async fn test_encode_decode_round_trip_uint() {
+        let before = AmqpType::Uint(100);
+        let encoded: Vec<u8> = before.encode().into();
+        let decoded = AmqpType::try_decode(&mut encoded.into_pinned_stream())
+            .await
+            .unwrap();
+        assert_eq!(decoded, before);
+    }
+    #[tokio::test]
+    async fn test_encode_decode_round_trip_ulong() {
+        let before = AmqpType::Ulong(100);
+        let encoded: Vec<u8> = before.encode().into();
+        let decoded = AmqpType::try_decode(&mut encoded.into_pinned_stream())
+            .await
+            .unwrap();
+        assert_eq!(decoded, before);
+    }
+    #[tokio::test]
+    async fn test_encode_decode_round_trip_byte() {
+        let before = AmqpType::Byte(100);
+        let encoded: Vec<u8> = before.encode().into();
+        let decoded = AmqpType::try_decode(&mut encoded.into_pinned_stream())
+            .await
+            .unwrap();
+        assert_eq!(decoded, before);
+    }
+    #[tokio::test]
+    async fn test_encode_decode_round_trip_short() {
+        let before = AmqpType::Short(100);
+        let encoded: Vec<u8> = before.encode().into();
+        let decoded = AmqpType::try_decode(&mut encoded.into_pinned_stream())
+            .await
+            .unwrap();
+        assert_eq!(decoded, before);
+    }
+    #[tokio::test]
+    async fn test_encode_decode_round_trip_int() {
+        let before = AmqpType::Int(100);
+        let encoded: Vec<u8> = before.encode().into();
+        let decoded = AmqpType::try_decode(&mut encoded.into_pinned_stream())
+            .await
+            .unwrap();
+        assert_eq!(decoded, before);
+    }
+    #[tokio::test]
+    async fn test_encode_decode_round_trip_long() {
+        let before = AmqpType::Long(100);
+        let encoded: Vec<u8> = before.encode().into();
+        let decoded = AmqpType::try_decode(&mut encoded.into_pinned_stream())
+            .await
+            .unwrap();
+        assert_eq!(decoded, before);
+    }
+    #[tokio::test]
+    async fn test_encode_decode_round_trip_float() {
+        let before = AmqpType::Float(1.0.into());
+        let encoded: Vec<u8> = before.encode().into();
+        let decoded = AmqpType::try_decode(&mut encoded.into_pinned_stream())
+            .await
+            .unwrap();
+        assert_eq!(decoded, before);
+    }
+    #[tokio::test]
+    async fn test_encode_decode_round_trip_double() {
+        let before = AmqpType::Double(100.0.into());
+        let encoded: Vec<u8> = before.encode().into();
+        let decoded = AmqpType::try_decode(&mut encoded.into_pinned_stream())
+            .await
+            .unwrap();
+        assert_eq!(decoded, before);
+    }
+    #[tokio::test]
+    async fn test_encode_decode_round_trip_decimal32() {
+        let before = AmqpType::Decimal32(100.0.into());
+        let encoded: Vec<u8> = before.encode().into();
+        let decoded = AmqpType::try_decode(&mut encoded.into_pinned_stream())
+            .await
+            .unwrap();
+        assert_eq!(decoded, before);
+    }
+    #[tokio::test]
+    async fn test_encode_decode_round_trip_decimal64() {
+        let before = AmqpType::Decimal64(100.0.into());
+        let encoded: Vec<u8> = before.encode().into();
+        let decoded = AmqpType::try_decode(&mut encoded.into_pinned_stream())
+            .await
+            .unwrap();
+        assert_eq!(decoded, before);
+    }
+    #[tokio::test]
+    #[ignore]
+    // Ignored because f128 is not implemented yet
+    async fn test_encode_decode_round_trip_decimal128() {
+        let before = AmqpType::Decimal128(BigDecimal::from(10000u32).into());
+        let encoded: Vec<u8> = before.encode().into();
+        let decoded = AmqpType::try_decode(&mut encoded.into_pinned_stream())
+            .await
+            .unwrap();
+        assert_eq!(decoded, before);
+    }
+    #[tokio::test]
+    async fn test_encode_decode_round_trip_timestamp() {
+        let before = AmqpType::Timestamp(10000.into());
+        let encoded: Vec<u8> = before.encode().into();
+        let decoded = AmqpType::try_decode(&mut encoded.into_pinned_stream())
+            .await
+            .unwrap();
+        assert_eq!(decoded, before);
+    }
+    #[tokio::test]
+    async fn test_encode_decode_round_trip_uuid() {
+        let before = AmqpType::Uuid(uuid::Uuid::new_v4().into());
+        let encoded: Vec<u8> = before.encode().into();
+        let decoded = AmqpType::try_decode(&mut encoded.into_pinned_stream())
+            .await
+            .unwrap();
+        assert_eq!(decoded, before);
+    }
+    #[tokio::test]
+    async fn test_encode_decode_round_trip_binary() {
+        let before = AmqpType::Binary(vec![1, 2, 3, 4, 5].into());
+        let encoded: Vec<u8> = before.encode().into();
+        let decoded = AmqpType::try_decode(&mut encoded.into_pinned_stream())
+            .await
+            .unwrap();
+        assert_eq!(decoded, before);
+    }
+    #[tokio::test]
+    async fn test_encode_decode_round_trip_string() {
+        let before = AmqpType::String("Hello World".to_string());
+        let encoded: Vec<u8> = before.encode().into();
+        let decoded = AmqpType::try_decode(&mut encoded.into_pinned_stream())
+            .await
+            .unwrap();
+        assert_eq!(decoded, before);
+    }
+    #[tokio::test]
+    async fn test_encode_decode_round_trip_symbol() {
+        let before = AmqpType::Symbol(Symbol::new("book:seller:entry".to_string()).unwrap());
+        let encoded: Vec<u8> = before.encode().into();
+        let decoded = AmqpType::try_decode(&mut encoded.into_pinned_stream())
+            .await
+            .unwrap();
+        assert_eq!(decoded, before);
+    }
+    #[tokio::test]
+    async fn test_encode_decode_round_trip_list() {
+        let before = AmqpType::List(
+            vec![
+                AmqpType::String("Hello world".to_string()),
+                AmqpType::Char('a'),
+                AmqpType::Byte(10),
+            ]
+            .into(),
+        );
+        let encoded: Vec<u8> = before.encode().into();
+        let decoded = AmqpType::try_decode(&mut encoded.into_pinned_stream())
+            .await
+            .unwrap();
+        assert_eq!(decoded, before);
+    }
+    #[tokio::test]
+    async fn test_encode_decode_round_trip_map() {
+        let map: IndexMap<AmqpType, AmqpType> = [
+            (
+                AmqpType::String("Hello world".to_string()),
+                AmqpType::String("Hello world".to_string()),
+            ),
+            (
+                AmqpType::Char('a'),
+                AmqpType::String("Hello world aaaaaaaaaaaaa".to_string()),
+            ),
+            (
+                AmqpType::Byte(10),
+                AmqpType::String(
+                    "Hello world Mega man was here and i need a long text. anyways, moving on"
+                        .to_string(),
+                ),
+            ),
+        ]
+        .into();
+        let before = AmqpType::Map(map.into());
+        let encoded: Vec<u8> = before.encode().into();
+        let decoded = AmqpType::try_decode(&mut encoded.into_pinned_stream())
+            .await
+            .unwrap();
+        assert_eq!(decoded, before);
+    }
+    #[tokio::test]
+    async fn test_encode_decode_round_trip_array() {
+        let before = AmqpType::Array(
+            vec![
+                AmqpType::Int(100),
+                AmqpType::Int(1000),
+                AmqpType::Int(10000),
+            ]
+            .into(),
+        );
+        let encoded: Vec<u8> = before.encode().into();
+        let decoded = AmqpType::try_decode(&mut encoded.into_pinned_stream())
+            .await
+            .unwrap();
+        assert_eq!(decoded, before);
     }
 }

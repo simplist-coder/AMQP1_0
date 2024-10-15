@@ -10,9 +10,10 @@ impl Encode for u64 {
     fn encode(&self) -> Encoded {
         match self {
             0 => Encoded::new_empty(UNSIGNED_LONG_ZERO),
-            x if x > &&0 && x <= &255 => {
-                Encoded::new_fixed(SMALL_UNSIGNED_LONG, x.to_be_bytes().to_vec())
-            }
+            x if x > &&0 && x <= &255 => Encoded::new_fixed(
+                SMALL_UNSIGNED_LONG,
+                (x.clone() as u8).to_be_bytes().to_vec(),
+            ),
             _ => Encoded::new_fixed(UNSIGNED_LONG, self.to_be_bytes().to_vec()),
         }
     }
@@ -62,10 +63,10 @@ mod test {
     #[test]
     fn test_encode_u64() {
         let test_cases = [
-            (0_u64, vec![0x44]),                             // Test with zero
-            (1_u64, vec![0x53, 0, 0, 0, 0, 0, 0, 0, 1]),     // Test with a small positive value
-            (255_u64, vec![0x53, 0, 0, 0, 0, 0, 0, 0, 255]), // Test with upper boundary of small ulong
-            (256_u64, vec![0x80, 0, 0, 0, 0, 0, 0, 1, 0]),   // Test just outside upper boundary
+            (0_u64, vec![0x44]),                           // Test with zero
+            (1_u64, vec![0x53, 1]),                        // Test with a small positive value
+            (255_u64, vec![0x53, 255]), // Test with upper boundary of small ulong
+            (256_u64, vec![0x80, 0, 0, 0, 0, 0, 0, 1, 0]), // Test just outside upper boundary
             (
                 u64::MAX,
                 vec![0x80, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff],

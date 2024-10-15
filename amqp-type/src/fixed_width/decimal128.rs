@@ -30,5 +30,11 @@ impl Decode for Decimal128 {
     }
 }
 
+impl From<BigDecimal> for Decimal128 {
+    fn from(value: BigDecimal) -> Self {
+        Decimal128(value)
+    }
+}
+
 #[cfg(test)]
 mod test {}

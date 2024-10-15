@@ -12,9 +12,10 @@ impl Encode for u32 {
     fn encode(&self) -> Encoded {
         match self {
             0 => Encoded::new_empty(UNSIGNED_INTEGER_ZERO),
-            x if x > &0 && x <= &255 => {
-                Encoded::new_fixed(SMALL_UNSIGNED_INTEGER, x.to_be_bytes().to_vec())
-            }
+            x if x > &0 && x <= &255 => Encoded::new_fixed(
+                SMALL_UNSIGNED_INTEGER,
+                (x.clone() as u8).to_be_bytes().to_vec(),
+            ),
             _ => Encoded::new_fixed(UNSIGNED_INTEGER, self.to_be_bytes().to_vec()),
         }
     }
@@ -65,9 +66,9 @@ mod test {
     fn test_encode_u32() {
         let test_cases = [
             (0_u32, vec![0x43]),                            // Test with zero
-            (1_u32, vec![0x52, 0, 0, 0, 1]),                // Test with a small positive value
-            (255_u32, vec![0x52, 0, 0, 0, 255]), // Test with upper boundary of small uint
-            (256_u32, vec![0x70, 0, 0, 1, 0]),   // Test just outside upper boundary
+            (1_u32, vec![0x52, 1]),                         // Test with a small positive value
+            (255_u32, vec![0x52, 255]), // Test with upper boundary of small uint
+            (256_u32, vec![0x70, 0, 0, 1, 0]), // Test just outside upper boundary
             (u32::MAX, vec![0x70, 0xff, 0xff, 0xff, 0xff]), // Test with the maximum u32 value
         ];
 

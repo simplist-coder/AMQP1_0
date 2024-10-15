@@ -123,14 +123,14 @@ fn encode_array(
 
 fn encode_size(len: usize) -> Vec<u8> {
     match len {
-        0..=255 => vec![len as u8],
+        0..=255 => (len as u8).to_be_bytes().to_vec(),
         _ => (len as u32).to_be_bytes().to_vec(),
     }
 }
 
 fn encode_count(count: usize) -> Vec<u8> {
     match count {
-        0..=255 => vec![count as u8],
+        0..=255 => (count as u8).to_be_bytes().to_vec(),
         _ => (count as u32).to_be_bytes().to_vec(),
     }
 }

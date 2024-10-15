@@ -12,7 +12,7 @@ impl Encode for i32 {
     fn encode(&self) -> Encoded {
         match self {
             x if x >= &-128 && x <= &127 => {
-                Encoded::new_fixed(SMALL_INTEGER, x.to_be_bytes().to_vec())
+                Encoded::new_fixed(SMALL_INTEGER, (x.clone() as i8).to_be_bytes().to_vec())
             }
             _ => Encoded::new_fixed(INTEGER, self.to_be_bytes().to_vec()),
         }
@@ -23,7 +23,7 @@ impl Decode for i32 {
     async fn try_decode(
         constructor: u8,
         stream: &mut Pin<Box<impl Stream<Item = u8>>>,
-    ) -> Result<Self, crate::error::AppError>
+    ) -> Result<Self, AppError>
     where
         Self: Sized,
     {
@@ -56,8 +56,8 @@ mod test {
     #[test]
     fn test_encode_i32() {
         let test_cases = [
-            (127_i32, vec![0x54, 0, 0, 0, 127]), // Test with upper boundary of small int
-            (-128_i32, vec![0x54, 0xff, 0xff, 0xff, 0x80]), // Test with lower boundary of small int
+            (127_i32, vec![0x54, 127]),   // Test with upper boundary of small int
+            (-128_i32, vec![0x54, 0x80]), // Test with lower boundary of small int
             (128_i32, vec![0x71, 0, 0, 0, 128]), // Test just outside upper boundary
             (-129_i32, vec![0x71, 0xff, 0xff, 0xff, 0x7f]), // Test just outside lower boundary
             (i32::MAX, vec![0x71, 0x7f, 0xff, 0xff, 0xff]), // Test with the maximum i32 value

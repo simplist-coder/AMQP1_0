@@ -37,6 +37,12 @@ async fn parse_timestamp(
     Ok(Timestamp(i64::from_be_bytes(byte_vals)))
 }
 
+impl From<i64> for Timestamp {
+    fn from(value: i64) -> Self {
+        Timestamp(value)
+    }
+}
+
 #[cfg(test)]
 mod test {
     use super::*;
