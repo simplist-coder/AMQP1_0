@@ -40,7 +40,7 @@ async fn parse_i64(iter: &mut Pin<Box<impl Stream<Item = u8>>>) -> Result<i64, A
 
 async fn parse_small_i64(iter: &mut Pin<Box<impl Stream<Item = u8>>>) -> Result<i64, AppError> {
     if let Some(val) = iter.next().await {
-        Ok(val as i64)
+        Ok(i8::from_be_bytes([val]) as i64)
     } else {
         Err(AppError::IteratorEmptyOrTooShortError)
     }
@@ -122,12 +122,19 @@ mod test {
 
     #[tokio::test]
     async fn try_decode_can_decode_smalli64_values() {
-        let val = vec![0xff];
+        let positive = vec![100];
+        let negative = (-100i8).to_be_bytes().to_vec();
         assert_eq!(
-            i64::try_decode(0x55, &mut val.into_pinned_stream())
+            i64::try_decode(SMALL_LONG, &mut positive.into_pinned_stream())
                 .await
                 .unwrap(),
-            255
+            100
+        );
+        assert_eq!(
+            i64::try_decode(SMALL_LONG, &mut negative.into_pinned_stream())
+                .await
+                .unwrap(),
+            -100
         );
     }
 

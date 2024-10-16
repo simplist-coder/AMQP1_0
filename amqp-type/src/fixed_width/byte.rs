@@ -28,7 +28,7 @@ impl Decode for i8 {
 
 async fn parse_i8(iter: &mut Pin<Box<impl Stream<Item = u8>>>) -> Result<i8, AppError> {
     if let Some(val) = iter.next().await {
-        Ok(val as i8)
+        Ok(i8::from_be_bytes([val]))
     } else {
         Err(AppError::IteratorEmptyOrTooShortError)
     }

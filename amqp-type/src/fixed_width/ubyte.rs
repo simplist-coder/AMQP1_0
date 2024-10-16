@@ -15,7 +15,7 @@ impl Decode for u8 {
     async fn try_decode(
         constructor: u8,
         stream: &mut Pin<Box<impl Stream<Item = u8>>>,
-    ) -> Result<Self, crate::error::AppError>
+    ) -> Result<Self, AppError>
     where
         Self: Sized,
     {

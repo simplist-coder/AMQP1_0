@@ -521,9 +521,9 @@ mod tests {
     async fn test_encode_decode_round_trip_array() {
         let before = AmqpType::Array(
             vec![
+                AmqpType::Int(-100),
                 AmqpType::Int(100),
-                AmqpType::Int(1000),
-                AmqpType::Int(10000),
+                AmqpType::Int(120),
             ]
             .into(),
         );
