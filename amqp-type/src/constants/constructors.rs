@@ -35,4 +35,4 @@ pub const BINARY: u8 = 0xb0;
 pub const STRING_SHORT: u8 = 0xa1;
 pub const STRING: u8 = 0xb1;
 pub const SYMBOL_SHORT: u8 = 0xa3;
-pub const SYMBOL: u8 = 0xb1;
+pub const SYMBOL: u8 = 0xb3;
