@@ -17,19 +17,18 @@ pub struct Map(IndexMap<AmqpType, AmqpType>);
 impl Encode for Map {
     fn encode(&self) -> Encoded {
         let mut res: Vec<Encoded> = Vec::new();
-        let mut data_len = 0;
         let mut count = 0;
         for (key, value) in &self.0 {
             let k = key.encode();
             let v = value.encode();
-            data_len += k.data_len() + v.data_len();
             res.push(k);
             res.push(v);
             count += 2;
         }
-        match data_len {
-            x if x <= 255 => Encoded::new_compound(MAP_SHORT, count, EncodedVec::new(res).into()),
-            _ => Encoded::new_compound(MAP, count, EncodedVec::new(res).into()),
+        let encoded: Vec<u8> = EncodedVec::new(res).into();
+        match encoded.len() {
+            x if x <= 255 => Encoded::new_compound(MAP_SHORT, count, encoded),
+            _ => Encoded::new_compound(MAP, count, encoded),
         }
     }
 }

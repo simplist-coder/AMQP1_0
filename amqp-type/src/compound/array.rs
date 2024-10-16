@@ -17,20 +17,13 @@ impl Encode for Array {
             0 => Encoded::new_array(ARRAY_SHORT, 0, NULL, vec![]),
             len => {
                 let encoded: Vec<Encoded> = self.0.iter().map(|x| x.encode()).collect();
-                let byte_size = encoded.iter().fold(0, |acc, x| acc + x.data_len());
-                match (len, byte_size) {
-                    (len, size) if len <= 255 && size < 256 => Encoded::new_array(
-                        ARRAY_SHORT,
-                        len,
-                        encoded[0].constructor(),
-                        EncodedVec::new(encoded).serialize_without_constructors(),
-                    ),
-                    (_, _) => Encoded::new_array(
-                        ARRAY,
-                        len,
-                        encoded[0].constructor(),
-                        EncodedVec::new(encoded).serialize_without_constructors(),
-                    ),
+                let element_constructor = encoded[0].constructor();
+                let bytes = EncodedVec::new(encoded).serialize_without_constructors();
+                match (len, bytes.len()) {
+                    (len, size) if len <= 255 && size < 256 => {
+                        Encoded::new_array(ARRAY_SHORT, len, element_constructor, bytes)
+                    }
+                    (_, _) => Encoded::new_array(ARRAY, len, element_constructor, bytes),
                 }
             }
         }

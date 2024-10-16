@@ -41,7 +41,6 @@ mod test {
     use super::*;
     use crate::common::tests::ByteVecExt;
     use crate::constants::constructors::CHAR;
-    use bigdecimal::num_traits::ToBytes;
 
     #[test]
     fn construct_char() {
