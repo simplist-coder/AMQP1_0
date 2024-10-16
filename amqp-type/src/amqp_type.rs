@@ -124,6 +124,7 @@ impl AmqpType {
             x @ (MAP_SHORT | MAP) => Ok(Map::try_decode(x, stream).await?.into()),
             x @ (BINARY_SHORT | BINARY) => Ok(Binary::try_decode(x, stream).await?.into()),
             x @ (STRING_SHORT | STRING) => Ok(String::try_decode(x, stream).await?.into()),
+            x @ (SYMBOL_SHORT | SYMBOL) => Ok(Symbol::try_decode(x, stream).await?.into()),
             other => Err(AppError::DeserializationIllegalConstructorError(other)),
         }
     }
