@@ -9,7 +9,7 @@ use tokio_stream::Stream;
 
 impl Encode for char {
     fn encode(&self) -> Encoded {
-        Encoded::new_fixed(CHAR, self.to_string().into_bytes())
+        Encoded::new_fixed(CHAR, (self.clone() as u32).to_be_bytes().to_vec())
     }
 }
 
@@ -41,6 +41,7 @@ mod test {
     use super::*;
     use crate::common::tests::ByteVecExt;
     use crate::constants::constructors::CHAR;
+    use bigdecimal::num_traits::ToBytes;
 
     #[test]
     fn construct_char() {
@@ -50,21 +51,16 @@ mod test {
 
     #[test]
     fn test_encode_char() {
-        let test_cases = [
-            ('a', vec![CHAR, 0x61]),       // Test with a basic ASCII character
-            ('ñ', vec![CHAR, 0xc3, 0xb1]), // Test with a non-ASCII character
-            ('😊', vec![CHAR, 0xf0, 0x9f, 0x98, 0x8a]), // Test with an emoji (multi-byte character)
-        ];
+        let mut ascii = vec![CHAR];
+        let mut non_ascii = vec![CHAR];
+        let mut utf_8 = vec![CHAR];
+        ascii.extend(('a' as u32).to_be_bytes().to_vec());
+        non_ascii.extend(('ñ' as u32).to_be_bytes().to_vec());
+        utf_8.extend(('😊' as u32).to_be_bytes().to_vec());
 
-        for (input, expected) in test_cases {
-            let encoded = input.encode();
-            assert_eq!(
-                encoded.to_bytes(),
-                expected,
-                "Failed encoding for char value: '{}'",
-                input
-            );
-        }
+        assert_eq!(ascii, 'a'.encode().serialize());
+        assert_eq!(non_ascii, 'ñ'.encode().serialize());
+        assert_eq!(utf_8, '😊'.encode().serialize());
     }
 
     #[tokio::test]

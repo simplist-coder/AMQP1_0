@@ -13,15 +13,15 @@ pub struct List(Vec<AmqpType>);
 
 impl Encode for List {
     fn encode(&self) -> Encoded {
-        let encoded: Vec<Encoded> = self.0.iter().map(|x| x.encode()).collect();
-        let count = encoded.len();
-        let byte_size = encoded.iter().fold(0, |acc, x| acc + x.data_len());
-        match (encoded.len(), byte_size) {
+        let count = self.0.len();
+        let encoded_elements = self.0.iter().map(|x| x.encode()).collect();
+        let encoded = EncodedVec::new(encoded_elements).serialize();
+        match (count, encoded.len()) {
             (0, _) => LIST_EMPTY.into(),
             (len, size) if len <= 255 && size < 256 => {
-                Encoded::new_compound(LIST_SHORT, count, EncodedVec::new(encoded).into())
+                Encoded::new_compound(LIST_SHORT, count, encoded)
             }
-            (_, _) => Encoded::new_compound(LIST, count, EncodedVec::new(encoded).into()),
+            (_, _) => Encoded::new_compound(LIST, count, encoded),
         }
     }
 }
@@ -70,7 +70,8 @@ async fn parse_list_to_vec(
     size: usize,
     count: usize,
 ) -> Result<Vec<AmqpType>, AppError> {
-    let mut buffer = Box::pin(iter(read_bytes(stream, size).await?));
+    let vec = read_bytes(stream, size).await?;
+    let mut buffer = Box::pin(iter(vec));
     let mut result = Vec::with_capacity(count);
     for _ in 0..count {
         let decoded = Box::pin(AmqpType::try_decode(&mut buffer)).await?;

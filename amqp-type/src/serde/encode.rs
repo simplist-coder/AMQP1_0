@@ -103,7 +103,9 @@ fn encode_variable(constructor: Option<u8>, mut data: Vec<u8>) -> Vec<u8> {
 }
 
 fn encode_compound(constructor: Option<u8>, count: usize, mut data: Vec<u8>) -> Vec<u8> {
+    let size = data.len();
     data.prepend(&mut encode_count(count));
+    data.prepend(&mut encode_size(size));
     data.prepend(&mut encode_constructor(constructor));
     data
 }
@@ -114,9 +116,10 @@ fn encode_array(
     element_constructor: u8,
     mut data: Vec<u8>,
 ) -> Vec<u8> {
+    let size = data.len();
     data.prepend(&mut vec![element_constructor]);
     data.prepend(&mut encode_count(count));
-    data.prepend(&mut encode_size(count));
+    data.prepend(&mut encode_size(size));
     data.prepend(&mut encode_constructor(constructor));
     data
 }
