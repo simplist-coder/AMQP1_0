@@ -62,7 +62,6 @@ impl From<f32> for Decimal32 {
 mod test {
     use super::*;
     use crate::common::tests::ByteVecExt;
-    use bytes::BufMut;
 
     #[test]
     fn construct_decimal_32() {
@@ -98,8 +97,7 @@ mod test {
     #[tokio::test]
     async fn test_successful_deserialization() {
         let value = 1.2345f32;
-        let mut data = vec![];
-        data.put_f32(value);
+        let data = value.to_be_bytes().to_vec();
 
         match Decimal32::try_decode(DECIMAL_32, &mut data.into_pinned_stream()).await {
             Ok(decimal) => assert_eq!(value, decimal.0),

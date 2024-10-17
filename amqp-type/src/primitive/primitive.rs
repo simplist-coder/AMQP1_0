@@ -284,7 +284,6 @@ impl From<Decimal128> for Primitive {
 mod tests {
     use super::*;
     use crate::common::tests::ByteVecExt;
-    use bigdecimal::BigDecimal;
     use indexmap::IndexMap;
 
     #[test]
@@ -423,7 +422,7 @@ mod tests {
     #[ignore]
     // Ignored because f128 is not implemented yet
     async fn test_encode_decode_round_trip_decimal128() {
-        let before = Primitive::Decimal128(BigDecimal::from(10000u32).into());
+        let before = Primitive::Decimal128(Decimal128());
         let encoded: Vec<u8> = before.encode().into();
         let decoded = Primitive::try_decode(&mut encoded.into_pinned_stream())
             .await

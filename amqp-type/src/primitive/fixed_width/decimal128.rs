@@ -1,12 +1,11 @@
 use crate::error::AppError;
 use crate::serde::decode::Decode;
 use crate::serde::encode::{Encode, Encoded};
-use bigdecimal::BigDecimal;
 use std::pin::Pin;
 use tokio_stream::Stream;
 
 #[derive(Debug, Hash, Eq, PartialEq)]
-pub struct Decimal128(BigDecimal);
+pub struct Decimal128();
 
 /**
 f128 is not yet supported by rust, see https://github.com/rust-lang/rust/issues/116909
@@ -27,12 +26,6 @@ impl Decode for Decimal128 {
         Self: Sized,
     {
         todo!("Decimal128  type is not implemented yet")
-    }
-}
-
-impl From<BigDecimal> for Decimal128 {
-    fn from(value: BigDecimal) -> Self {
-        Decimal128(value)
     }
 }
 

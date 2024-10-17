@@ -1,5 +1,5 @@
 [package]
-name = "amqp-lib"
+name = "amqp-type"
 version = "0.1.0"
 edition = "2021"
 
@@ -11,12 +11,8 @@ zero-length-encoding = []
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-bigdecimal = "0.4.1"
-bytes = "1.4.0"
 indexmap = "2.0.0"
-thiserror = "1.0.47"
-tokio = {version = "1", features=["full"]}
-tracing = "0.1.37"
-uuid = {version = "1.4.1", features = ["v4"]}
-chrono = "0.4.31"
-tokio-stream = "0.1.16"
+thiserror = {workspace = true}
+tokio = {workspace = true}
+uuid = {workspace = true}
+tokio-stream = {workspace = true}
