@@ -30,6 +30,15 @@ pub(crate) async fn read_bytes(
     Ok(res)
 }
 
+pub(crate) async fn drain(iter: &mut Pin<Box<impl Stream<Item = u8>>>) -> Vec<u8> {
+    let (lower, upper) = iter.size_hint();
+    let mut res = Vec::with_capacity(upper.unwrap_or(lower));
+    while let Some(byte) = iter.next().await {
+        res.push(byte);
+    }
+    res
+}
+
 pub(crate) async fn read_bytes_2(
     iter: &mut Pin<Box<impl Stream<Item = u8>>>,
 ) -> Result<[u8; 2], AppError> {
