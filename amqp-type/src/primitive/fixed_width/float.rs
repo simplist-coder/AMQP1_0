@@ -7,11 +7,11 @@ use std::hash::Hash;
 use std::pin::Pin;
 use tokio_stream::Stream;
 
-#[derive(Debug)]
+#[derive(Debug, Copy, Clone)]
 pub struct Float(f32);
 
 impl Encode for Float {
-    fn encode(&self) -> Encoded {
+    fn encode(self) -> Encoded {
         Encoded::new_fixed(FLOAT, self.0.to_be_bytes().to_vec())
     }
 }

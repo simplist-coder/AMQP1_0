@@ -6,11 +6,11 @@ use crate::serde::encode::{Encode, Encoded};
 use std::pin::Pin;
 use tokio_stream::{Stream, StreamExt};
 
-#[derive(Debug, Hash, Eq, PartialEq)]
+#[derive(Debug, Hash, Eq, PartialEq, Clone)]
 pub struct Symbol(String);
 
 impl Encode for Symbol {
-    fn encode(&self) -> Encoded {
+    fn encode(self) -> Encoded {
         match self.0.len() {
             x if x <= 255 => Encoded::new_variable(SYMBOL_SHORT, self.0.as_bytes().to_vec()),
             _ => Encoded::new_variable(SYMBOL, self.0.as_bytes().to_vec()),
@@ -91,7 +91,7 @@ mod test {
     #[test]
     fn test_encode_short_symbol_255() {
         let symbol = Symbol::new("a".repeat(255).to_string()).unwrap();
-        let encoded = symbol.encode().to_bytes();
+        let encoded = symbol.clone().encode().to_bytes();
 
         let mut expected = vec![SYMBOL_SHORT];
         let mut bytes = symbol.0.into_bytes();
@@ -104,7 +104,7 @@ mod test {
     #[test]
     fn test_encode_large_symbol_256() {
         let large_string = Symbol::new("a".repeat(256)).unwrap();
-        let encoded = large_string.encode().to_bytes();
+        let encoded = large_string.clone().encode().to_bytes();
 
         let mut expected = vec![SYMBOL];
         let mut bytes = large_string.0.into_bytes();

@@ -6,11 +6,11 @@ use crate::serde::encode::{Encode, Encoded};
 use std::pin::Pin;
 use tokio_stream::Stream;
 
-#[derive(Debug, Hash, Eq, PartialEq)]
+#[derive(Debug, Hash, Eq, PartialEq, Clone)]
 pub struct Uuid(uuid::Uuid);
 
 impl Encode for Uuid {
-    fn encode(&self) -> Encoded {
+    fn encode(self) -> Encoded {
         Encoded::new_fixed(UUID, self.0.into_bytes().to_vec())
     }
 }
@@ -56,7 +56,7 @@ mod test {
     #[test]
     fn test_encode_correctness() {
         let uuid = Uuid(uuid::Uuid::new_v4());
-        let encoded = uuid.encode();
+        let encoded = uuid.clone().encode();
         let mut expected_bytes = Vec::new();
         expected_bytes.push(UUID);
         expected_bytes.extend_from_slice(&uuid.0.into_bytes());

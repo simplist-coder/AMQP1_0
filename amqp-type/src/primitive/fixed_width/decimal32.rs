@@ -7,11 +7,11 @@ use std::hash::{Hash, Hasher};
 use std::pin::Pin;
 use tokio_stream::Stream;
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub struct Decimal32(f32);
 
 impl Encode for Decimal32 {
-    fn encode(&self) -> Encoded {
+    fn encode(self) -> Encoded {
         Encoded::new_fixed(DECIMAL_32, self.0.to_be_bytes().to_vec())
     }
 }
@@ -84,7 +84,7 @@ mod test {
         ];
 
         for (input, expected) in test_cases {
-            let encoded = input.encode();
+            let encoded = input.clone().encode();
             assert_eq!(
                 encoded.to_bytes(),
                 expected,

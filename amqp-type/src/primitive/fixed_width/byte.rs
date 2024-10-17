@@ -6,7 +6,7 @@ use std::pin::Pin;
 use tokio_stream::{Stream, StreamExt};
 
 impl Encode for i8 {
-    fn encode(&self) -> Encoded {
+    fn encode(self) -> Encoded {
         Encoded::new_fixed(BYTE, self.to_be_bytes().to_vec())
     }
 }

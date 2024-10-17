@@ -9,10 +9,10 @@ use std::pin::Pin;
 use tokio_stream::{Stream, StreamExt};
 
 impl Encode for i32 {
-    fn encode(&self) -> Encoded {
+    fn encode(self) -> Encoded {
         match self {
-            x if x >= &-128 && x <= &127 => {
-                Encoded::new_fixed(SMALL_INTEGER, (x.clone() as i8).to_be_bytes().to_vec())
+            x if x >= -128 && x <= 127 => {
+                Encoded::new_fixed(SMALL_INTEGER, (x as i8).to_be_bytes().to_vec())
             }
             _ => Encoded::new_fixed(INTEGER, self.to_be_bytes().to_vec()),
         }

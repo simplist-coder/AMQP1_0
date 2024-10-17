@@ -9,7 +9,7 @@ use tokio_stream::{Stream, StreamExt};
 
 #[cfg(not(feature = "zero-length-encoding"))]
 impl Encode for bool {
-    fn encode(&self) -> Encoded {
+    fn encode(self) -> Encoded {
         match self {
             true => Encoded::new_fixed(BOOLEAN, vec![0x01]),
             false => Encoded::new_fixed(BOOLEAN, vec![0x00]),
@@ -19,7 +19,7 @@ impl Encode for bool {
 
 #[cfg(feature = "zero-length-encoding")]
 impl Encode for bool {
-    fn encode(&self) -> Encoded {
+    fn encode(self) -> Encoded {
         match self {
             true => BOOLEAN_TRUE.into(),
             false => BOOLEAN_FALSE.into(),

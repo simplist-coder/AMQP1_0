@@ -13,7 +13,7 @@ pub enum Frame {
 }
 
 impl Encode for Frame {
-    fn encode(&self) -> Encoded {
+    fn encode(self) -> Encoded {
         match self {
             Frame::AmqpFrame(amqp) => amqp.encode(),
             Frame::SaslFrame(sasl) => sasl.encode(),

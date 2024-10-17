@@ -7,7 +7,7 @@ use tokio_stream::Stream;
 pub struct AmqpFrame {}
 
 impl Encode for AmqpFrame {
-    fn encode(&self) -> Encoded {
+    fn encode(self) -> Encoded {
         todo!()
     }
 }

@@ -14,12 +14,12 @@ use tokio_stream::Stream;
 /// This ensures that no information is lost.
 /// regardless of whether they mean Nan or similar things.
 /// As a result, Nan == Nan if and only if the two numbers have the exact same byte sequence.
-#[derive(Debug)]
+#[derive(Debug, Copy, Clone)]
 pub struct Double(f64);
 
 impl Encode for Double {
-    fn encode(&self) -> Encoded {
-        Encoded::new_fixed(0x82, self.0.to_be_bytes().to_vec())
+    fn encode(self) -> Encoded {
+        Encoded::new_fixed(DOUBLE, self.0.to_be_bytes().to_vec())
     }
 }
 
@@ -93,7 +93,7 @@ mod test {
         ];
 
         for (input, expected) in test_cases {
-            let encoded = input.encode();
+            let encoded = input.clone().encode();
             assert_eq!(
                 encoded.to_bytes(),
                 expected,

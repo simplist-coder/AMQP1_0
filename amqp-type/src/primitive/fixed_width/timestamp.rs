@@ -6,11 +6,11 @@ use crate::serde::encode::{Encode, Encoded};
 use std::pin::Pin;
 use tokio_stream::Stream;
 
-#[derive(Debug, Hash, Eq, PartialEq)]
+#[derive(Debug, Hash, Eq, PartialEq, Clone)]
 pub struct Timestamp(i64);
 
 impl Encode for Timestamp {
-    fn encode(&self) -> Encoded {
+    fn encode(self) -> Encoded {
         Encoded::new_fixed(TIMESTAMP, self.0.to_be_bytes().to_vec())
     }
 }

@@ -7,7 +7,7 @@ use std::pin::Pin;
 use tokio_stream::Stream;
 
 impl Encode for i16 {
-    fn encode(&self) -> Encoded {
+    fn encode(self) -> Encoded {
         Encoded::new_fixed(SHORT, self.to_be_bytes().to_vec())
     }
 }

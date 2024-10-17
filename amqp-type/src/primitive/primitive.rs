@@ -18,7 +18,7 @@ use std::hash::Hash;
 use std::pin::Pin;
 use tokio_stream::{Stream, StreamExt};
 
-#[derive(Debug, Hash, Eq, PartialEq)]
+#[derive(Debug, Hash, Eq, PartialEq, Clone)]
 pub enum Primitive {
     Null,
     Boolean(bool),
@@ -47,7 +47,7 @@ pub enum Primitive {
 }
 
 impl Encode for Primitive {
-    fn encode(&self) -> Encoded {
+    fn encode(self) -> Encoded {
         match self {
             Self::Null => NULL.into(),
             Self::Boolean(val) => val.encode(),
@@ -295,7 +295,7 @@ mod tests {
     #[tokio::test]
     async fn test_encode_decode_round_trip_null() {
         let before = Primitive::Null;
-        let encoded: Vec<u8> = before.encode().into();
+        let encoded: Vec<u8> = before.clone().encode().into();
         let decoded = Primitive::try_decode(&mut encoded.into_pinned_stream())
             .await
             .unwrap();
@@ -304,7 +304,7 @@ mod tests {
     #[tokio::test]
     async fn test_encode_decode_round_trip_boolean() {
         let before = Primitive::Boolean(false);
-        let encoded: Vec<u8> = before.encode().into();
+        let encoded: Vec<u8> = before.clone().encode().into();
         let decoded = Primitive::try_decode(&mut encoded.into_pinned_stream())
             .await
             .unwrap();
@@ -313,7 +313,7 @@ mod tests {
     #[tokio::test]
     async fn test_encode_decode_round_trip_ubyte() {
         let before = Primitive::Ubyte(10);
-        let encoded: Vec<u8> = before.encode().into();
+        let encoded: Vec<u8> = before.clone().encode().into();
         let decoded = Primitive::try_decode(&mut encoded.into_pinned_stream())
             .await
             .unwrap();
@@ -322,7 +322,7 @@ mod tests {
     #[tokio::test]
     async fn test_encode_decode_round_trip_ushort() {
         let before = Primitive::Ushort(100);
-        let encoded: Vec<u8> = before.encode().into();
+        let encoded: Vec<u8> = before.clone().encode().into();
         let decoded = Primitive::try_decode(&mut encoded.into_pinned_stream())
             .await
             .unwrap();
@@ -331,7 +331,7 @@ mod tests {
     #[tokio::test]
     async fn test_encode_decode_round_trip_uint() {
         let before = Primitive::Uint(100);
-        let encoded: Vec<u8> = before.encode().into();
+        let encoded: Vec<u8> = before.clone().encode().into();
         let decoded = Primitive::try_decode(&mut encoded.into_pinned_stream())
             .await
             .unwrap();
@@ -340,7 +340,7 @@ mod tests {
     #[tokio::test]
     async fn test_encode_decode_round_trip_ulong() {
         let before = Primitive::Ulong(100);
-        let encoded: Vec<u8> = before.encode().into();
+        let encoded: Vec<u8> = before.clone().encode().into();
         let decoded = Primitive::try_decode(&mut encoded.into_pinned_stream())
             .await
             .unwrap();
@@ -349,7 +349,7 @@ mod tests {
     #[tokio::test]
     async fn test_encode_decode_round_trip_byte() {
         let before = Primitive::Byte(100);
-        let encoded: Vec<u8> = before.encode().into();
+        let encoded: Vec<u8> = before.clone().encode().into();
         let decoded = Primitive::try_decode(&mut encoded.into_pinned_stream())
             .await
             .unwrap();
@@ -358,7 +358,7 @@ mod tests {
     #[tokio::test]
     async fn test_encode_decode_round_trip_short() {
         let before = Primitive::Short(100);
-        let encoded: Vec<u8> = before.encode().into();
+        let encoded: Vec<u8> = before.clone().encode().into();
         let decoded = Primitive::try_decode(&mut encoded.into_pinned_stream())
             .await
             .unwrap();
@@ -367,7 +367,7 @@ mod tests {
     #[tokio::test]
     async fn test_encode_decode_round_trip_int() {
         let before = Primitive::Int(100);
-        let encoded: Vec<u8> = before.encode().into();
+        let encoded: Vec<u8> = before.clone().encode().into();
         let decoded = Primitive::try_decode(&mut encoded.into_pinned_stream())
             .await
             .unwrap();
@@ -376,7 +376,7 @@ mod tests {
     #[tokio::test]
     async fn test_encode_decode_round_trip_long() {
         let before = Primitive::Long(100);
-        let encoded: Vec<u8> = before.encode().into();
+        let encoded: Vec<u8> = before.clone().encode().into();
         let decoded = Primitive::try_decode(&mut encoded.into_pinned_stream())
             .await
             .unwrap();
@@ -385,7 +385,7 @@ mod tests {
     #[tokio::test]
     async fn test_encode_decode_round_trip_float() {
         let before = Primitive::Float(1.0.into());
-        let encoded: Vec<u8> = before.encode().into();
+        let encoded: Vec<u8> = before.clone().encode().into();
         let decoded = Primitive::try_decode(&mut encoded.into_pinned_stream())
             .await
             .unwrap();
@@ -394,7 +394,7 @@ mod tests {
     #[tokio::test]
     async fn test_encode_decode_round_trip_double() {
         let before = Primitive::Double(100.0.into());
-        let encoded: Vec<u8> = before.encode().into();
+        let encoded: Vec<u8> = before.clone().encode().into();
         let decoded = Primitive::try_decode(&mut encoded.into_pinned_stream())
             .await
             .unwrap();
@@ -403,7 +403,7 @@ mod tests {
     #[tokio::test]
     async fn test_encode_decode_round_trip_decimal32() {
         let before = Primitive::Decimal32(100.0.into());
-        let encoded: Vec<u8> = before.encode().into();
+        let encoded: Vec<u8> = before.clone().encode().into();
         let decoded = Primitive::try_decode(&mut encoded.into_pinned_stream())
             .await
             .unwrap();
@@ -412,7 +412,7 @@ mod tests {
     #[tokio::test]
     async fn test_encode_decode_round_trip_decimal64() {
         let before = Primitive::Decimal64(100.0.into());
-        let encoded: Vec<u8> = before.encode().into();
+        let encoded: Vec<u8> = before.clone().encode().into();
         let decoded = Primitive::try_decode(&mut encoded.into_pinned_stream())
             .await
             .unwrap();
@@ -423,7 +423,7 @@ mod tests {
     // Ignored because f128 is not implemented yet
     async fn test_encode_decode_round_trip_decimal128() {
         let before = Primitive::Decimal128(Decimal128());
-        let encoded: Vec<u8> = before.encode().into();
+        let encoded: Vec<u8> = before.clone().encode().into();
         let decoded = Primitive::try_decode(&mut encoded.into_pinned_stream())
             .await
             .unwrap();
@@ -432,7 +432,7 @@ mod tests {
     #[tokio::test]
     async fn test_encode_decode_round_trip_timestamp() {
         let before = Primitive::Timestamp(10000.into());
-        let encoded: Vec<u8> = before.encode().into();
+        let encoded: Vec<u8> = before.clone().encode().into();
         let decoded = Primitive::try_decode(&mut encoded.into_pinned_stream())
             .await
             .unwrap();
@@ -441,7 +441,7 @@ mod tests {
     #[tokio::test]
     async fn test_encode_decode_round_trip_uuid() {
         let before = Primitive::Uuid(uuid::Uuid::new_v4().into());
-        let encoded: Vec<u8> = before.encode().into();
+        let encoded: Vec<u8> = before.clone().encode().into();
         let decoded = Primitive::try_decode(&mut encoded.into_pinned_stream())
             .await
             .unwrap();
@@ -450,7 +450,7 @@ mod tests {
     #[tokio::test]
     async fn test_encode_decode_round_trip_binary() {
         let before = Primitive::Binary(vec![1, 2, 3, 4, 5].into());
-        let encoded: Vec<u8> = before.encode().into();
+        let encoded: Vec<u8> = before.clone().encode().into();
         let decoded = Primitive::try_decode(&mut encoded.into_pinned_stream())
             .await
             .unwrap();
@@ -459,7 +459,7 @@ mod tests {
     #[tokio::test]
     async fn test_encode_decode_round_trip_string() {
         let before = Primitive::String("Hello World".to_string());
-        let encoded: Vec<u8> = before.encode().into();
+        let encoded: Vec<u8> = before.clone().encode().into();
         let decoded = Primitive::try_decode(&mut encoded.into_pinned_stream())
             .await
             .unwrap();
@@ -468,7 +468,7 @@ mod tests {
     #[tokio::test]
     async fn test_encode_decode_round_trip_symbol() {
         let before = Primitive::Symbol(Symbol::new("book:seller:entry".to_string()).unwrap());
-        let encoded: Vec<u8> = before.encode().into();
+        let encoded: Vec<u8> = before.clone().encode().into();
         let decoded = Primitive::try_decode(&mut encoded.into_pinned_stream())
             .await
             .unwrap();
@@ -484,7 +484,7 @@ mod tests {
             ]
             .into(),
         );
-        let encoded: Vec<u8> = before.encode().into();
+        let encoded: Vec<u8> = before.clone().encode().into();
         let decoded = Primitive::try_decode(&mut encoded.into_pinned_stream())
             .await
             .unwrap();
@@ -511,7 +511,7 @@ mod tests {
         ]
         .into();
         let before = Primitive::Map(map.into());
-        let encoded: Vec<u8> = before.encode().into();
+        let encoded: Vec<u8> = before.clone().encode().into();
         let decoded = Primitive::try_decode(&mut encoded.into_pinned_stream())
             .await
             .unwrap();
@@ -527,7 +527,7 @@ mod tests {
             ]
             .into(),
         );
-        let encoded: Vec<u8> = before.encode().into();
+        let encoded: Vec<u8> = before.clone().encode().into();
         let decoded = Primitive::try_decode(&mut encoded.into_pinned_stream())
             .await
             .unwrap();

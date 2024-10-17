@@ -7,7 +7,7 @@ use std::pin::Pin;
 use tokio_stream::Stream;
 
 impl Encode for u16 {
-    fn encode(&self) -> Encoded {
+    fn encode(self) -> Encoded {
         Encoded::new_fixed(UNSIGNED_SHORT, self.to_be_bytes().to_vec())
     }
 }

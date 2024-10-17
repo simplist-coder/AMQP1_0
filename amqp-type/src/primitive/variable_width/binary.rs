@@ -6,11 +6,11 @@ use crate::serde::encode::{Encode, Encoded};
 use std::pin::Pin;
 use tokio_stream::{Stream, StreamExt};
 
-#[derive(Debug, Hash, Eq, PartialEq)]
+#[derive(Debug, Hash, Eq, PartialEq, Clone)]
 pub struct Binary(Vec<u8>);
 
 impl Encode for Binary {
-    fn encode(&self) -> Encoded {
+    fn encode(self) -> Encoded {
         match self.0.len() {
             x if x <= 255 => Encoded::new_variable(BINARY_SHORT, self.0.to_owned()),
             _ => Encoded::new_variable(BINARY, self.0.to_owned()),

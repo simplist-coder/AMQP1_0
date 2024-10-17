@@ -4,7 +4,7 @@ use crate::serde::encode::{Encode, Encoded};
 use std::pin::Pin;
 use tokio_stream::Stream;
 
-#[derive(Debug, Hash, Eq, PartialEq)]
+#[derive(Debug, Hash, Eq, PartialEq, Clone)]
 pub struct Decimal128();
 
 /**
@@ -12,7 +12,7 @@ f128 is not yet supported by rust, see https://github.com/rust-lang/rust/issues/
 Implement this when f128 it is available in stable.
  */
 impl Encode for Decimal128 {
-    fn encode(&self) -> Encoded {
+    fn encode(self) -> Encoded {
         0x94.into()
     }
 }

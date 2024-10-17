@@ -8,15 +8,15 @@ use crate::serde::encode::{Encode, Encoded};
 use std::pin::Pin;
 use tokio_stream::{iter, Stream, StreamExt};
 
-#[derive(Debug, Hash, Eq, PartialEq)]
+#[derive(Debug, Hash, Eq, PartialEq, Clone)]
 pub struct Array(Vec<Primitive>);
 
 impl Encode for Array {
-    fn encode(&self) -> Encoded {
+    fn encode(self) -> Encoded {
         match self.0.len() {
             0 => Encoded::new_array(ARRAY_SHORT, 0, NULL, vec![]),
             len => {
-                let encoded: Vec<Encoded> = self.0.iter().map(|x| x.encode()).collect();
+                let encoded: Vec<Encoded> = self.0.into_iter().map(|x| x.encode()).collect();
                 let element_constructor = encoded[0].constructor();
                 let bytes = EncodedVec::new(encoded).serialize_without_constructors();
                 match (len, bytes.len()) {

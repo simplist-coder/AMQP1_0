@@ -8,8 +8,8 @@ use std::pin::Pin;
 use tokio_stream::Stream;
 
 impl Encode for char {
-    fn encode(&self) -> Encoded {
-        Encoded::new_fixed(CHAR, (self.clone() as u32).to_be_bytes().to_vec())
+    fn encode(self) -> Encoded {
+        Encoded::new_fixed(CHAR, (self as u32).to_be_bytes().to_vec())
     }
 }
 

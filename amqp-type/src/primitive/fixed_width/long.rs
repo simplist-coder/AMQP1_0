@@ -7,10 +7,10 @@ use std::pin::Pin;
 use tokio_stream::{Stream, StreamExt};
 
 impl Encode for i64 {
-    fn encode(&self) -> Encoded {
+    fn encode(self) -> Encoded {
         match self {
-            x if x >= &-128 && x <= &127 => {
-                Encoded::new_fixed(SMALL_LONG, (x.clone() as i8).to_be_bytes().to_vec())
+            x if x >= -128 && x <= 127 => {
+                Encoded::new_fixed(SMALL_LONG, (x as i8).to_be_bytes().to_vec())
             }
             _ => Encoded::new_fixed(LONG, self.to_be_bytes().to_vec()),
         }

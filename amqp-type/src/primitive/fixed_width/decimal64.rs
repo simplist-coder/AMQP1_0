@@ -7,11 +7,11 @@ use std::hash::{Hash, Hasher};
 use std::pin::Pin;
 use tokio_stream::Stream;
 
-#[derive(Debug)]
+#[derive(Debug, Copy, Clone)]
 pub struct Decimal64(f64);
 
 impl Encode for Decimal64 {
-    fn encode(&self) -> Encoded {
+    fn encode(self) -> Encoded {
         Encoded::new_fixed(DECIMAL_64, self.0.to_be_bytes().to_vec())
     }
 }
@@ -84,7 +84,7 @@ mod test {
         ];
 
         for (input, expected) in test_cases {
-            let encoded = input.encode();
+            let encoded = input.clone().encode();
             assert_eq!(
                 encoded.to_bytes(),
                 expected,

@@ -11,14 +11,14 @@ use std::pin::Pin;
 use tokio_stream::StreamExt;
 use tokio_stream::{iter, Stream};
 
-#[derive(Debug, Eq, PartialEq)]
+#[derive(Debug, Eq, PartialEq, Clone)]
 pub struct Map(IndexMap<Primitive, Primitive>);
 
 impl Encode for Map {
-    fn encode(&self) -> Encoded {
+    fn encode(self) -> Encoded {
         let mut res: Vec<Encoded> = Vec::new();
         let mut count = 0;
-        for (key, value) in &self.0 {
+        for (key, value) in self.0 {
             let k = key.encode();
             let v = value.encode();
             res.push(k);

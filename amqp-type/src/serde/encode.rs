@@ -1,5 +1,5 @@
 pub trait Encode {
-    fn encode(&self) -> Encoded;
+    fn encode(self) -> Encoded;
 }
 
 pub enum Encoded {

@@ -7,7 +7,7 @@ use tokio_stream::Stream;
 pub struct SaslFrame {}
 
 impl Encode for SaslFrame {
-    fn encode(&self) -> Encoded {
+    fn encode(self) -> Encoded {
         todo!()
     }
 }

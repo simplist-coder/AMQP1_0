@@ -8,13 +8,13 @@ use crate::serde::encode::{Encode, Encoded};
 use std::pin::Pin;
 use tokio_stream::{iter, Stream, StreamExt};
 
-#[derive(Debug, Hash, Eq, PartialEq)]
+#[derive(Debug, Hash, Eq, PartialEq, Clone)]
 pub struct List(Vec<Primitive>);
 
 impl Encode for List {
-    fn encode(&self) -> Encoded {
+    fn encode(self) -> Encoded {
         let count = self.0.len();
-        let encoded_elements = self.0.iter().map(|x| x.encode()).collect();
+        let encoded_elements = self.0.into_iter().map(|x| x.encode()).collect();
         let encoded = EncodedVec::new(encoded_elements).serialize();
         match (count, encoded.len()) {
             (0, _) => LIST_EMPTY.into(),
