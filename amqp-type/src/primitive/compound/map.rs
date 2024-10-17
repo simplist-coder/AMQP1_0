@@ -1,8 +1,8 @@
-use crate::amqp_type::Primitive;
 use crate::common::{read_bytes, read_bytes_4};
-use crate::compound::encoded_vec::EncodedVec;
 use crate::constants::constructors::{MAP, MAP_SHORT};
 use crate::error::AppError;
+use crate::primitive::compound::encoded_vec::EncodedVec;
+use crate::primitive::primitive::Primitive;
 use crate::serde::decode::Decode;
 use crate::serde::encode::{Encode, Encoded};
 use indexmap::IndexMap;

@@ -51,8 +51,8 @@ async fn parse_small_i32(iter: &mut Pin<Box<impl Stream<Item = u8>>>) -> Result<
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::amqp_type::Primitive;
     use crate::common::tests::ByteVecExt;
+    use crate::primitive::primitive::Primitive;
 
     #[test]
     fn test_encode_i32() {

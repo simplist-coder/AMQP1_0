@@ -1,7 +1,7 @@
 use crate::common::read_bytes_4;
 use crate::constants::constructors::CHAR;
 use crate::error::AppError;
-use crate::fixed_width::char;
+use crate::primitive::fixed_width::char;
 use crate::serde::decode::Decode;
 use crate::serde::encode::{Encode, Encoded};
 use std::pin::Pin;

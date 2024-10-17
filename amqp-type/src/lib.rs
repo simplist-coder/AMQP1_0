@@ -1,8 +1,7 @@
-pub mod amqp_type;
+pub mod composite;
+pub mod primitive;
+
 mod common;
-mod compound;
 mod constants;
 mod error;
-mod fixed_width;
 mod serde;
-mod variable_width;
