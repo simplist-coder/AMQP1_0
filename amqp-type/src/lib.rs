@@ -1,7 +1,8 @@
 pub mod composite;
+mod constants;
 pub mod error;
+pub mod frame;
 pub mod primitive;
-pub mod serde;
+mod serde;
 
 mod common;
-pub mod constants;
