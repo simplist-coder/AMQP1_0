@@ -1,4 +1,4 @@
-use crate::amqp_type::AmqpType;
+use crate::amqp_type::Primitive;
 use crate::common::{read_bytes, read_bytes_4};
 use crate::compound::encoded_vec::EncodedVec;
 use crate::constants::constructors::{LIST, LIST_EMPTY, LIST_SHORT};
@@ -9,7 +9,7 @@ use std::pin::Pin;
 use tokio_stream::{iter, Stream, StreamExt};
 
 #[derive(Debug, Hash, Eq, PartialEq)]
-pub struct List(Vec<AmqpType>);
+pub struct List(Vec<Primitive>);
 
 impl Encode for List {
     fn encode(&self) -> Encoded {
@@ -69,20 +69,20 @@ async fn parse_list_to_vec(
     stream: &mut Pin<Box<impl Stream<Item = u8>>>,
     size: usize,
     count: usize,
-) -> Result<Vec<AmqpType>, AppError> {
+) -> Result<Vec<Primitive>, AppError> {
     let vec = read_bytes(stream, size).await?;
     let mut buffer = Box::pin(iter(vec));
     let mut result = Vec::with_capacity(count);
     for _ in 0..count {
-        let decoded = Box::pin(AmqpType::try_decode(&mut buffer)).await?;
+        let decoded = Box::pin(Primitive::try_decode(&mut buffer)).await?;
         result.push(decoded);
     }
 
     Ok(result)
 }
 
-impl From<Vec<AmqpType>> for List {
-    fn from(value: Vec<AmqpType>) -> Self {
+impl From<Vec<Primitive>> for List {
+    fn from(value: Vec<Primitive>) -> Self {
         List(value)
     }
 }
@@ -142,8 +142,8 @@ mod test {
             .await
             .unwrap();
         assert_eq!(res.0.len(), 2);
-        assert!(matches!(res.0[0], AmqpType::Int(21)));
-        assert!(matches!(res.0[1], AmqpType::Ushort(16)));
+        assert!(matches!(res.0[0], Primitive::Int(21)));
+        assert!(matches!(res.0[1], Primitive::Ushort(16)));
     }
 
     #[tokio::test]
@@ -155,7 +155,7 @@ mod test {
             .await
             .unwrap();
         assert_eq!(res.0.len(), 1);
-        assert!(matches!(res.0[0], AmqpType::Int(21)));
+        assert!(matches!(res.0[0], Primitive::Int(21)));
     }
 
     #[tokio::test]

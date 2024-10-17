@@ -1,4 +1,4 @@
-use crate::amqp_type::AmqpType;
+use crate::amqp_type::Primitive;
 use crate::common::{read_bytes, read_bytes_4};
 use crate::compound::encoded_vec::EncodedVec;
 use crate::constants::constructors::{ARRAY, ARRAY_SHORT, NULL};
@@ -9,7 +9,7 @@ use std::pin::Pin;
 use tokio_stream::{iter, Stream, StreamExt};
 
 #[derive(Debug, Hash, Eq, PartialEq)]
-pub struct Array(Vec<AmqpType>);
+pub struct Array(Vec<Primitive>);
 
 impl Encode for Array {
     fn encode(&self) -> Encoded {
@@ -83,11 +83,11 @@ async fn parse_raw_to_vec(
     size: usize,
     count: usize,
     element_constructor: u8,
-) -> Result<Vec<AmqpType>, AppError> {
+) -> Result<Vec<Primitive>, AppError> {
     let mut result = Vec::with_capacity(count);
     let mut buffer = Box::pin(iter(read_bytes(stream, size).await?));
     for _ in 0..count {
-        let amqp_type = Box::pin(AmqpType::try_decode_with_constructor(
+        let amqp_type = Box::pin(Primitive::try_decode_with_constructor(
             element_constructor,
             &mut buffer,
         ))
@@ -97,8 +97,8 @@ async fn parse_raw_to_vec(
     Ok(result)
 }
 
-impl From<Vec<AmqpType>> for Array {
-    fn from(value: Vec<AmqpType>) -> Self {
+impl From<Vec<Primitive>> for Array {
+    fn from(value: Vec<Primitive>) -> Self {
         Array(value)
     }
 }
@@ -117,7 +117,7 @@ mod test {
 
     #[test]
     fn construct_array_with_less_than_255_elements() {
-        let val = Array(vec![AmqpType::Char('a')]);
+        let val = Array(vec![Primitive::Char('a')]);
         assert_eq!(val.encode().constructor(), 0xe0);
     }
 
@@ -166,7 +166,7 @@ mod test {
         let values = raw_data
             .clone()
             .into_iter()
-            .map(|x| AmqpType::Ubyte(x))
+            .map(|x| Primitive::Ubyte(x))
             .collect();
         let array = Array(values);
 
@@ -191,7 +191,7 @@ mod test {
         let values = raw_data
             .clone()
             .into_iter()
-            .map(|x| AmqpType::Ubyte(x))
+            .map(|x| Primitive::Ubyte(x))
             .collect();
         let array = Array(values);
 
@@ -217,7 +217,7 @@ mod test {
             .unwrap();
         assert_eq!(res.0.len(), 1);
         match res.0[0] {
-            AmqpType::Int(value) => assert_eq!(value, 21),
+            Primitive::Int(value) => assert_eq!(value, 21),
             _ => panic!("Could not destructure expected int value"),
         }
     }
@@ -232,7 +232,7 @@ mod test {
             .unwrap();
         assert_eq!(res.0.len(), 1);
         match res.0[0] {
-            AmqpType::Int(value) => assert_eq!(value, 21),
+            Primitive::Int(value) => assert_eq!(value, 21),
             _ => panic!("Could not destructure expected int value"),
         }
     }

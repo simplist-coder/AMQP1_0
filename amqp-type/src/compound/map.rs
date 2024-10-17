@@ -1,4 +1,4 @@
-use crate::amqp_type::AmqpType;
+use crate::amqp_type::Primitive;
 use crate::common::{read_bytes, read_bytes_4};
 use crate::compound::encoded_vec::EncodedVec;
 use crate::constants::constructors::{MAP, MAP_SHORT};
@@ -12,7 +12,7 @@ use tokio_stream::StreamExt;
 use tokio_stream::{iter, Stream};
 
 #[derive(Debug, Eq, PartialEq)]
-pub struct Map(IndexMap<AmqpType, AmqpType>);
+pub struct Map(IndexMap<Primitive, Primitive>);
 
 impl Encode for Map {
     fn encode(&self) -> Encoded {
@@ -81,15 +81,15 @@ async fn parse_to_index_map(
     stream: &mut Pin<Box<impl Stream<Item = u8>>>,
     size: usize,
     count: usize,
-) -> Result<IndexMap<AmqpType, AmqpType>, AppError> {
+) -> Result<IndexMap<Primitive, Primitive>, AppError> {
     if count % 2 != 0 {
         return Err(AppError::DeserializationMapContainsOddAmountOfElementsError);
     }
     let mut buffer = Box::pin(iter(read_bytes(stream, size).await?));
     let mut result = IndexMap::with_capacity(count);
     for _ in 0..count / 2 {
-        let key = Box::pin(AmqpType::try_decode(&mut buffer)).await?;
-        let value = Box::pin(AmqpType::try_decode(&mut buffer)).await?;
+        let key = Box::pin(Primitive::try_decode(&mut buffer)).await?;
+        let value = Box::pin(Primitive::try_decode(&mut buffer)).await?;
         result.insert(key, value);
     }
     Ok(result)
@@ -101,8 +101,8 @@ impl Hash for Map {
     }
 }
 
-impl From<IndexMap<AmqpType, AmqpType>> for Map {
-    fn from(value: IndexMap<AmqpType, AmqpType>) -> Self {
+impl From<IndexMap<Primitive, Primitive>> for Map {
+    fn from(value: IndexMap<Primitive, Primitive>) -> Self {
         Map(value)
     }
 }
@@ -149,7 +149,7 @@ mod test {
             .await
             .unwrap();
         assert_eq!(res.0.len(), 1);
-        assert!(matches!(&res.0[&AmqpType::Int(21)], AmqpType::Ushort(16)));
+        assert!(matches!(&res.0[&Primitive::Int(21)], Primitive::Ushort(16)));
     }
 
     #[tokio::test]
@@ -176,7 +176,7 @@ mod test {
             .await
             .unwrap();
         assert_eq!(res.0.len(), 1);
-        assert!(matches!(&res.0[&AmqpType::Int(21)], AmqpType::Ushort(16)));
+        assert!(matches!(&res.0[&Primitive::Int(21)], Primitive::Ushort(16)));
     }
 
     #[tokio::test]

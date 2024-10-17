@@ -19,7 +19,7 @@ use std::pin::Pin;
 use tokio_stream::{Stream, StreamExt};
 
 #[derive(Debug, Hash, Eq, PartialEq)]
-pub enum AmqpType {
+pub enum Primitive {
     Null,
     Boolean(bool),
     Ubyte(u8),
@@ -46,7 +46,7 @@ pub enum AmqpType {
     Array(Array),
 }
 
-impl Encode for AmqpType {
+impl Encode for Primitive {
     fn encode(&self) -> Encoded {
         match self {
             Self::Null => NULL.into(),
@@ -77,7 +77,7 @@ impl Encode for AmqpType {
     }
 }
 
-impl AmqpType {
+impl Primitive {
     pub async fn try_decode(stream: &mut Pin<Box<impl Stream<Item = u8>>>) -> Result<Self, AppError>
     where
         Self: Sized,
@@ -130,153 +130,153 @@ impl AmqpType {
     }
 }
 
-impl From<Option<AmqpType>> for AmqpType {
-    fn from(value: Option<AmqpType>) -> Self {
-        value.unwrap_or_else(|| AmqpType::Null)
+impl From<Option<Primitive>> for Primitive {
+    fn from(value: Option<Primitive>) -> Self {
+        value.unwrap_or_else(|| Primitive::Null)
     }
 }
 
-impl From<bool> for AmqpType {
+impl From<bool> for Primitive {
     fn from(value: bool) -> Self {
-        AmqpType::Boolean(value)
+        Primitive::Boolean(value)
     }
 }
 
-impl From<Timestamp> for AmqpType {
+impl From<Timestamp> for Primitive {
     fn from(value: Timestamp) -> Self {
-        AmqpType::Timestamp(value)
+        Primitive::Timestamp(value)
     }
 }
 
-impl From<u8> for AmqpType {
+impl From<u8> for Primitive {
     fn from(value: u8) -> Self {
-        AmqpType::Ubyte(value)
+        Primitive::Ubyte(value)
     }
 }
 
-impl From<u16> for AmqpType {
+impl From<u16> for Primitive {
     fn from(value: u16) -> Self {
-        AmqpType::Ushort(value)
+        Primitive::Ushort(value)
     }
 }
 
-impl From<u32> for AmqpType {
+impl From<u32> for Primitive {
     fn from(value: u32) -> Self {
-        AmqpType::Uint(value)
+        Primitive::Uint(value)
     }
 }
 
-impl From<u64> for AmqpType {
+impl From<u64> for Primitive {
     fn from(value: u64) -> Self {
-        AmqpType::Ulong(value)
+        Primitive::Ulong(value)
     }
 }
 
-impl From<i8> for AmqpType {
+impl From<i8> for Primitive {
     fn from(value: i8) -> Self {
-        AmqpType::Byte(value)
+        Primitive::Byte(value)
     }
 }
 
-impl From<i16> for AmqpType {
+impl From<i16> for Primitive {
     fn from(value: i16) -> Self {
-        AmqpType::Short(value)
+        Primitive::Short(value)
     }
 }
 
-impl From<i32> for AmqpType {
+impl From<i32> for Primitive {
     fn from(value: i32) -> Self {
-        AmqpType::Int(value)
+        Primitive::Int(value)
     }
 }
 
-impl From<i64> for AmqpType {
+impl From<i64> for Primitive {
     fn from(value: i64) -> Self {
-        AmqpType::Long(value)
+        Primitive::Long(value)
     }
 }
 
-impl From<Float> for AmqpType {
+impl From<Float> for Primitive {
     fn from(value: Float) -> Self {
-        AmqpType::Float(value.into())
+        Primitive::Float(value.into())
     }
 }
 
-impl From<Double> for AmqpType {
+impl From<Double> for Primitive {
     fn from(value: Double) -> Self {
-        AmqpType::Double(value.into())
+        Primitive::Double(value.into())
     }
 }
 
-impl From<char> for AmqpType {
+impl From<char> for Primitive {
     fn from(value: char) -> Self {
-        AmqpType::Char(value)
+        Primitive::Char(value)
     }
 }
 
-impl From<Uuid> for AmqpType {
+impl From<Uuid> for Primitive {
     fn from(value: Uuid) -> Self {
-        AmqpType::Uuid(value)
+        Primitive::Uuid(value)
     }
 }
 
-impl From<Binary> for AmqpType {
+impl From<Binary> for Primitive {
     fn from(value: Binary) -> Self {
-        AmqpType::Binary(value)
+        Primitive::Binary(value)
     }
 }
 
-impl From<&str> for AmqpType {
+impl From<&str> for Primitive {
     fn from(value: &str) -> Self {
         value.to_string().into()
     }
 }
 
-impl From<String> for AmqpType {
+impl From<String> for Primitive {
     fn from(value: String) -> Self {
-        AmqpType::String(value)
+        Primitive::String(value)
     }
 }
 
-impl From<Symbol> for AmqpType {
+impl From<Symbol> for Primitive {
     fn from(value: Symbol) -> Self {
-        AmqpType::Symbol(value)
+        Primitive::Symbol(value)
     }
 }
 
-impl From<List> for AmqpType {
+impl From<List> for Primitive {
     fn from(value: List) -> Self {
-        AmqpType::List(value)
+        Primitive::List(value)
     }
 }
 
-impl From<Map> for AmqpType {
+impl From<Map> for Primitive {
     fn from(value: Map) -> Self {
-        AmqpType::Map(value)
+        Primitive::Map(value)
     }
 }
 
-impl From<Array> for AmqpType {
+impl From<Array> for Primitive {
     fn from(value: Array) -> Self {
-        AmqpType::Array(value)
+        Primitive::Array(value)
     }
 }
 
-impl From<Decimal32> for AmqpType {
+impl From<Decimal32> for Primitive {
     fn from(value: Decimal32) -> Self {
-        AmqpType::Decimal32(value)
+        Primitive::Decimal32(value)
     }
 }
 
-impl From<Decimal64> for AmqpType {
+impl From<Decimal64> for Primitive {
     fn from(value: Decimal64) -> Self {
-        AmqpType::Decimal64(value)
+        Primitive::Decimal64(value)
     }
 }
 
-impl From<Decimal128> for AmqpType {
+impl From<Decimal128> for Primitive {
     fn from(value: Decimal128) -> Self {
-        AmqpType::Decimal128(value)
+        Primitive::Decimal128(value)
     }
 }
 
@@ -289,132 +289,132 @@ mod tests {
 
     #[test]
     fn construct_null() {
-        let val = AmqpType::Null;
+        let val = Primitive::Null;
         assert_eq!(val.encode().constructor(), 0x40);
     }
 
     #[tokio::test]
     async fn test_encode_decode_round_trip_null() {
-        let before = AmqpType::Null;
+        let before = Primitive::Null;
         let encoded: Vec<u8> = before.encode().into();
-        let decoded = AmqpType::try_decode(&mut encoded.into_pinned_stream())
+        let decoded = Primitive::try_decode(&mut encoded.into_pinned_stream())
             .await
             .unwrap();
         assert_eq!(decoded, before);
     }
     #[tokio::test]
     async fn test_encode_decode_round_trip_boolean() {
-        let before = AmqpType::Boolean(false);
+        let before = Primitive::Boolean(false);
         let encoded: Vec<u8> = before.encode().into();
-        let decoded = AmqpType::try_decode(&mut encoded.into_pinned_stream())
+        let decoded = Primitive::try_decode(&mut encoded.into_pinned_stream())
             .await
             .unwrap();
         assert_eq!(decoded, before);
     }
     #[tokio::test]
     async fn test_encode_decode_round_trip_ubyte() {
-        let before = AmqpType::Ubyte(10);
+        let before = Primitive::Ubyte(10);
         let encoded: Vec<u8> = before.encode().into();
-        let decoded = AmqpType::try_decode(&mut encoded.into_pinned_stream())
+        let decoded = Primitive::try_decode(&mut encoded.into_pinned_stream())
             .await
             .unwrap();
         assert_eq!(decoded, before);
     }
     #[tokio::test]
     async fn test_encode_decode_round_trip_ushort() {
-        let before = AmqpType::Ushort(100);
+        let before = Primitive::Ushort(100);
         let encoded: Vec<u8> = before.encode().into();
-        let decoded = AmqpType::try_decode(&mut encoded.into_pinned_stream())
+        let decoded = Primitive::try_decode(&mut encoded.into_pinned_stream())
             .await
             .unwrap();
         assert_eq!(decoded, before);
     }
     #[tokio::test]
     async fn test_encode_decode_round_trip_uint() {
-        let before = AmqpType::Uint(100);
+        let before = Primitive::Uint(100);
         let encoded: Vec<u8> = before.encode().into();
-        let decoded = AmqpType::try_decode(&mut encoded.into_pinned_stream())
+        let decoded = Primitive::try_decode(&mut encoded.into_pinned_stream())
             .await
             .unwrap();
         assert_eq!(decoded, before);
     }
     #[tokio::test]
     async fn test_encode_decode_round_trip_ulong() {
-        let before = AmqpType::Ulong(100);
+        let before = Primitive::Ulong(100);
         let encoded: Vec<u8> = before.encode().into();
-        let decoded = AmqpType::try_decode(&mut encoded.into_pinned_stream())
+        let decoded = Primitive::try_decode(&mut encoded.into_pinned_stream())
             .await
             .unwrap();
         assert_eq!(decoded, before);
     }
     #[tokio::test]
     async fn test_encode_decode_round_trip_byte() {
-        let before = AmqpType::Byte(100);
+        let before = Primitive::Byte(100);
         let encoded: Vec<u8> = before.encode().into();
-        let decoded = AmqpType::try_decode(&mut encoded.into_pinned_stream())
+        let decoded = Primitive::try_decode(&mut encoded.into_pinned_stream())
             .await
             .unwrap();
         assert_eq!(decoded, before);
     }
     #[tokio::test]
     async fn test_encode_decode_round_trip_short() {
-        let before = AmqpType::Short(100);
+        let before = Primitive::Short(100);
         let encoded: Vec<u8> = before.encode().into();
-        let decoded = AmqpType::try_decode(&mut encoded.into_pinned_stream())
+        let decoded = Primitive::try_decode(&mut encoded.into_pinned_stream())
             .await
             .unwrap();
         assert_eq!(decoded, before);
     }
     #[tokio::test]
     async fn test_encode_decode_round_trip_int() {
-        let before = AmqpType::Int(100);
+        let before = Primitive::Int(100);
         let encoded: Vec<u8> = before.encode().into();
-        let decoded = AmqpType::try_decode(&mut encoded.into_pinned_stream())
+        let decoded = Primitive::try_decode(&mut encoded.into_pinned_stream())
             .await
             .unwrap();
         assert_eq!(decoded, before);
     }
     #[tokio::test]
     async fn test_encode_decode_round_trip_long() {
-        let before = AmqpType::Long(100);
+        let before = Primitive::Long(100);
         let encoded: Vec<u8> = before.encode().into();
-        let decoded = AmqpType::try_decode(&mut encoded.into_pinned_stream())
+        let decoded = Primitive::try_decode(&mut encoded.into_pinned_stream())
             .await
             .unwrap();
         assert_eq!(decoded, before);
     }
     #[tokio::test]
     async fn test_encode_decode_round_trip_float() {
-        let before = AmqpType::Float(1.0.into());
+        let before = Primitive::Float(1.0.into());
         let encoded: Vec<u8> = before.encode().into();
-        let decoded = AmqpType::try_decode(&mut encoded.into_pinned_stream())
+        let decoded = Primitive::try_decode(&mut encoded.into_pinned_stream())
             .await
             .unwrap();
         assert_eq!(decoded, before);
     }
     #[tokio::test]
     async fn test_encode_decode_round_trip_double() {
-        let before = AmqpType::Double(100.0.into());
+        let before = Primitive::Double(100.0.into());
         let encoded: Vec<u8> = before.encode().into();
-        let decoded = AmqpType::try_decode(&mut encoded.into_pinned_stream())
+        let decoded = Primitive::try_decode(&mut encoded.into_pinned_stream())
             .await
             .unwrap();
         assert_eq!(decoded, before);
     }
     #[tokio::test]
     async fn test_encode_decode_round_trip_decimal32() {
-        let before = AmqpType::Decimal32(100.0.into());
+        let before = Primitive::Decimal32(100.0.into());
         let encoded: Vec<u8> = before.encode().into();
-        let decoded = AmqpType::try_decode(&mut encoded.into_pinned_stream())
+        let decoded = Primitive::try_decode(&mut encoded.into_pinned_stream())
             .await
             .unwrap();
         assert_eq!(decoded, before);
     }
     #[tokio::test]
     async fn test_encode_decode_round_trip_decimal64() {
-        let before = AmqpType::Decimal64(100.0.into());
+        let before = Primitive::Decimal64(100.0.into());
         let encoded: Vec<u8> = before.encode().into();
-        let decoded = AmqpType::try_decode(&mut encoded.into_pinned_stream())
+        let decoded = Primitive::try_decode(&mut encoded.into_pinned_stream())
             .await
             .unwrap();
         assert_eq!(decoded, before);
@@ -423,113 +423,113 @@ mod tests {
     #[ignore]
     // Ignored because f128 is not implemented yet
     async fn test_encode_decode_round_trip_decimal128() {
-        let before = AmqpType::Decimal128(BigDecimal::from(10000u32).into());
+        let before = Primitive::Decimal128(BigDecimal::from(10000u32).into());
         let encoded: Vec<u8> = before.encode().into();
-        let decoded = AmqpType::try_decode(&mut encoded.into_pinned_stream())
+        let decoded = Primitive::try_decode(&mut encoded.into_pinned_stream())
             .await
             .unwrap();
         assert_eq!(decoded, before);
     }
     #[tokio::test]
     async fn test_encode_decode_round_trip_timestamp() {
-        let before = AmqpType::Timestamp(10000.into());
+        let before = Primitive::Timestamp(10000.into());
         let encoded: Vec<u8> = before.encode().into();
-        let decoded = AmqpType::try_decode(&mut encoded.into_pinned_stream())
+        let decoded = Primitive::try_decode(&mut encoded.into_pinned_stream())
             .await
             .unwrap();
         assert_eq!(decoded, before);
     }
     #[tokio::test]
     async fn test_encode_decode_round_trip_uuid() {
-        let before = AmqpType::Uuid(uuid::Uuid::new_v4().into());
+        let before = Primitive::Uuid(uuid::Uuid::new_v4().into());
         let encoded: Vec<u8> = before.encode().into();
-        let decoded = AmqpType::try_decode(&mut encoded.into_pinned_stream())
+        let decoded = Primitive::try_decode(&mut encoded.into_pinned_stream())
             .await
             .unwrap();
         assert_eq!(decoded, before);
     }
     #[tokio::test]
     async fn test_encode_decode_round_trip_binary() {
-        let before = AmqpType::Binary(vec![1, 2, 3, 4, 5].into());
+        let before = Primitive::Binary(vec![1, 2, 3, 4, 5].into());
         let encoded: Vec<u8> = before.encode().into();
-        let decoded = AmqpType::try_decode(&mut encoded.into_pinned_stream())
+        let decoded = Primitive::try_decode(&mut encoded.into_pinned_stream())
             .await
             .unwrap();
         assert_eq!(decoded, before);
     }
     #[tokio::test]
     async fn test_encode_decode_round_trip_string() {
-        let before = AmqpType::String("Hello World".to_string());
+        let before = Primitive::String("Hello World".to_string());
         let encoded: Vec<u8> = before.encode().into();
-        let decoded = AmqpType::try_decode(&mut encoded.into_pinned_stream())
+        let decoded = Primitive::try_decode(&mut encoded.into_pinned_stream())
             .await
             .unwrap();
         assert_eq!(decoded, before);
     }
     #[tokio::test]
     async fn test_encode_decode_round_trip_symbol() {
-        let before = AmqpType::Symbol(Symbol::new("book:seller:entry".to_string()).unwrap());
+        let before = Primitive::Symbol(Symbol::new("book:seller:entry".to_string()).unwrap());
         let encoded: Vec<u8> = before.encode().into();
-        let decoded = AmqpType::try_decode(&mut encoded.into_pinned_stream())
+        let decoded = Primitive::try_decode(&mut encoded.into_pinned_stream())
             .await
             .unwrap();
         assert_eq!(decoded, before);
     }
     #[tokio::test]
     async fn test_encode_decode_round_trip_list() {
-        let before = AmqpType::List(
+        let before = Primitive::List(
             vec![
-                AmqpType::String("Hello world".to_string()),
-                AmqpType::Char('a'),
-                AmqpType::Byte(10),
+                Primitive::String("Hello world".to_string()),
+                Primitive::Char('a'),
+                Primitive::Byte(10),
             ]
             .into(),
         );
         let encoded: Vec<u8> = before.encode().into();
-        let decoded = AmqpType::try_decode(&mut encoded.into_pinned_stream())
+        let decoded = Primitive::try_decode(&mut encoded.into_pinned_stream())
             .await
             .unwrap();
         assert_eq!(decoded, before);
     }
     #[tokio::test]
     async fn test_encode_decode_round_trip_map() {
-        let map: IndexMap<AmqpType, AmqpType> = [
+        let map: IndexMap<Primitive, Primitive> = [
             (
-                AmqpType::String("Hello world".to_string()),
-                AmqpType::String("Hello world".to_string()),
+                Primitive::String("Hello world".to_string()),
+                Primitive::String("Hello world".to_string()),
             ),
             (
-                AmqpType::Char('a'),
-                AmqpType::String("Hello world aaaaaaaaaaaaa".to_string()),
+                Primitive::Char('a'),
+                Primitive::String("Hello world aaaaaaaaaaaaa".to_string()),
             ),
             (
-                AmqpType::Byte(10),
-                AmqpType::String(
+                Primitive::Byte(10),
+                Primitive::String(
                     "Hello world Mega man was here and i need a long text. anyways, moving on"
                         .to_string(),
                 ),
             ),
         ]
         .into();
-        let before = AmqpType::Map(map.into());
+        let before = Primitive::Map(map.into());
         let encoded: Vec<u8> = before.encode().into();
-        let decoded = AmqpType::try_decode(&mut encoded.into_pinned_stream())
+        let decoded = Primitive::try_decode(&mut encoded.into_pinned_stream())
             .await
             .unwrap();
         assert_eq!(decoded, before);
     }
     #[tokio::test]
     async fn test_encode_decode_round_trip_array() {
-        let before = AmqpType::Array(
+        let before = Primitive::Array(
             vec![
-                AmqpType::Int(-100),
-                AmqpType::Int(100),
-                AmqpType::Int(120),
+                Primitive::Int(-100),
+                Primitive::Int(100),
+                Primitive::Int(120),
             ]
             .into(),
         );
         let encoded: Vec<u8> = before.encode().into();
-        let decoded = AmqpType::try_decode(&mut encoded.into_pinned_stream())
+        let decoded = Primitive::try_decode(&mut encoded.into_pinned_stream())
             .await
             .unwrap();
         assert_eq!(decoded, before);

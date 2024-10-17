@@ -51,7 +51,7 @@ async fn parse_small_i32(iter: &mut Pin<Box<impl Stream<Item = u8>>>) -> Result<
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::amqp_type::AmqpType;
+    use crate::amqp_type::Primitive;
     use crate::common::tests::ByteVecExt;
 
     #[test]
@@ -138,7 +138,7 @@ mod test {
 
     #[tokio::test]
     async fn test_encode_decode_negative_small_int() {
-        let original = AmqpType::Int(-100);
+        let original = Primitive::Int(-100);
         let encoded = original.encode().to_bytes();
         let stream = &mut encoded.into_pinned_stream();
         stream.next().await;
@@ -148,12 +148,11 @@ mod test {
 
     #[tokio::test]
     async fn test_encode_decode_negative_int() {
-        let original = AmqpType::Int(-1000);
+        let original = Primitive::Int(-1000);
         let encoded = original.encode().to_bytes();
         let stream = &mut encoded.into_pinned_stream();
         stream.next().await;
         let decoded = i32::try_decode(INTEGER, stream).await.unwrap();
         assert_eq!(decoded, -1000);
     }
-
 }
