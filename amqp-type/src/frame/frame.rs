@@ -40,3 +40,15 @@ impl Decode for Frame {
         }
     }
 }
+
+impl From<AmqpFrame> for Frame {
+    fn from(value: AmqpFrame) -> Self {
+        Frame::AmqpFrame(value)
+    }
+}
+
+impl From<SaslFrame> for Frame {
+    fn from(value: SaslFrame) -> Self {
+        Frame::SaslFrame(value)
+    }
+}
