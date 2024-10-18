@@ -25,6 +25,11 @@ pub enum Encoded {
         element_constructor: u8,
         data: Vec<u8>,
     },
+    Composite {
+        constructor: u8,
+        descriptor: Vec<u8>,
+        data: Vec<u8>,
+    },
 }
 
 impl Encoded {
@@ -62,13 +67,22 @@ impl Encoded {
         }
     }
 
+    pub fn new_composite(constructor: u8, descriptor: Vec<u8>, data: Vec<u8>) -> Self {
+        Encoded::Composite {
+            constructor,
+            descriptor,
+            data,
+        }
+    }
+
     pub fn constructor(&self) -> u8 {
         match self {
-            Encoded::Empty { constructor } => constructor.to_owned(),
-            Encoded::Fixed { constructor, .. } => constructor.to_owned(),
-            Encoded::Variable { constructor, .. } => constructor.to_owned(),
-            Encoded::Compound { constructor, .. } => constructor.to_owned(),
-            Encoded::Array { constructor, .. } => constructor.to_owned(),
+            Self::Empty { constructor } => constructor.to_owned(),
+            Self::Fixed { constructor, .. } => constructor.to_owned(),
+            Self::Variable { constructor, .. } => constructor.to_owned(),
+            Self::Compound { constructor, .. } => constructor.to_owned(),
+            Self::Array { constructor, .. } => constructor.to_owned(),
+            Self::Composite { constructor, .. } => constructor.to_owned(),
         }
     }
 
@@ -79,6 +93,7 @@ impl Encoded {
             Self::Variable { data, .. } => data.len(),
             Self::Compound { data, .. } => data.len(),
             Self::Array { data, .. } => data.len(),
+            Self::Composite { data, .. } => data.len(),
         }
     }
 
@@ -124,6 +139,16 @@ fn encode_array(
     data
 }
 
+fn encode_composite(
+    constructor: Option<u8>,
+    mut descriptor: Vec<u8>,
+    mut data: Vec<u8>,
+) -> Vec<u8> {
+    data.prepend(&mut descriptor);
+    data.prepend(&mut encode_constructor(constructor));
+    data
+}
+
 fn encode_size(len: usize) -> Vec<u8> {
     match len {
         0..=255 => (len as u8).to_be_bytes().to_vec(),
@@ -158,6 +183,9 @@ impl Encoded {
                 data,
                 ..
             } => encode_array(None, count, element_constructor, data),
+            Encoded::Composite { .. } => {
+                panic!("Composite values must not be encoded without constructor")
+            }
         }
     }
 
@@ -177,6 +205,11 @@ impl Encoded {
                 element_constructor,
                 data,
             } => encode_array(Some(constructor), count, element_constructor, data),
+            Encoded::Composite {
+                constructor,
+                descriptor,
+                data,
+            } => encode_composite(Some(constructor), descriptor, data),
         }
     }
 }

@@ -36,5 +36,4 @@ pub const STRING_SHORT: u8 = 0xa1;
 pub const STRING: u8 = 0xb1;
 pub const SYMBOL_SHORT: u8 = 0xa3;
 pub const SYMBOL: u8 = 0xb3;
-pub const AMQP_FRAME: u8 = 0x00;
-pub const SASL_FRAME: u8 = 0x01;
+pub const DESCRIBED_TYPE: u8 = 0x00;

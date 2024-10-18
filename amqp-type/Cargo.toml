@@ -11,6 +11,7 @@ zero-length-encoding = []
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+# External
 indexmap = "2.0.0"
 thiserror = {workspace = true}
 tokio = {workspace = true}

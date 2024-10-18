@@ -1,19 +1,16 @@
-use crate::common::{read_bytes, read_bytes_4};
-use crate::constants::constructors::{AMQP_FRAME, SASL_FRAME};
-use crate::error::AppError;
 use crate::frame::amqp_frame::AmqpFrame;
 use crate::frame::sasl_frame::SaslFrame;
-use crate::serde::encode::{Encode, Encoded};
+use amqp_type::error::AppError;
 use std::pin::Pin;
-use tokio_stream::{iter, Stream, StreamExt};
+use tokio_stream::Stream;
 
 pub enum Frame {
     AmqpFrame(AmqpFrame),
     SaslFrame(SaslFrame),
 }
 
-impl Encode for Frame {
-    fn encode(self) -> Encoded {
+impl Frame {
+    pub fn encode(self) -> Vec<u8> {
         match self {
             Frame::AmqpFrame(amqp) => amqp.encode(),
             Frame::SaslFrame(sasl) => sasl.encode(),
@@ -22,11 +19,14 @@ impl Encode for Frame {
 }
 
 impl Frame {
-    pub async fn try_decode(stream: &mut Pin<Box<impl Stream<Item = u8>>>) -> Result<Self, AppError>
+    pub async fn try_decode(
+        _stream: &mut Pin<Box<impl Stream<Item = u8>>>,
+    ) -> Result<Self, AppError>
     where
         Self: Sized,
     {
-        let size = u32::from_be_bytes(read_bytes_4(stream).await?);
+        todo!()
+        /*let size = u32::from_be_bytes(read_bytes_4(stream).await?);
         let mut buffer = Box::pin(iter(read_bytes(stream, size as usize).await?));
         let doff = buffer
             .next()
@@ -44,7 +44,7 @@ impl Frame {
                 .await
                 .map(Frame::SaslFrame),
             illegal => Err(AppError::DeserializationIllegalConstructorError(illegal)),
-        }
+        }*/
     }
 }
 

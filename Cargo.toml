@@ -9,6 +9,9 @@ members = [
 resolver = "2"
 
 [workspace.dependencies]
+# Internal
+
+# External
 thiserror = "1.0.47"
 tokio = {version = "1", features=["full"]}
 uuid = {version = "1.4.1", features = ["v4"]}
