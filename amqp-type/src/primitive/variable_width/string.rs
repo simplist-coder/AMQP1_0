@@ -57,7 +57,7 @@ mod test {
     #[test]
     fn test_encode_empty_string() {
         let empty_string = String::new();
-        let encoded = empty_string.clone().encode().to_bytes();
+        let encoded = empty_string.clone().encode().into_bytes();
 
         let mut expected = vec![STRING_SHORT];
         let len = empty_string.into_bytes().len() as u8;
@@ -69,7 +69,7 @@ mod test {
     #[test]
     fn test_encode_small_string() {
         let small_string = "Test".to_string();
-        let encoded = small_string.clone().encode().to_bytes();
+        let encoded = small_string.clone().encode().into_bytes();
 
         let mut expected = vec![STRING_SHORT];
         let mut bytes = small_string.into_bytes();
@@ -82,7 +82,7 @@ mod test {
     #[test]
     fn test_encode_boundary_string() {
         let boundary_string = "a".repeat(255);
-        let encoded = boundary_string.clone().encode().to_bytes();
+        let encoded = boundary_string.clone().encode().into_bytes();
 
         let mut expected = vec![STRING_SHORT];
         let mut bytes = boundary_string.into_bytes();
@@ -95,7 +95,7 @@ mod test {
     #[test]
     fn test_encode_large_string() {
         let large_string = "a".repeat(256);
-        let encoded = large_string.clone().encode().to_bytes();
+        let encoded = large_string.clone().encode().into_bytes();
 
         let mut expected = vec![STRING];
         let mut bytes = large_string.into_bytes();

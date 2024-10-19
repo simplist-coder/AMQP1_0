@@ -67,7 +67,7 @@ mod test {
             .chain(example_unix_time_ms.to_be_bytes())
             .collect::<Vec<_>>();
 
-        assert_eq!(encoded.to_bytes(), expected_bytes.as_slice());
+        assert_eq!(encoded.into_bytes(), expected_bytes.as_slice());
     }
 
     #[tokio::test]

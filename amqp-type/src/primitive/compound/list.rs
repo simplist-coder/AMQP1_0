@@ -2,7 +2,7 @@ use crate::common::{read_bytes, read_bytes_4};
 use crate::constants::constructors::{LIST, LIST_EMPTY, LIST_SHORT};
 use crate::error::AppError;
 use crate::primitive::compound::encoded_vec::EncodedVec;
-use crate::primitive::primitive::Primitive;
+use crate::primitive::Primitive;
 use crate::serde::decode::Decode;
 use crate::serde::encode::{Encode, Encoded};
 use std::pin::Pin;

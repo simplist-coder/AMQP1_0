@@ -78,7 +78,7 @@ mod test {
         expected.append(&mut data.clone());
 
         assert_eq!(encoded.constructor(), BINARY_SHORT);
-        assert_eq!(encoded.to_bytes(), expected);
+        assert_eq!(encoded.into_bytes(), expected);
     }
 
     #[test]
@@ -92,7 +92,7 @@ mod test {
         expected.append(&mut data.clone());
 
         assert_eq!(encoded.constructor(), BINARY);
-        assert_eq!(encoded.to_bytes(), expected);
+        assert_eq!(encoded.into_bytes(), expected);
     }
 
     #[tokio::test]

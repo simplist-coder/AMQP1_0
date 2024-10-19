@@ -1,5 +1,5 @@
-use crate::composite::composite::Composite;
-use crate::primitive::primitive::Primitive;
+use crate::composite::Composite;
+use crate::primitive::Primitive;
 
 pub enum AmqpType {
     Primitive(Primitive),

@@ -52,10 +52,6 @@ impl PartialEq for Float {
     fn eq(&self, other: &Self) -> bool {
         self.0.to_bits() == other.0.to_bits()
     }
-
-    fn ne(&self, other: &Self) -> bool {
-        !self.eq(other)
-    }
 }
 
 impl Eq for Float {}
@@ -85,7 +81,7 @@ mod test {
         for (input, expected) in test_cases {
             let encoded = input.encode();
             assert_eq!(
-                encoded.to_bytes(),
+                encoded.into_bytes(),
                 expected,
                 "Failed encoding for Float value: {input:?}"
             );

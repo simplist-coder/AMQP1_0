@@ -86,7 +86,7 @@ mod test {
         for (input, expected) in test_cases {
             let encoded = input.encode();
             assert_eq!(
-                encoded.to_bytes(),
+                encoded.into_bytes(),
                 expected,
                 "Failed encoding for Decimal32 value: {input:?}"
             );

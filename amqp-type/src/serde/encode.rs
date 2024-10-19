@@ -97,7 +97,7 @@ impl Encoded {
         }
     }
 
-    pub fn to_bytes(self) -> Vec<u8> {
+    pub fn into_bytes(self) -> Vec<u8> {
         self.into()
     }
 }

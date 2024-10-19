@@ -52,7 +52,7 @@ async fn parse_small_i32(iter: &mut Pin<Box<impl Stream<Item = u8>>>) -> Result<
 mod test {
     use super::*;
     use crate::common::tests::ByteVecExt;
-    use crate::primitive::primitive::Primitive;
+    use crate::primitive::Primitive;
 
     #[test]
     fn test_encode_i32() {
@@ -68,7 +68,7 @@ mod test {
         for (input, expected) in test_cases {
             let encoded = input.encode();
             assert_eq!(
-                encoded.to_bytes(),
+                encoded.into_bytes(),
                 expected,
                 "Failed encoding for i32 value: {input}"
             );
@@ -138,7 +138,7 @@ mod test {
     #[tokio::test]
     async fn test_encode_decode_negative_small_int() {
         let original = Primitive::Int(-100);
-        let encoded = original.encode().to_bytes();
+        let encoded = original.encode().into_bytes();
         let stream = &mut encoded.into_pinned_stream();
         stream.next().await;
         let decoded = i32::try_decode(SMALL_INTEGER, stream).await.unwrap();
@@ -148,7 +148,7 @@ mod test {
     #[tokio::test]
     async fn test_encode_decode_negative_int() {
         let original = Primitive::Int(-1000);
-        let encoded = original.encode().to_bytes();
+        let encoded = original.encode().into_bytes();
         let stream = &mut encoded.into_pinned_stream();
         stream.next().await;
         let decoded = i32::try_decode(INTEGER, stream).await.unwrap();

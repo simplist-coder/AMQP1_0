@@ -10,9 +10,10 @@ use tokio_stream::{Stream, StreamExt};
 #[cfg(not(feature = "zero-length-encoding"))]
 impl Encode for bool {
     fn encode(self) -> Encoded {
-        match self {
-            true => Encoded::new_fixed(BOOLEAN, vec![0x01]),
-            false => Encoded::new_fixed(BOOLEAN, vec![0x00]),
+        if self {
+            Encoded::new_fixed(BOOLEAN, vec![0x01])
+        } else {
+            Encoded::new_fixed(BOOLEAN, vec![0x00])
         }
     }
 }
@@ -41,8 +42,8 @@ impl Decode for bool {
             BOOLEAN => {
                 let val = iter.next().await;
                 match (constructor, val) {
-                    (BOOLEAN, Some(v)) if v == 0x00 => Ok(false),
-                    (BOOLEAN, Some(v)) if v == 0x01 => Ok(true),
+                    (BOOLEAN, Some(0x00)) => Ok(false),
+                    (BOOLEAN, Some(0x01)) => Ok(true),
                     (c, _) => Err(AppError::DeserializationIllegalConstructorError(c)),
                 }
             }
@@ -65,8 +66,8 @@ mod test {
     #[test]
     #[cfg(not(feature = "zero-length-encoding"))]
     fn bool_gets_encoded_correctly() {
-        assert_eq!(true.encode().to_bytes(), vec![0x56, 0x01]);
-        assert_eq!(false.encode().to_bytes(), vec![0x56, 0x00]);
+        assert_eq!(true.encode().serialize(), vec![0x56, 0x01]);
+        assert_eq!(false.encode().serialize(), vec![0x56, 0x00]);
     }
 
     #[test]

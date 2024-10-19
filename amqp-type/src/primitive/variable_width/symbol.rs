@@ -52,7 +52,7 @@ async fn parse_symbol(
     Symbol::new(String::from_utf8(read_bytes(stream, size as usize).await?)?)
 }
 
-fn verify_ascii_char_set(string: &String) -> Result<(), AppError> {
+fn verify_ascii_char_set(string: &str) -> Result<(), AppError> {
     let mut chars = string.chars();
     match chars.all(|c| c.is_ascii()) {
         true => Ok(()),
@@ -89,7 +89,7 @@ mod test {
     #[test]
     fn test_encode_short_symbol_255() {
         let symbol = Symbol::new("a".repeat(255).to_string()).unwrap();
-        let encoded = symbol.clone().encode().to_bytes();
+        let encoded = symbol.clone().encode().into_bytes();
 
         let mut expected = vec![SYMBOL_SHORT];
         let mut bytes = symbol.0.into_bytes();
@@ -102,7 +102,7 @@ mod test {
     #[test]
     fn test_encode_large_symbol_256() {
         let large_string = Symbol::new("a".repeat(256)).unwrap();
-        let encoded = large_string.clone().encode().to_bytes();
+        let encoded = large_string.clone().encode().into_bytes();
 
         let mut expected = vec![SYMBOL];
         let mut bytes = large_string.0.into_bytes();

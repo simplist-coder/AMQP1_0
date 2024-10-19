@@ -61,7 +61,7 @@ mod test {
         expected_bytes.push(UUID);
         expected_bytes.extend_from_slice(&uuid.0.into_bytes());
 
-        assert_eq!(encoded.to_bytes(), expected_bytes);
+        assert_eq!(encoded.into_bytes(), expected_bytes);
     }
 
     #[tokio::test]
