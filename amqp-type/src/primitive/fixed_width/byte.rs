@@ -1,7 +1,7 @@
 use crate::constants::constructors::BYTE;
-use crate::error::AppError;
 use crate::serde::decode::Decode;
 use crate::serde::encode::{Encode, Encoded};
+use amqp_error::AppError;
 use std::pin::Pin;
 use tokio_stream::{Stream, StreamExt};
 
@@ -37,7 +37,8 @@ async fn parse_i8(iter: &mut Pin<Box<impl Stream<Item = u8>>>) -> Result<i8, App
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::common::tests::ByteVecExt;
+    use amqp_utils::ByteVecExt;
+
     use crate::constants::constructors::BYTE;
 
     #[test]

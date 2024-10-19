@@ -1,8 +1,8 @@
-use crate::common::read_bytes_8;
 use crate::constants::constructors::{LONG, SMALL_LONG};
-use crate::error::AppError;
 use crate::serde::decode::Decode;
 use crate::serde::encode::{Encode, Encoded};
+use amqp_error::AppError;
+use amqp_utils::read_bytes_8;
 use std::pin::Pin;
 use tokio_stream::{Stream, StreamExt};
 
@@ -49,7 +49,7 @@ async fn parse_small_i64(iter: &mut Pin<Box<impl Stream<Item = u8>>>) -> Result<
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::common::tests::ByteVecExt;
+    use amqp_utils::ByteVecExt;
 
     #[test]
     fn construct_long() {

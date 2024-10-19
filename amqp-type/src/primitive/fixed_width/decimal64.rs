@@ -1,8 +1,8 @@
-use crate::common::read_bytes_8;
 use crate::constants::constructors::DECIMAL_64;
-use crate::error::AppError;
 use crate::serde::decode::Decode;
 use crate::serde::encode::{Encode, Encoded};
+use amqp_error::AppError;
+use amqp_utils::read_bytes_8;
 use std::hash::{Hash, Hasher};
 use std::pin::Pin;
 use tokio_stream::Stream;
@@ -61,7 +61,7 @@ impl Hash for Decimal64 {
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::common::tests::ByteVecExt;
+    use amqp_utils::ByteVecExt;
 
     #[test]
     fn construct_decimal_64() {

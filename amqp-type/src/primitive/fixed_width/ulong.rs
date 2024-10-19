@@ -1,8 +1,8 @@
-use crate::common::read_bytes_8;
 use crate::constants::constructors::{SMALL_UNSIGNED_LONG, UNSIGNED_LONG, UNSIGNED_LONG_ZERO};
-use crate::error::AppError;
 use crate::serde::decode::Decode;
 use crate::serde::encode::{Encode, Encoded};
+use amqp_error::AppError;
+use amqp_utils::read_bytes_8;
 use std::pin::Pin;
 use tokio_stream::{Stream, StreamExt};
 
@@ -22,7 +22,7 @@ impl Decode for u64 {
     async fn try_decode(
         constructor: u8,
         stream: &mut Pin<Box<impl Stream<Item = u8>>>,
-    ) -> Result<Self, crate::error::AppError>
+    ) -> Result<Self, AppError>
     where
         Self: Sized,
     {
@@ -53,7 +53,7 @@ async fn parse_small_ulong(iter: &mut Pin<Box<impl Stream<Item = u8>>>) -> Resul
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::common::tests::ByteVecExt;
+    use amqp_utils::ByteVecExt;
 
     #[test]
     fn construct_ulong() {

@@ -1,8 +1,8 @@
-use crate::common::read_bytes_2;
 use crate::constants::constructors::UNSIGNED_SHORT;
-use crate::error::AppError;
 use crate::serde::decode::Decode;
 use crate::serde::encode::{Encode, Encoded};
+use amqp_error::AppError;
+use amqp_utils::read_bytes_2;
 use std::pin::Pin;
 use tokio_stream::Stream;
 
@@ -35,7 +35,7 @@ async fn parse_u16(iter: &mut Pin<Box<impl Stream<Item = u8>>>) -> Result<u16, A
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::common::tests::ByteVecExt;
+    use amqp_utils::ByteVecExt;
 
     #[test]
     fn construct_ushort() {

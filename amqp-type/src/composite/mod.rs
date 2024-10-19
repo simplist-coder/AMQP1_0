@@ -1,11 +1,11 @@
 pub mod performative;
 
 use crate::constants::constructors::DESCRIBED_TYPE;
-use crate::error::AppError;
 use crate::primitive::compound::list::List;
 use crate::primitive::variable_width::symbol::Symbol;
 use crate::serde::decode::Decode;
 use crate::serde::encode::{Encode, Encoded};
+use amqp_error::AppError;
 use std::pin::Pin;
 use tokio_stream::Stream;
 

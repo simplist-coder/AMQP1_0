@@ -1,9 +1,9 @@
 use crate::constants::constructors::BOOLEAN;
 use crate::constants::constructors::BOOLEAN_FALSE;
 use crate::constants::constructors::BOOLEAN_TRUE;
-use crate::error::AppError;
 use crate::serde::decode::Decode;
 use crate::serde::encode::{Encode, Encoded};
+use amqp_error::AppError;
 use std::pin::Pin;
 use tokio_stream::{Stream, StreamExt};
 
@@ -55,7 +55,7 @@ impl Decode for bool {
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::common::tests::ByteVecExt;
+    use amqp_utils::ByteVecExt;
 
     #[test]
     #[cfg(not(feature = "zero-length-encoding"))]

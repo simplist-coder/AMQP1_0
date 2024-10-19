@@ -1,8 +1,8 @@
-use crate::common::{read_bytes, read_bytes_4};
 use crate::constants::constructors::{SYMBOL, SYMBOL_SHORT};
-use crate::error::AppError;
 use crate::serde::decode::Decode;
 use crate::serde::encode::{Encode, Encoded};
+use amqp_error::AppError;
+use amqp_utils::{read_bytes, read_bytes_4};
 use std::pin::Pin;
 use tokio_stream::{Stream, StreamExt};
 
@@ -78,7 +78,7 @@ impl TryFrom<String> for Symbol {
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::common::tests::ByteVecExt;
+    use amqp_utils::ByteVecExt;
 
     #[test]
     fn construct_symbol() {

@@ -1,10 +1,10 @@
-use crate::common::{read_bytes, read_bytes_4};
 use crate::constants::constructors::{MAP, MAP_SHORT};
-use crate::error::AppError;
 use crate::primitive::compound::encoded_vec::EncodedVec;
 use crate::primitive::Primitive;
 use crate::serde::decode::Decode;
 use crate::serde::encode::{Encode, Encoded};
+use amqp_error::AppError;
+use amqp_utils::{read_bytes, read_bytes_4};
 use indexmap::IndexMap;
 use std::hash::Hash;
 use std::pin::Pin;
@@ -110,7 +110,8 @@ impl From<IndexMap<Primitive, Primitive>> for Map {
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::common::tests::ByteVecExt;
+    use amqp_utils::ByteVecExt;
+
     use crate::constants::constructors::{INTEGER, MAP, MAP_SHORT, UNSIGNED_SHORT};
 
     const ILLEGAL_ELEMENT_CONSTRUCTOR: u8 = 0x99;

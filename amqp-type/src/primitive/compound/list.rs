@@ -1,10 +1,10 @@
-use crate::common::{read_bytes, read_bytes_4};
 use crate::constants::constructors::{LIST, LIST_EMPTY, LIST_SHORT};
-use crate::error::AppError;
 use crate::primitive::compound::encoded_vec::EncodedVec;
 use crate::primitive::Primitive;
 use crate::serde::decode::Decode;
 use crate::serde::encode::{Encode, Encoded};
+use amqp_error::AppError;
+use amqp_utils::{read_bytes, read_bytes_4};
 use std::pin::Pin;
 use tokio_stream::{iter, Stream, StreamExt};
 
@@ -94,7 +94,8 @@ impl From<Vec<Primitive>> for List {
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::common::tests::ByteVecExt;
+    use amqp_utils::ByteVecExt;
+
     use crate::constants::constructors::{INTEGER, UNSIGNED_SHORT};
     #[test]
     fn construct_empty_list() {

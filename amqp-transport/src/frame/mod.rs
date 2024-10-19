@@ -3,7 +3,7 @@ pub mod sasl_frame;
 
 use crate::frame::amqp_frame::AmqpFrame;
 use crate::frame::sasl_frame::SaslFrame;
-use amqp_type::error::AppError;
+use amqp_error::AppError;
 use std::pin::Pin;
 use tokio_stream::Stream;
 
@@ -28,7 +28,6 @@ impl Frame {
     where
         Self: Sized,
     {
-        todo!()
         /*let size = u32::from_be_bytes(read_bytes_4(stream).await?);
         let mut buffer = Box::pin(iter(read_bytes(stream, size as usize).await?));
         let doff = buffer
@@ -48,6 +47,7 @@ impl Frame {
                 .map(Frame::SaslFrame),
             illegal => Err(AppError::DeserializationIllegalConstructorError(illegal)),
         }*/
+        todo!()
     }
 }
 

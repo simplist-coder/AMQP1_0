@@ -5,6 +5,8 @@ members = [
   "amqp-messaging",
   "amqp-transaction",
   "amqp-security",
+  "amqp-error",
+  "amqp-utils"
 ]
 resolver = "2"
 

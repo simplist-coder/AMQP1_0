@@ -13,6 +13,10 @@ zero-length-encoding = []
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+# Internal
+amqp-utils = {path = "../amqp-utils" }
+amqp-error = {path = "../amqp-error"}
+
 # External
 indexmap = "2.0.0"
 thiserror = {workspace = true}

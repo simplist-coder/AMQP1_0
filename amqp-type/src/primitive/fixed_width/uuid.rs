@@ -1,8 +1,8 @@
-use crate::common::read_bytes_16;
 use crate::constants::constructors::UUID;
-use crate::error::AppError;
 use crate::serde::decode::Decode;
 use crate::serde::encode::{Encode, Encoded};
+use amqp_error::AppError;
+use amqp_utils::read_bytes_16;
 use std::pin::Pin;
 use tokio_stream::Stream;
 
@@ -44,7 +44,8 @@ impl From<uuid::Uuid> for Uuid {
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::common::tests::ByteVecExt;
+    use amqp_utils::ByteVecExt;
+
     use crate::constants::constructors::UUID;
 
     #[test]

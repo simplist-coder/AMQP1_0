@@ -8,6 +8,7 @@ edition = "2021"
 [dependencies]
 # Internal dependencies
 amqp-type = {path = "../amqp-type"}
+amqp-error = {path = "../amqp-error"}
 
 # External dependencies
 thiserror = {workspace = true}

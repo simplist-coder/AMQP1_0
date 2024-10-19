@@ -1,5 +1,5 @@
+use amqp_error::AppError;
 use amqp_type::composite::performative::Performative;
-use amqp_type::error::AppError;
 use std::pin::Pin;
 use tokio_stream::Stream;
 use tokio_stream::StreamExt;

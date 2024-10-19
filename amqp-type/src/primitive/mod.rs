@@ -9,7 +9,6 @@ use crate::constants::constructors::{
     STRING, STRING_SHORT, SYMBOL, SYMBOL_SHORT, TIMESTAMP, UNSIGNED_BYTE, UNSIGNED_INTEGER,
     UNSIGNED_INTEGER_ZERO, UNSIGNED_LONG, UNSIGNED_LONG_ZERO, UNSIGNED_SHORT, UUID,
 };
-use crate::error::AppError;
 use crate::primitive::compound::array::Array;
 use crate::primitive::compound::list::List;
 use crate::primitive::compound::map::Map;
@@ -24,6 +23,7 @@ use crate::primitive::variable_width::binary::Binary;
 use crate::primitive::variable_width::symbol::Symbol;
 use crate::serde::decode::Decode;
 use crate::serde::encode::{Encode, Encoded};
+use amqp_error::AppError;
 use std::hash::Hash;
 use std::pin::Pin;
 use tokio_stream::{Stream, StreamExt};
@@ -293,7 +293,8 @@ impl From<Decimal128> for Primitive {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::common::tests::ByteVecExt;
+
+    use amqp_utils::ByteVecExt;
     use indexmap::IndexMap;
 
     #[test]

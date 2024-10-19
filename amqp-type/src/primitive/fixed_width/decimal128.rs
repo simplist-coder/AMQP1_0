@@ -1,6 +1,6 @@
-use crate::error::AppError;
 use crate::serde::decode::Decode;
 use crate::serde::encode::{Encode, Encoded};
+use amqp_error::AppError;
 use std::pin::Pin;
 use tokio_stream::Stream;
 

@@ -1,10 +1,8 @@
-use crate::common::read_bytes_4;
 use crate::constants::constructors::{INTEGER, SMALL_INTEGER};
 use crate::serde::decode::Decode;
-use crate::{
-    error::AppError,
-    serde::encode::{Encode, Encoded},
-};
+use crate::serde::encode::{Encode, Encoded};
+use amqp_error::AppError;
+use amqp_utils::read_bytes_4;
 use std::pin::Pin;
 use tokio_stream::{Stream, StreamExt};
 
@@ -51,7 +49,8 @@ async fn parse_small_i32(iter: &mut Pin<Box<impl Stream<Item = u8>>>) -> Result<
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::common::tests::ByteVecExt;
+    use amqp_utils::ByteVecExt;
+
     use crate::primitive::Primitive;
 
     #[test]

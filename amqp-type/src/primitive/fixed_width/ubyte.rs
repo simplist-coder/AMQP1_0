@@ -1,7 +1,7 @@
 use crate::constants::constructors::UNSIGNED_BYTE;
-use crate::error::AppError;
 use crate::serde::decode::Decode;
 use crate::serde::encode::{Encode, Encoded};
+use amqp_error::AppError;
 use std::pin::Pin;
 use tokio_stream::{Stream, StreamExt};
 
@@ -30,7 +30,7 @@ impl Decode for u8 {
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::common::tests::ByteVecExt;
+    use amqp_utils::ByteVecExt;
 
     #[test]
     fn construct_ubyte() {

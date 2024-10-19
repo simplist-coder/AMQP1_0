@@ -1,4 +1,4 @@
-use crate::error::AppError;
+use amqp_error::AppError;
 use std::pin::Pin;
 use tokio_stream::Stream;
 
