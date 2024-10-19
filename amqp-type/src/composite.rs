@@ -9,6 +9,9 @@ use std::vec::IntoIter;
 pub trait CompositeType: From<Composite> + Into<Composite> {}
 
 #[derive(Debug, Eq, PartialEq, Clone)]
+pub struct Composite(Descriptor, List);
+
+#[derive(Debug, Eq, PartialEq, Clone)]
 pub enum Descriptor {
     Symbol(Symbol),
     Code(u64),
@@ -32,14 +35,13 @@ impl Decode for Descriptor {
             SYMBOL | SYMBOL_SHORT => {
                 Symbol::try_decode(constructor, stream).map(Descriptor::Symbol)
             }
-            UNSIGNED_LONG => u64::try_decode(UNSIGNED_LONG, stream).map(Descriptor::Code),
+            UNSIGNED_LONG | SMALL_UNSIGNED_LONG => {
+                u64::try_decode(constructor, stream).map(Descriptor::Code)
+            }
             illegal => Err(AppError::DeserializationIllegalConstructorError(illegal)),
         }
     }
 }
-
-#[derive(Debug, Eq, PartialEq, Clone)]
-pub struct Composite(Descriptor, List);
 
 impl Encode for Composite {
     fn encode(self) -> Encoded {
@@ -107,7 +109,7 @@ mod tests {
     use crate::primitive::Primitive;
 
     #[test]
-    fn test_encode_decode_round_trip_composite() {
+    fn test_encode_decode_round_trip_composite_with_short_symbol() {
         let desc = Symbol::new("Hello".to_owned()).unwrap().into();
         let list = vec![
             Primitive::String("World".to_owned()),
@@ -126,5 +128,92 @@ mod tests {
         let encoded = original.clone().encode().into_bytes();
         let decoded = Composite::try_decode_without_constructor(&mut encoded.into_iter()).unwrap();
         assert_eq!(original, decoded);
+    }
+
+    #[test]
+    fn test_encode_decode_round_trip_composite_with_small_u64_descriptor() {
+        let desc = 150u64.into();
+        let list = vec![
+            Primitive::String("World".to_owned()),
+            Primitive::Boolean(true),
+            Primitive::List(
+                vec![
+                    Primitive::Binary(vec![1, 2, 3, 4, 5].into()),
+                    Primitive::Binary(vec![5, 5, 6, 7, 10].into()),
+                ]
+                .into(),
+            ),
+        ]
+        .into();
+        let original = Composite::new(desc, list);
+
+        let encoded = original.clone().encode().into_bytes();
+        let decoded = Composite::try_decode_without_constructor(&mut encoded.into_iter()).unwrap();
+        assert_eq!(original, decoded);
+    }
+
+    #[test]
+    fn test_encode_decode_round_trip_composite_with_long_symbol() {
+        let long_name = "aaaaaaaaaa".repeat(50).to_owned();
+        let desc = Symbol::new(long_name).unwrap().into();
+        let list = vec![
+            Primitive::String("World".to_owned()),
+            Primitive::Boolean(true),
+            Primitive::List(
+                vec![
+                    Primitive::Binary(vec![1, 2, 3, 4, 5].into()),
+                    Primitive::Binary(vec![5, 5, 6, 7, 10].into()),
+                ]
+                .into(),
+            ),
+        ]
+        .into();
+        let original = Composite::new(desc, list);
+
+        let encoded = original.clone().encode().into_bytes();
+        let decoded = Composite::try_decode_without_constructor(&mut encoded.into_iter()).unwrap();
+        assert_eq!(original, decoded);
+    }
+
+    #[test]
+    fn test_encode_decode_round_trip_composite_with_large_64_descriptor() {
+        let desc = 150000u64.into();
+        let list = vec![
+            Primitive::String("World".to_owned()),
+            Primitive::Boolean(true),
+            Primitive::List(
+                vec![
+                    Primitive::Binary(vec![1, 2, 3, 4, 5].into()),
+                    Primitive::Binary(vec![5, 5, 6, 7, 10].into()),
+                ]
+                .into(),
+            ),
+        ]
+        .into();
+        let original = Composite::new(desc, list);
+
+        let encoded = original.clone().encode().into_bytes();
+        let decoded = Composite::try_decode_without_constructor(&mut encoded.into_iter()).unwrap();
+        assert_eq!(original, decoded);
+    }
+
+    #[test]
+    fn test_try_decode_for_descriptor_returns_err_on_invalid_constructor() {
+        let raw = vec![5];
+        let decoded = Composite::try_decode_without_constructor(&mut raw.into_iter()).unwrap_err();
+        assert!(matches!(
+            decoded,
+            AppError::DeserializationIllegalConstructorError(5)
+        ));
+    }
+
+    #[test]
+    fn test_try_decode_for_symbol_returns_err_on_invalid_described_constructor() {
+        let raw = vec![5];
+        let decoded = Descriptor::try_decode(5, &mut raw.into_iter()).unwrap_err();
+        assert!(matches!(
+            decoded,
+            AppError::DeserializationIllegalConstructorError(5)
+        ));
     }
 }
