@@ -39,8 +39,8 @@ impl Frame {
             .next()
             .ok_or(AppError::IteratorEmptyOrTooShortError)?;
         match frame_type {
-            AMQP_FRAME => AmqpFrame::try_decode(size, doff, &mut buffer).map(Frame::AmqpFrame),
-            SASL_FRAME => SaslFrame::try_decode(size, doff, &mut buffer).map(Frame::SaslFrame),
+            AMQP_FRAME => AmqpFrame::try_decode(doff, &mut buffer).map(Frame::AmqpFrame),
+            SASL_FRAME => SaslFrame::try_decode(doff, &mut buffer).map(Frame::SaslFrame),
             illegal => Err(AppError::DeserializationIllegalConstructorError(illegal)),
         }
     }

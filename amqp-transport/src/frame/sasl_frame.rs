@@ -10,7 +10,7 @@ impl SaslFrame {
 }
 
 impl SaslFrame {
-    pub fn try_decode(_size: u32, _doff: u8, _stream: &mut IntoIter<u8>) -> Result<Self, AppError>
+    pub fn try_decode(_doff: u8, _stream: &mut IntoIter<u8>) -> Result<Self, AppError>
     where
         Self: Sized,
     {
