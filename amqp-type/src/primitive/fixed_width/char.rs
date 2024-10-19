@@ -68,7 +68,7 @@ mod test {
 
         match char::try_decode(CHAR, &mut value.into_pinned_stream()).await {
             Ok(decoded_char) => assert_eq!('A', decoded_char),
-            Err(e) => panic!("Unexpected error: {:?}", e),
+            Err(e) => panic!("Unexpected error: {e:?}"),
         }
     }
 
@@ -80,9 +80,9 @@ mod test {
         match char::try_decode(illegal_constructor, &mut bytes.into_pinned_stream()).await {
             Ok(_) => panic!("Expected an error, but deserialization succeeded"),
             Err(AppError::DeserializationIllegalConstructorError(c)) => {
-                assert_eq!(illegal_constructor, c)
+                assert_eq!(illegal_constructor, c);
             }
-            Err(e) => panic!("Unexpected error type: {:?}", e),
+            Err(e) => panic!("Unexpected error type: {e:?}"),
         }
     }
 
@@ -93,7 +93,7 @@ mod test {
         match char::try_decode(CHAR, &mut bytes.into_pinned_stream()).await {
             Ok(_) => panic!("Expected an error, but deserialization succeeded"),
             Err(AppError::IteratorEmptyOrTooShortError) => (), // Expected outcome
-            Err(e) => panic!("Unexpected error type: {:?}", e),
+            Err(e) => panic!("Unexpected error type: {e:?}"),
         }
     }
 
@@ -104,7 +104,7 @@ mod test {
         match char::try_decode(CHAR, &mut bytes.into_pinned_stream()).await {
             Ok(_) => panic!("Expected an error, but deserialization succeeded"),
             Err(AppError::InvalidChar) => (), // Expected outcome
-            Err(e) => panic!("Unexpected error type: {:?}", e),
+            Err(e) => panic!("Unexpected error type: {e:?}"),
         }
     }
 }

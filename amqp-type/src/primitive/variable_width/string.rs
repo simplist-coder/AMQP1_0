@@ -9,7 +9,7 @@ use tokio_stream::{Stream, StreamExt};
 impl Encode for String {
     fn encode(self) -> Encoded {
         match self.len() as i32 {
-            x if x >= 0 && x <= 255 => {
+            x if (0..=255).contains(&x) => {
                 Encoded::new_variable(STRING_SHORT, self.as_bytes().to_vec())
             }
             _ => Encoded::new_variable(STRING, self.as_bytes().to_vec()),

@@ -58,7 +58,7 @@ mod test {
     #[test]
     fn test_successful_timestamp_encoding() {
         // Example Unix time in milliseconds: 2011-07-26T18:21:03.521Z
-        let example_unix_time_ms: i64 = 1311704463521;
+        let example_unix_time_ms: i64 = 1_311_704_463_521;
         let timestamp = Timestamp(example_unix_time_ms);
 
         let encoded = timestamp.encode();
@@ -73,13 +73,13 @@ mod test {
     #[tokio::test]
     async fn test_timestamp_decoding() {
         // Example Unix time in milliseconds: 2011-07-26T18:21:03.521Z
-        let example_unix_time_ms: i64 = 1311704463521;
+        let example_unix_time_ms: i64 = 1_311_704_463_521;
         let mut data = vec![];
         data.extend_from_slice(&example_unix_time_ms.to_be_bytes());
 
         match Timestamp::try_decode(TIMESTAMP, &mut data.into_pinned_stream()).await {
             Ok(timestamp) => assert_eq!(timestamp.0, example_unix_time_ms),
-            Err(e) => panic!("Unexpected error: {:?}", e),
+            Err(e) => panic!("Unexpected error: {e:?}"),
         }
     }
 
@@ -91,9 +91,9 @@ mod test {
         match Timestamp::try_decode(illegal_constructor, &mut bytes.into_pinned_stream()).await {
             Ok(_) => panic!("Expected an error, but deserialization succeeded"),
             Err(AppError::DeserializationIllegalConstructorError(c)) => {
-                assert_eq!(illegal_constructor, c)
+                assert_eq!(illegal_constructor, c);
             }
-            Err(e) => panic!("Unexpected error type: {:?}", e),
+            Err(e) => panic!("Unexpected error type: {e:?}"),
         }
     }
 
@@ -104,7 +104,7 @@ mod test {
         match Timestamp::try_decode(TIMESTAMP, &mut data.into_pinned_stream()).await {
             Ok(_) => panic!("Expected an error, but deserialization succeeded"),
             Err(AppError::IteratorEmptyOrTooShortError) => (), // Expected outcome
-            Err(e) => panic!("Unexpected error type: {:?}", e),
+            Err(e) => panic!("Unexpected error type: {e:?}"),
         }
     }
 }

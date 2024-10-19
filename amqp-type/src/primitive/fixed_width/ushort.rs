@@ -57,8 +57,7 @@ mod test {
             assert_eq!(
                 encoded.to_bytes(),
                 expected,
-                "Failed encoding for u16 value: {}",
-                input
+                "Failed encoding for u16 value: {input}"
             );
         }
     }
@@ -71,7 +70,7 @@ mod test {
                 .await
                 .unwrap(),
             16
-        )
+        );
     }
 
     #[tokio::test]

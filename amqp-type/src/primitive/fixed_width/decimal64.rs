@@ -54,7 +54,7 @@ impl Eq for Decimal64 {}
 
 impl Hash for Decimal64 {
     fn hash<H: Hasher>(&self, state: &mut H) {
-        self.0.to_bits().hash(state)
+        self.0.to_bits().hash(state);
     }
 }
 
@@ -84,12 +84,11 @@ mod test {
         ];
 
         for (input, expected) in test_cases {
-            let encoded = input.clone().encode();
+            let encoded = input.encode();
             assert_eq!(
                 encoded.to_bytes(),
                 expected,
-                "Failed encoding for Decimal64 value: {:?}",
-                input
+                "Failed encoding for Decimal64 value: {input:?}"
             );
         }
     }
@@ -102,7 +101,7 @@ mod test {
 
         match Decimal64::try_decode(DECIMAL_64, &mut data.into_pinned_stream()).await {
             Ok(decimal) => assert_eq!(value, decimal.0),
-            Err(e) => panic!("Unexpected error: {:?}", e),
+            Err(e) => panic!("Unexpected error: {e:?}"),
         }
     }
 
@@ -114,9 +113,9 @@ mod test {
         match Decimal64::try_decode(illegal_constructor, &mut bytes.into_pinned_stream()).await {
             Ok(_) => panic!("Expected an error, but deserialization succeeded"),
             Err(AppError::DeserializationIllegalConstructorError(c)) => {
-                assert_eq!(illegal_constructor, c)
+                assert_eq!(illegal_constructor, c);
             }
-            Err(e) => panic!("Unexpected error type: {:?}", e),
+            Err(e) => panic!("Unexpected error type: {e:?}"),
         }
     }
 
@@ -127,7 +126,7 @@ mod test {
         match Decimal64::try_decode(DECIMAL_64, &mut bytes.into_pinned_stream()).await {
             Ok(_) => panic!("Expected an error, but deserialization succeeded"),
             Err(AppError::IteratorEmptyOrTooShortError) => (), // Expected outcome
-            Err(e) => panic!("Unexpected error type: {:?}", e),
+            Err(e) => panic!("Unexpected error type: {e:?}"),
         }
     }
 }

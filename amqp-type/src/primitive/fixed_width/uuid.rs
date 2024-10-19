@@ -71,7 +71,7 @@ mod test {
         bytes.extend(uuid.into_bytes().to_vec());
         let decoded = Uuid::try_decode(UUID, &mut bytes.into_pinned_stream()).await;
         assert!(decoded.is_ok());
-        assert_eq!(decoded.unwrap().0, uuid)
+        assert_eq!(decoded.unwrap().0, uuid);
     }
 
     #[tokio::test]

@@ -16,7 +16,11 @@ impl Encode for Array {
         match self.0.len() {
             0 => Encoded::new_array(ARRAY_SHORT, 0, NULL, vec![]),
             len => {
-                let encoded: Vec<Encoded> = self.0.into_iter().map(|x| x.encode()).collect();
+                let encoded: Vec<Encoded> = self
+                    .0
+                    .into_iter()
+                    .map(crate::serde::encode::Encode::encode)
+                    .collect();
                 let element_constructor = encoded[0].constructor();
                 let bytes = EncodedVec::new(encoded).serialize_without_constructors();
                 match (len, bytes.len()) {
@@ -125,7 +129,7 @@ mod test {
     fn construct_array_with_more_than_255_elements() {
         let mut arr = vec![];
         for i in 0..500 {
-            arr.push(i.into())
+            arr.push(i.into());
         }
         let val = Array(arr);
         assert_eq!(val.encode().constructor(), 0xf0);
@@ -148,10 +152,10 @@ mod test {
 
         let encoded: Vec<u8> = array.encode().into();
 
-        let constructor = encoded.get(0).unwrap().clone();
-        let size = encoded.get(1).unwrap().clone();
-        let count = encoded.get(2).unwrap().clone();
-        let element_constructor = encoded.get(3).unwrap().clone();
+        let constructor = *encoded.first().unwrap();
+        let size = *encoded.get(1).unwrap();
+        let count = *encoded.get(2).unwrap();
+        let element_constructor = *encoded.get(3).unwrap();
         assert_eq!(encoded.len(), 4); //1 byte constructor, 1 byte size, 1 byte count, 1 byte element constructor, 0 bytes data
         assert_eq!(constructor, ARRAY_SHORT);
         assert_eq!(size, 0);
@@ -163,19 +167,15 @@ mod test {
     fn test_encode_long_array() {
         // using Vec<u8> because it makes the result easier to reason about
         let raw_data = vec![5; 1000];
-        let values = raw_data
-            .clone()
-            .into_iter()
-            .map(|x| Primitive::Ubyte(x))
-            .collect();
+        let values = raw_data.clone().into_iter().map(Primitive::Ubyte).collect();
         let array = Array(values);
 
         let encoded: Vec<u8> = array.encode().into();
 
-        let constructor = encoded.get(0).unwrap().clone();
+        let constructor = *encoded.first().unwrap();
         let size = u32::from_be_bytes(encoded.get(1..5).unwrap().try_into().unwrap());
         let count = u32::from_be_bytes(encoded.get(5..9).unwrap().try_into().unwrap());
-        let element_constructor = encoded.get(9).unwrap().clone();
+        let element_constructor = *encoded.get(9).unwrap();
         assert_eq!(constructor, ARRAY);
         assert_eq!(encoded.len(), 1010); // 1 byte constructor, 4 bytes size, 4 bytes count, 1 byte element constructor, 1000 bytes data
         assert_eq!(size, 1000);
@@ -188,19 +188,15 @@ mod test {
     fn test_encode_short_array() {
         // using Vec<u8> because it makes the result easier to reason about
         let raw_data = vec![5; 100];
-        let values = raw_data
-            .clone()
-            .into_iter()
-            .map(|x| Primitive::Ubyte(x))
-            .collect();
+        let values = raw_data.clone().into_iter().map(Primitive::Ubyte).collect();
         let array = Array(values);
 
         let encoded: Vec<u8> = array.encode().into();
 
-        let constructor = encoded.get(0).unwrap().clone();
-        let size = encoded.get(1).unwrap().clone();
-        let count = encoded.get(2).unwrap().clone();
-        let element_constructor = encoded.get(3).unwrap().clone();
+        let constructor = *encoded.first().unwrap();
+        let size = *encoded.get(1).unwrap();
+        let count = *encoded.get(2).unwrap();
+        let element_constructor = *encoded.get(3).unwrap();
         assert_eq!(encoded.len(), 104); // 1 byte constructor, 1 byte size, 1 byte count, 1 byte element constructor, 100 bytes data
         assert_eq!(constructor, ARRAY_SHORT);
         assert_eq!(size, 100);

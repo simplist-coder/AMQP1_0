@@ -14,7 +14,11 @@ pub struct List(Vec<Primitive>);
 impl Encode for List {
     fn encode(self) -> Encoded {
         let count = self.0.len();
-        let encoded_elements = self.0.into_iter().map(|x| x.encode()).collect();
+        let encoded_elements = self
+            .0
+            .into_iter()
+            .map(crate::serde::encode::Encode::encode)
+            .collect();
         let encoded = EncodedVec::new(encoded_elements).serialize();
         match (count, encoded.len()) {
             (0, _) => LIST_EMPTY.into(),
@@ -108,7 +112,7 @@ mod test {
     fn construct_list_with_more_than_255_elements() {
         let mut arr = vec![];
         for i in 0..500 {
-            arr.push(i.into())
+            arr.push(i.into());
         }
         let val = List(arr);
         assert_eq!(val.encode().constructor(), 0xd0);

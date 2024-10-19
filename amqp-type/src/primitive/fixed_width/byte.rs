@@ -61,8 +61,7 @@ mod test {
             assert_eq!(
                 encoded.to_bytes(),
                 expected,
-                "Failed encoding for i8 value: {}",
-                input
+                "Failed encoding for i8 value: {input}"
             );
         }
     }

@@ -44,7 +44,7 @@ async fn parse_ulong(iter: &mut Pin<Box<impl Stream<Item = u8>>>) -> Result<u64,
 
 async fn parse_small_ulong(iter: &mut Pin<Box<impl Stream<Item = u8>>>) -> Result<u64, AppError> {
     if let Some(val) = iter.next().await {
-        Ok(val as u64)
+        Ok(u64::from(val))
     } else {
         Err(AppError::IteratorEmptyOrTooShortError)
     }
@@ -79,8 +79,7 @@ mod test {
             assert_eq!(
                 encoded.to_bytes(),
                 expected,
-                "Failed encoding for u64 value: {}",
-                input
+                "Failed encoding for u64 value: {input}"
             );
         }
     }
@@ -104,7 +103,7 @@ mod test {
             u64::try_decode(0x80, &mut val.into_pinned_stream())
                 .await
                 .unwrap(),
-            72357829700222992
+            72_357_829_700_222_992
         );
     }
 

@@ -11,7 +11,7 @@ use tokio_stream::{Stream, StreamExt};
 impl Encode for i32 {
     fn encode(self) -> Encoded {
         match self {
-            x if x >= -128 && x <= 127 => {
+            x if (-128..=127).contains(&x) => {
                 Encoded::new_fixed(SMALL_INTEGER, (x as i8).to_be_bytes().to_vec())
             }
             _ => Encoded::new_fixed(INTEGER, self.to_be_bytes().to_vec()),
@@ -42,7 +42,7 @@ async fn parse_i32(iter: &mut Pin<Box<impl Stream<Item = u8>>>) -> Result<i32, A
 
 async fn parse_small_i32(iter: &mut Pin<Box<impl Stream<Item = u8>>>) -> Result<i32, AppError> {
     if let Some(val) = iter.next().await {
-        Ok(i8::from_be_bytes([val]) as i32)
+        Ok(i32::from(i8::from_be_bytes([val])))
     } else {
         Err(AppError::IteratorEmptyOrTooShortError)
     }
@@ -70,8 +70,7 @@ mod test {
             assert_eq!(
                 encoded.to_bytes(),
                 expected,
-                "Failed encoding for i32 value: {}",
-                input
+                "Failed encoding for i32 value: {input}"
             );
         }
     }
@@ -84,7 +83,7 @@ mod test {
                 .await
                 .unwrap(),
             16
-        )
+        );
     }
 
     #[tokio::test]

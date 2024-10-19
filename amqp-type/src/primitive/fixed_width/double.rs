@@ -45,7 +45,7 @@ async fn parse_f64(iter: &mut Pin<Box<impl Stream<Item = u8>>>) -> Result<Double
 
 impl Hash for Double {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-        self.0.to_bits().hash(state)
+        self.0.to_bits().hash(state);
     }
 }
 
@@ -93,12 +93,11 @@ mod test {
         ];
 
         for (input, expected) in test_cases {
-            let encoded = input.clone().encode();
+            let encoded = input.encode();
             assert_eq!(
                 encoded.to_bytes(),
                 expected,
-                "Failed encoding for Double value: {:?}",
-                input
+                "Failed encoding for Double value: {input:?}"
             );
         }
     }
@@ -110,7 +109,7 @@ mod test {
             Double::try_decode(DOUBLE, &mut val.into_pinned_stream())
                 .await
                 .unwrap(),
-            8.0000019501895.into()
+            8.000_001_950_189_5.into()
         );
     }
 

@@ -44,7 +44,7 @@ impl From<f32> for Float {
 
 impl Hash for Float {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-        self.0.to_bits().hash(state)
+        self.0.to_bits().hash(state);
     }
 }
 
@@ -87,8 +87,7 @@ mod test {
             assert_eq!(
                 encoded.to_bytes(),
                 expected,
-                "Failed encoding for Float value: {:?}",
-                input
+                "Failed encoding for Float value: {input:?}"
             );
         }
     }
@@ -100,7 +99,7 @@ mod test {
             Float::try_decode(0x72, &mut val.into_pinned_stream())
                 .await
                 .unwrap(),
-            15.000015.into()
+            15.000_015.into()
         );
     }
 

@@ -52,8 +52,7 @@ mod test {
             assert_eq!(
                 encoded.to_bytes(),
                 expected,
-                "Failed encoding for u8 value: {}",
-                input
+                "Failed encoding for u8 value: {input}"
             );
         }
     }
@@ -66,6 +65,6 @@ mod test {
                 .await
                 .unwrap(),
             16
-        )
+        );
     }
 }

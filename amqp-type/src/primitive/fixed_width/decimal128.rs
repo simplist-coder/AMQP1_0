@@ -8,7 +8,7 @@ use tokio_stream::Stream;
 pub struct Decimal128();
 
 /**
-f128 is not yet supported by rust, see https://github.com/rust-lang/rust/issues/116909
+f128 is not yet supported by rust, see <https://github.com/rust-lang/rust/issues/116909>
 Implement this when f128 it is available in stable.
  */
 impl Encode for Decimal128 {

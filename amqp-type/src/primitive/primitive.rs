@@ -1,4 +1,10 @@
-use crate::constants::constructors::*;
+use crate::constants::constructors::{
+    ARRAY, ARRAY_SHORT, BINARY, BINARY_SHORT, BOOLEAN, BOOLEAN_FALSE, BOOLEAN_TRUE, BYTE, CHAR,
+    DECIMAL_32, DECIMAL_64, DOUBLE, FLOAT, INTEGER, LIST, LIST_EMPTY, LIST_SHORT, LONG, MAP,
+    MAP_SHORT, NULL, SHORT, SMALL_INTEGER, SMALL_LONG, SMALL_UNSIGNED_INTEGER, SMALL_UNSIGNED_LONG,
+    STRING, STRING_SHORT, SYMBOL, SYMBOL_SHORT, TIMESTAMP, UNSIGNED_BYTE, UNSIGNED_INTEGER,
+    UNSIGNED_INTEGER_ZERO, UNSIGNED_LONG, UNSIGNED_LONG_ZERO, UNSIGNED_SHORT, UUID,
+};
 use crate::error::AppError;
 use crate::primitive::compound::array::Array;
 use crate::primitive::compound::list::List;
@@ -6,7 +12,7 @@ use crate::primitive::compound::map::Map;
 use crate::primitive::fixed_width::decimal128::Decimal128;
 use crate::primitive::fixed_width::decimal32::Decimal32;
 use crate::primitive::fixed_width::decimal64::Decimal64;
-use crate::primitive::fixed_width::double::*;
+use crate::primitive::fixed_width::double::Double;
 use crate::primitive::fixed_width::float::Float;
 use crate::primitive::fixed_width::timestamp::Timestamp;
 use crate::primitive::fixed_width::uuid::Uuid;
@@ -198,13 +204,13 @@ impl From<i64> for Primitive {
 
 impl From<Float> for Primitive {
     fn from(value: Float) -> Self {
-        Primitive::Float(value.into())
+        Primitive::Float(value)
     }
 }
 
 impl From<Double> for Primitive {
     fn from(value: Double) -> Self {
-        Primitive::Double(value.into())
+        Primitive::Double(value)
     }
 }
 

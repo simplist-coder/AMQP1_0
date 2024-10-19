@@ -220,7 +220,7 @@ impl From<Encoded> for Vec<u8> {
     }
 }
 
-/// From: https://www.reddit.com/r/rust/comments/kul4qz/vec_prepend_insert_from_slice/
+/// From: <https://www.reddit.com/r/rust/comments/kul4qz/vec_prepend_insert_from_slice>/
 trait VecExt<T>: AsMut<Vec<T>> {
     fn prepend(&mut self, other: &mut Vec<T>) {
         self.as_mut().splice(..0, other.drain(..));

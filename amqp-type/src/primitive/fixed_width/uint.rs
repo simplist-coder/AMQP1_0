@@ -44,7 +44,7 @@ async fn parse_uint(iter: &mut Pin<Box<impl Stream<Item = u8>>>) -> Result<u32, 
 
 async fn parse_small_uint(iter: &mut Pin<Box<impl Stream<Item = u8>>>) -> Result<u32, AppError> {
     if let Some(val) = iter.next().await {
-        Ok(val as u32)
+        Ok(u32::from(val))
     } else {
         Err(AppError::IteratorEmptyOrTooShortError)
     }
@@ -76,8 +76,7 @@ mod test {
             assert_eq!(
                 encoded.to_bytes(),
                 expected,
-                "Failed encoding for u32 value: {}",
-                input
+                "Failed encoding for u32 value: {input}"
             );
         }
     }

@@ -49,9 +49,7 @@ async fn parse_symbol(
     stream: &mut Pin<Box<impl Stream<Item = u8> + Sized>>,
 ) -> Result<Symbol, AppError> {
     let size = u32::from_be_bytes(read_bytes_4(stream).await?);
-    Ok(Symbol::new(String::from_utf8(
-        read_bytes(stream, size as usize).await?,
-    )?)?)
+    Symbol::new(String::from_utf8(read_bytes(stream, size as usize).await?)?)
 }
 
 fn verify_ascii_char_set(string: &String) -> Result<(), AppError> {
@@ -84,7 +82,7 @@ mod test {
 
     #[test]
     fn construct_symbol() {
-        let val = Symbol("".to_string());
+        let val = Symbol(String::new());
         assert_eq!(val.encode().constructor(), SYMBOL_SHORT);
     }
 
