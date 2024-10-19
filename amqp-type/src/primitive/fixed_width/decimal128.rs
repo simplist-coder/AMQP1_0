@@ -1,8 +1,7 @@
 use crate::serde::decode::Decode;
 use crate::serde::encode::{Encode, Encoded};
 use amqp_error::AppError;
-use std::pin::Pin;
-use tokio_stream::Stream;
+use std::vec::IntoIter;
 
 #[derive(Debug, Hash, Eq, PartialEq, Clone)]
 pub struct Decimal128();
@@ -18,10 +17,7 @@ impl Encode for Decimal128 {
 }
 
 impl Decode for Decimal128 {
-    async fn try_decode(
-        _constructor: u8,
-        _stream: &mut Pin<Box<impl Stream<Item = u8>>>,
-    ) -> Result<Self, AppError>
+    fn try_decode(_constructor: u8, _stream: &mut IntoIter<u8>) -> Result<Self, AppError>
     where
         Self: Sized,
     {

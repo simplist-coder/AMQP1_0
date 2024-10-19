@@ -56,9 +56,6 @@ dependencies = [
  "amqp-error",
  "amqp-utils",
  "indexmap",
- "thiserror",
- "tokio",
- "tokio-stream",
  "uuid",
 ]
 

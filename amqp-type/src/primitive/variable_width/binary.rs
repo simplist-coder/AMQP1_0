@@ -2,9 +2,8 @@ use crate::constants::constructors::{BINARY, BINARY_SHORT};
 use crate::serde::decode::Decode;
 use crate::serde::encode::{Encode, Encoded};
 use amqp_error::AppError;
-use amqp_utils::{read_bytes, read_bytes_4};
-use std::pin::Pin;
-use tokio_stream::{Stream, StreamExt};
+use amqp_utils::sync_util::{read_bytes, read_bytes_4};
+use std::vec::IntoIter;
 
 #[derive(Debug, Hash, Eq, PartialEq, Clone)]
 pub struct Binary(Vec<u8>);
@@ -19,35 +18,28 @@ impl Encode for Binary {
 }
 
 impl Decode for Binary {
-    async fn try_decode(
-        constructor: u8,
-        stream: &mut Pin<Box<impl Stream<Item = u8>>>,
-    ) -> Result<Self, AppError>
+    fn try_decode(constructor: u8, stream: &mut IntoIter<u8>) -> Result<Self, AppError>
     where
         Self: Sized,
     {
         match constructor {
-            BINARY_SHORT => Ok(parse_small_binary(stream).await?),
-            BINARY => Ok(parse_large_binary(stream).await?),
+            BINARY_SHORT => Ok(parse_small_binary(stream)?),
+            BINARY => Ok(parse_large_binary(stream)?),
             illegal => Err(AppError::DeserializationIllegalConstructorError(illegal)),
         }
     }
 }
 
-async fn parse_small_binary(
-    iter: &mut Pin<Box<impl Stream<Item = u8>>>,
-) -> Result<Binary, AppError> {
-    match iter.next().await {
-        Some(size) => Ok(Binary(read_bytes(iter, size as usize).await?)),
+fn parse_small_binary(iter: &mut IntoIter<u8>) -> Result<Binary, AppError> {
+    match iter.next() {
+        Some(size) => Ok(Binary(read_bytes(iter, size as usize)?)),
         None => Err(AppError::IteratorEmptyOrTooShortError),
     }
 }
 
-async fn parse_large_binary(
-    iter: &mut Pin<Box<impl Stream<Item = u8>>>,
-) -> Result<Binary, AppError> {
-    let size = u32::from_be_bytes(read_bytes_4(iter).await?);
-    Ok(Binary(read_bytes(iter, size as usize).await?))
+fn parse_large_binary(iter: &mut IntoIter<u8>) -> Result<Binary, AppError> {
+    let size = u32::from_be_bytes(read_bytes_4(iter)?);
+    Ok(Binary(read_bytes(iter, size as usize)?))
 }
 
 impl From<Vec<u8>> for Binary {
@@ -59,7 +51,6 @@ impl From<Vec<u8>> for Binary {
 #[cfg(test)]
 mod test {
     use super::*;
-    use amqp_utils::ByteVecExt;
 
     #[test]
     fn construct_binary() {
@@ -95,17 +86,15 @@ mod test {
         assert_eq!(encoded.into_bytes(), expected);
     }
 
-    #[tokio::test]
-    async fn test_decode_small_binary() {
+    #[test]
+    fn test_decode_small_binary() {
         let data = vec![3, 0x01, 0x02, 0x03];
-        let result = Binary::try_decode(BINARY_SHORT, &mut data.into_pinned_stream())
-            .await
-            .unwrap();
+        let result = Binary::try_decode(BINARY_SHORT, &mut data.into_iter()).unwrap();
         assert_eq!(result.0, vec![0x01, 0x02, 0x03]);
     }
 
-    #[tokio::test]
-    async fn test_decode_large_binary() {
+    #[test]
+    fn test_decode_large_binary() {
         let size_bytes = (4u32).to_be_bytes();
         let data = vec![
             size_bytes[0],
@@ -117,26 +106,24 @@ mod test {
             0x03,
             0x04,
         ];
-        let result = Binary::try_decode(BINARY, &mut data.into_pinned_stream())
-            .await
-            .unwrap();
+        let result = Binary::try_decode(BINARY, &mut data.into_iter()).unwrap();
         assert_eq!(result.0, vec![0x01, 0x02, 0x03, 0x04]);
     }
 
-    #[tokio::test]
-    async fn test_illegal_constructor() {
+    #[test]
+    fn test_illegal_constructor() {
         let data = vec![3, 0x01, 0x02, 0x03];
-        let result = Binary::try_decode(0xFF, &mut data.into_pinned_stream()).await;
+        let result = Binary::try_decode(0xFF, &mut data.into_iter());
         assert!(matches!(
             result,
             Err(AppError::DeserializationIllegalConstructorError(0xFF))
         ));
     }
 
-    #[tokio::test]
-    async fn test_iterator_empty_or_too_short() {
+    #[test]
+    fn test_iterator_empty_or_too_short() {
         let data: Vec<u8> = vec![];
-        let result = Binary::try_decode(BINARY_SHORT, &mut data.into_pinned_stream()).await;
+        let result = Binary::try_decode(BINARY_SHORT, &mut data.into_iter());
         assert!(matches!(
             result,
             Err(AppError::IteratorEmptyOrTooShortError)

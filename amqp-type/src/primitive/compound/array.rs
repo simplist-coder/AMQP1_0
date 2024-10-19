@@ -4,9 +4,8 @@ use crate::primitive::Primitive;
 use crate::serde::decode::Decode;
 use crate::serde::encode::{Encode, Encoded};
 use amqp_error::AppError;
-use amqp_utils::{read_bytes, read_bytes_4};
-use std::pin::Pin;
-use tokio_stream::{iter, Stream, StreamExt};
+use amqp_utils::sync_util::{read_bytes, read_bytes_4};
+use std::vec::IntoIter;
 
 #[derive(Debug, Hash, Eq, PartialEq, Clone)]
 pub struct Array(Vec<Primitive>);
@@ -35,67 +34,60 @@ impl Encode for Array {
 }
 
 impl Decode for Array {
-    async fn try_decode(
-        constructor: u8,
-        stream: &mut Pin<Box<impl Stream<Item = u8>>>,
-    ) -> Result<Self, AppError>
+    fn try_decode(constructor: u8, stream: &mut IntoIter<u8>) -> Result<Self, AppError>
     where
         Self: Sized,
     {
         match constructor {
-            ARRAY_SHORT => Ok(parse_short_array(stream).await?),
-            ARRAY => Ok(parse_array(stream).await?),
+            ARRAY_SHORT => Ok(parse_short_array(stream)?),
+            ARRAY => Ok(parse_array(stream)?),
             illegal => Err(AppError::DeserializationIllegalConstructorError(illegal)),
         }
     }
 }
 
-async fn parse_short_array(
-    stream: &mut Pin<Box<impl Stream<Item = u8>>>,
-) -> Result<Array, AppError> {
+fn parse_short_array(stream: &mut IntoIter<u8>) -> Result<Array, AppError> {
     let size = stream
         .next()
-        .await
         .ok_or(AppError::IteratorEmptyOrTooShortError)?;
     let count = stream
         .next()
-        .await
         .ok_or(AppError::IteratorEmptyOrTooShortError)?;
     let element_constructor = stream
         .next()
-        .await
         .ok_or(AppError::IteratorEmptyOrTooShortError)?;
-    Ok(Array(
-        parse_raw_to_vec(stream, size as usize, count as usize, element_constructor).await?,
-    ))
+    Ok(Array(parse_raw_to_vec(
+        stream,
+        size as usize,
+        count as usize,
+        element_constructor,
+    )?))
 }
 
-async fn parse_array(stream: &mut Pin<Box<impl Stream<Item = u8>>>) -> Result<Array, AppError> {
-    let size = u32::from_be_bytes(read_bytes_4(stream).await?);
-    let count = u32::from_be_bytes(read_bytes_4(stream).await?);
+fn parse_array(stream: &mut IntoIter<u8>) -> Result<Array, AppError> {
+    let size = u32::from_be_bytes(read_bytes_4(stream)?);
+    let count = u32::from_be_bytes(read_bytes_4(stream)?);
     let element_constructor = stream
         .next()
-        .await
         .ok_or(AppError::IteratorEmptyOrTooShortError)?;
-    Ok(Array(
-        parse_raw_to_vec(stream, size as usize, count as usize, element_constructor).await?,
-    ))
+    Ok(Array(parse_raw_to_vec(
+        stream,
+        size as usize,
+        count as usize,
+        element_constructor,
+    )?))
 }
 
-async fn parse_raw_to_vec(
-    stream: &mut Pin<Box<impl Stream<Item = u8>>>,
+fn parse_raw_to_vec(
+    stream: &mut IntoIter<u8>,
     size: usize,
     count: usize,
     element_constructor: u8,
 ) -> Result<Vec<Primitive>, AppError> {
     let mut result = Vec::with_capacity(count);
-    let mut buffer = Box::pin(iter(read_bytes(stream, size).await?));
+    let mut buffer = read_bytes(stream, size)?.into_iter();
     for _ in 0..count {
-        let amqp_type = Box::pin(Primitive::try_decode_with_constructor(
-            element_constructor,
-            &mut buffer,
-        ))
-        .await?;
+        let amqp_type = Primitive::try_decode_with_constructor(element_constructor, &mut buffer)?;
         result.push(amqp_type);
     }
     Ok(result)
@@ -110,7 +102,6 @@ impl From<Vec<Primitive>> for Array {
 #[cfg(test)]
 mod test {
     use super::*;
-    use amqp_utils::ByteVecExt;
 
     use crate::constants::constructors::{INTEGER, UNSIGNED_BYTE};
 
@@ -206,12 +197,10 @@ mod test {
         assert!(encoded.ends_with(raw_data.as_slice()));
     }
 
-    #[tokio::test]
-    async fn try_decode_short_array_returns_correct_value() {
+    #[test]
+    fn try_decode_short_array_returns_correct_value() {
         let bytes = vec![0x04, 0x01, INTEGER, 0x00, 0x00, 0x00, 0x15];
-        let res = Array::try_decode(ARRAY_SHORT, &mut bytes.into_pinned_stream())
-            .await
-            .unwrap();
+        let res = Array::try_decode(ARRAY_SHORT, &mut bytes.into_iter()).unwrap();
         assert_eq!(res.0.len(), 1);
         match res.0[0] {
             Primitive::Int(value) => assert_eq!(value, 21),
@@ -219,14 +208,12 @@ mod test {
         }
     }
 
-    #[tokio::test]
-    async fn try_decode_array_returns_correct_value() {
+    #[test]
+    fn try_decode_array_returns_correct_value() {
         let bytes = vec![
             0x00, 0x00, 0x00, 0x04, 0x00, 0x00, 0x00, 0x01, INTEGER, 0x00, 0x00, 0x00, 0x15,
         ];
-        let res = Array::try_decode(ARRAY, &mut bytes.into_pinned_stream())
-            .await
-            .unwrap();
+        let res = Array::try_decode(ARRAY, &mut bytes.into_iter()).unwrap();
         assert_eq!(res.0.len(), 1);
         match res.0[0] {
             Primitive::Int(value) => assert_eq!(value, 21),
@@ -234,49 +221,49 @@ mod test {
         }
     }
 
-    #[tokio::test]
-    async fn try_decode_short_array_returns_error_if_constructor_is_wrong() {
+    #[test]
+    fn try_decode_short_array_returns_error_if_constructor_is_wrong() {
         let bytes = vec![0x04, 0x01, INTEGER, 0x00, 0x00, 0x00, 0x15];
-        let res = Array::try_decode(0x99, &mut bytes.into_pinned_stream()).await;
+        let res = Array::try_decode(0x99, &mut bytes.into_iter());
         assert!(matches!(
             res,
             Err(AppError::DeserializationIllegalConstructorError(_))
         ));
     }
 
-    #[tokio::test]
-    async fn try_decode_short_array_returns_error_if_element_constructor_is_wrong() {
+    #[test]
+    fn try_decode_short_array_returns_error_if_element_constructor_is_wrong() {
         let bytes = vec![
             0x04, 0x01, 0x99, /*<---wrong element constructor*/
             0x00, 0x00, 0x00, 0x15,
         ];
-        let res = Array::try_decode(ARRAY_SHORT, &mut bytes.into_pinned_stream()).await;
+        let res = Array::try_decode(ARRAY_SHORT, &mut bytes.into_iter());
         assert!(matches!(
             res,
             Err(AppError::DeserializationIllegalConstructorError(_))
         ));
     }
 
-    #[tokio::test]
-    async fn try_decode_array_returns_error_if_constructor_is_wrong() {
+    #[test]
+    fn try_decode_array_returns_error_if_constructor_is_wrong() {
         let bytes = vec![
             0x00, 0x00, 0x00, 0x04, 0x00, 0x00, 0x00, 0x01, INTEGER, 0x00, 0x00, 0x00, 0x15,
         ];
-        let res = Array::try_decode(0x99, &mut bytes.into_pinned_stream()).await;
+        let res = Array::try_decode(0x99, &mut bytes.into_iter());
         assert!(matches!(
             res,
             Err(AppError::DeserializationIllegalConstructorError(_))
         ));
     }
 
-    #[tokio::test]
-    async fn try_decode_array_returns_error_if_element_constructor_is_wrong() {
+    #[test]
+    fn try_decode_array_returns_error_if_element_constructor_is_wrong() {
         let bytes = vec![
             0x00, 0x00, 0x00, 0x04, 0x00, 0x00, 0x00, 0x01,
             0x99, /*<---wrong element constructor*/
             0x00, 0x00, 0x00, 0x15,
         ];
-        let res = Array::try_decode(ARRAY, &mut bytes.into_pinned_stream()).await;
+        let res = Array::try_decode(ARRAY, &mut bytes.into_iter());
         assert!(matches!(
             res,
             Err(AppError::DeserializationIllegalConstructorError(_))

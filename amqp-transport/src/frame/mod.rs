@@ -7,7 +7,7 @@ use crate::constants::{AMQP_FRAME, SASL_FRAME};
 use crate::frame::amqp_frame::AmqpFrame;
 use crate::frame::sasl_frame::SaslFrame;
 use amqp_error::AppError;
-use amqp_utils::{read_bytes, read_bytes_4};
+use amqp_utils::async_util::{read_bytes, read_bytes_4};
 use std::pin::Pin;
 use tokio_stream::Stream;
 

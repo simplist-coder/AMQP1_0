@@ -2,10 +2,9 @@ use crate::constants::constructors::DOUBLE;
 use crate::serde::decode::Decode;
 use crate::serde::encode::{Encode, Encoded};
 use amqp_error::AppError;
-use amqp_utils::read_bytes_8;
+use amqp_utils::sync_util::read_bytes_8;
 use std::hash::Hash;
-use std::pin::Pin;
-use tokio_stream::Stream;
+use std::vec::IntoIter;
 
 /// Crate assumes nothing about the values being passed to it.
 /// Any kind of f64 value is handled as is.
@@ -24,22 +23,19 @@ impl Encode for Double {
 }
 
 impl Decode for Double {
-    async fn try_decode(
-        constructor: u8,
-        stream: &mut Pin<Box<impl Stream<Item = u8>>>,
-    ) -> Result<Self, AppError>
+    fn try_decode(constructor: u8, stream: &mut IntoIter<u8>) -> Result<Self, AppError>
     where
         Self: Sized,
     {
         match constructor {
-            DOUBLE => Ok(parse_f64(stream).await?),
+            DOUBLE => Ok(parse_f64(stream)?),
             c => Err(AppError::DeserializationIllegalConstructorError(c)),
         }
     }
 }
 
-async fn parse_f64(iter: &mut Pin<Box<impl Stream<Item = u8>>>) -> Result<Double, AppError> {
-    let byte_vals = read_bytes_8(iter).await?;
+fn parse_f64(iter: &mut IntoIter<u8>) -> Result<Double, AppError> {
+    let byte_vals = read_bytes_8(iter)?;
     Ok(Double(f64::from_be_bytes(byte_vals)))
 }
 
@@ -66,7 +62,6 @@ impl From<f64> for Double {
 #[cfg(test)]
 mod test {
     use super::*;
-    use amqp_utils::ByteVecExt;
 
     #[test]
     fn construct_double() {
@@ -98,30 +93,24 @@ mod test {
         }
     }
 
-    #[tokio::test]
-    async fn try_decode_returns_correct_value() {
+    #[test]
+    fn try_decode_returns_correct_value() {
         let val = vec![0x40, 0x20, 0x00, 0x00, 0x41, 0x70, 0x00, 0x10];
         assert_eq!(
-            Double::try_decode(DOUBLE, &mut val.into_pinned_stream())
-                .await
-                .unwrap(),
+            Double::try_decode(DOUBLE, &mut val.into_iter()).unwrap(),
             8.000_001_950_189_5.into()
         );
     }
 
-    #[tokio::test]
-    async fn try_decode_returns_error_when_value_bytes_are_invalid() {
+    #[test]
+    fn try_decode_returns_error_when_value_bytes_are_invalid() {
         let val = vec![0x44];
-        assert!(Double::try_decode(0x66, &mut val.into_pinned_stream())
-            .await
-            .is_err());
+        assert!(Double::try_decode(0x66, &mut val.into_iter()).is_err());
     }
 
-    #[tokio::test]
-    async fn try_decode_returns_error_when_bytes_are_missing() {
+    #[test]
+    fn try_decode_returns_error_when_bytes_are_missing() {
         let val = vec![0x00, 0x01];
-        assert!(Double::try_decode(DOUBLE, &mut val.into_pinned_stream())
-            .await
-            .is_err());
+        assert!(Double::try_decode(DOUBLE, &mut val.into_iter()).is_err());
     }
 }

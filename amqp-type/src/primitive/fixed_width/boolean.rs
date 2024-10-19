@@ -4,8 +4,7 @@ use crate::constants::constructors::BOOLEAN_TRUE;
 use crate::serde::decode::Decode;
 use crate::serde::encode::{Encode, Encoded};
 use amqp_error::AppError;
-use std::pin::Pin;
-use tokio_stream::{Stream, StreamExt};
+use std::vec::IntoIter;
 
 #[cfg(not(feature = "zero-length-encoding"))]
 impl Encode for bool {
@@ -29,10 +28,7 @@ impl Encode for bool {
 }
 
 impl Decode for bool {
-    async fn try_decode(
-        constructor: u8,
-        iter: &mut Pin<Box<impl Stream<Item = u8>>>,
-    ) -> Result<Self, AppError>
+    fn try_decode(constructor: u8, iter: &mut IntoIter<u8>) -> Result<Self, AppError>
     where
         Self: Sized,
     {
@@ -40,7 +36,7 @@ impl Decode for bool {
             BOOLEAN_TRUE => Ok(true),
             BOOLEAN_FALSE => Ok(false),
             BOOLEAN => {
-                let val = iter.next().await;
+                let val = iter.next();
                 match (constructor, val) {
                     (BOOLEAN, Some(0x00)) => Ok(false),
                     (BOOLEAN, Some(0x01)) => Ok(true),
@@ -55,7 +51,6 @@ impl Decode for bool {
 #[cfg(test)]
 mod test {
     use super::*;
-    use amqp_utils::ByteVecExt;
 
     #[test]
     #[cfg(not(feature = "zero-length-encoding"))]
@@ -82,53 +77,36 @@ mod test {
         assert_eq!(true.encode().constructor(), 0x41)
     }
 
-    #[tokio::test]
-    async fn decode_returns_error_when_value_bytes_are_invalid() {
+    #[test]
+    fn decode_returns_error_when_value_bytes_are_invalid() {
         let val_true = vec![0x34];
         let val_false = vec![0x44];
-        assert!(bool::try_decode(0x56, &mut val_true.into_pinned_stream())
-            .await
-            .is_err());
-        assert!(bool::try_decode(0x56, &mut val_false.into_pinned_stream())
-            .await
-            .is_err());
+        assert!(bool::try_decode(0x56, &mut val_true.into_iter()).is_err());
+        assert!(bool::try_decode(0x56, &mut val_false.into_iter()).is_err());
     }
 
-    #[tokio::test]
-    async fn try_decode_returns_correct_value_if_bytes_are_valid() {
+    #[test]
+    fn try_decode_returns_correct_value_if_bytes_are_valid() {
         let val_true = vec![0x01];
         let val_false = vec![0x00];
         let val_true_zero_length = vec![];
         let val_false_zero_length = vec![];
-        assert!(bool::try_decode(0x56, &mut val_true.into_pinned_stream())
-            .await
-            .unwrap());
-        assert!(!bool::try_decode(0x56, &mut val_false.into_pinned_stream())
-            .await
-            .unwrap());
-        assert!(
-            bool::try_decode(BOOLEAN_TRUE, &mut val_true_zero_length.into_pinned_stream())
-                .await
-                .unwrap()
-        );
-        assert!(!bool::try_decode(
-            BOOLEAN_FALSE,
-            &mut val_false_zero_length.into_pinned_stream()
-        )
-        .await
-        .unwrap());
+        assert!(bool::try_decode(0x56, &mut val_true.into_iter()).unwrap());
+        assert!(!bool::try_decode(0x56, &mut val_false.into_iter()).unwrap());
+        assert!(bool::try_decode(BOOLEAN_TRUE, &mut val_true_zero_length.into_iter()).unwrap());
+        assert!(!bool::try_decode(BOOLEAN_FALSE, &mut val_false_zero_length.into_iter()).unwrap());
     }
 
-    #[tokio::test]
-    async fn try_decode_zero_length_encoded_bool_does_not_advance_the_stream() {
+    #[test]
+    fn try_decode_zero_length_encoded_bool_does_not_advance_the_stream() {
         let vals = vec![1, 2, 3];
-        let mut stream = vals.into_pinned_stream();
-        assert!(bool::try_decode(BOOLEAN_TRUE, &mut stream).await.unwrap());
-        assert!(!bool::try_decode(BOOLEAN_FALSE, &mut stream).await.unwrap());
-        assert_eq!(stream.next().await, Some(1));
-        assert_eq!(stream.next().await, Some(2));
-        assert_eq!(stream.next().await, Some(3));
-        assert_eq!(stream.next().await, None);
-        assert_eq!(stream.next().await, None);
+        let mut stream = vals.into_iter();
+        assert!(bool::try_decode(BOOLEAN_TRUE, &mut stream).unwrap());
+        assert!(!bool::try_decode(BOOLEAN_FALSE, &mut stream).unwrap());
+        assert_eq!(stream.next(), Some(1));
+        assert_eq!(stream.next(), Some(2));
+        assert_eq!(stream.next(), Some(3));
+        assert_eq!(stream.next(), None);
+        assert_eq!(stream.next(), None);
     }
 }

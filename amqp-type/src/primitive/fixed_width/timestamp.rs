@@ -2,9 +2,8 @@ use crate::constants::constructors::TIMESTAMP;
 use crate::serde::decode::Decode;
 use crate::serde::encode::{Encode, Encoded};
 use amqp_error::AppError;
-use amqp_utils::read_bytes_8;
-use std::pin::Pin;
-use tokio_stream::Stream;
+use amqp_utils::sync_util::read_bytes_8;
+use std::vec::IntoIter;
 
 #[derive(Debug, Hash, Eq, PartialEq, Clone)]
 pub struct Timestamp(i64);
@@ -16,24 +15,19 @@ impl Encode for Timestamp {
 }
 
 impl Decode for Timestamp {
-    async fn try_decode(
-        constructor: u8,
-        stream: &mut Pin<Box<impl Stream<Item = u8>>>,
-    ) -> Result<Self, AppError>
+    fn try_decode(constructor: u8, stream: &mut IntoIter<u8>) -> Result<Self, AppError>
     where
         Self: Sized,
     {
         match constructor {
-            TIMESTAMP => Ok(parse_timestamp(stream).await?),
+            TIMESTAMP => Ok(parse_timestamp(stream)?),
             c => Err(AppError::DeserializationIllegalConstructorError(c)),
         }
     }
 }
 
-async fn parse_timestamp(
-    iter: &mut Pin<Box<impl Stream<Item = u8>>>,
-) -> Result<Timestamp, AppError> {
-    let byte_vals = read_bytes_8(iter).await?;
+fn parse_timestamp(iter: &mut IntoIter<u8>) -> Result<Timestamp, AppError> {
+    let byte_vals = read_bytes_8(iter)?;
     Ok(Timestamp(i64::from_be_bytes(byte_vals)))
 }
 
@@ -46,7 +40,6 @@ impl From<i64> for Timestamp {
 #[cfg(test)]
 mod test {
     use super::*;
-    use amqp_utils::ByteVecExt;
 
     use crate::constants::constructors::TIMESTAMP;
 
@@ -71,25 +64,25 @@ mod test {
         assert_eq!(encoded.into_bytes(), expected_bytes.as_slice());
     }
 
-    #[tokio::test]
-    async fn test_timestamp_decoding() {
+    #[test]
+    fn test_timestamp_decoding() {
         // Example Unix time in milliseconds: 2011-07-26T18:21:03.521Z
         let example_unix_time_ms: i64 = 1_311_704_463_521;
         let mut data = vec![];
         data.extend_from_slice(&example_unix_time_ms.to_be_bytes());
 
-        match Timestamp::try_decode(TIMESTAMP, &mut data.into_pinned_stream()).await {
+        match Timestamp::try_decode(TIMESTAMP, &mut data.into_iter()) {
             Ok(timestamp) => assert_eq!(timestamp.0, example_unix_time_ms),
             Err(e) => panic!("Unexpected error: {e:?}"),
         }
     }
 
-    #[tokio::test]
-    async fn test_illegal_constructor_timestamp_decoding() {
+    #[test]
+    fn test_illegal_constructor_timestamp_decoding() {
         let illegal_constructor = 0xFF;
         let bytes = vec![];
 
-        match Timestamp::try_decode(illegal_constructor, &mut bytes.into_pinned_stream()).await {
+        match Timestamp::try_decode(illegal_constructor, &mut bytes.into_iter()) {
             Ok(_) => panic!("Expected an error, but deserialization succeeded"),
             Err(AppError::DeserializationIllegalConstructorError(c)) => {
                 assert_eq!(illegal_constructor, c);
@@ -98,11 +91,11 @@ mod test {
         }
     }
 
-    #[tokio::test]
-    async fn test_incomplete_iterator_timestamp_decoding() {
+    #[test]
+    fn test_incomplete_iterator_timestamp_decoding() {
         let data = vec![TIMESTAMP]; // Missing the 8 bytes for the timestamp
 
-        match Timestamp::try_decode(TIMESTAMP, &mut data.into_pinned_stream()).await {
+        match Timestamp::try_decode(TIMESTAMP, &mut data.into_iter()) {
             Ok(_) => panic!("Expected an error, but deserialization succeeded"),
             Err(AppError::IteratorEmptyOrTooShortError) => (), // Expected outcome
             Err(e) => panic!("Unexpected error type: {e:?}"),

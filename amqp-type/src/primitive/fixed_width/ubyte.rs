@@ -2,8 +2,7 @@ use crate::constants::constructors::UNSIGNED_BYTE;
 use crate::serde::decode::Decode;
 use crate::serde::encode::{Encode, Encoded};
 use amqp_error::AppError;
-use std::pin::Pin;
-use tokio_stream::{Stream, StreamExt};
+use std::vec::IntoIter;
 
 impl Encode for u8 {
     fn encode(self) -> Encoded {
@@ -12,14 +11,11 @@ impl Encode for u8 {
 }
 
 impl Decode for u8 {
-    async fn try_decode(
-        constructor: u8,
-        stream: &mut Pin<Box<impl Stream<Item = u8>>>,
-    ) -> Result<Self, AppError>
+    fn try_decode(constructor: u8, stream: &mut IntoIter<u8>) -> Result<Self, AppError>
     where
         Self: Sized,
     {
-        let val = stream.next().await;
+        let val = stream.next();
         match (constructor, val) {
             (UNSIGNED_BYTE, Some(x)) => Ok(x),
             (c, _) => Err(AppError::DeserializationIllegalConstructorError(c)),
@@ -30,7 +26,6 @@ impl Decode for u8 {
 #[cfg(test)]
 mod test {
     use super::*;
-    use amqp_utils::ByteVecExt;
 
     #[test]
     fn construct_ubyte() {
@@ -57,14 +52,9 @@ mod test {
         }
     }
 
-    #[tokio::test]
-    async fn try_decode_returns_correct_value() {
+    #[test]
+    fn try_decode_returns_correct_value() {
         let val = vec![0x10];
-        assert_eq!(
-            u8::try_decode(0x50, &mut val.into_pinned_stream())
-                .await
-                .unwrap(),
-            16
-        );
+        assert_eq!(u8::try_decode(0x50, &mut val.into_iter()).unwrap(), 16);
     }
 }

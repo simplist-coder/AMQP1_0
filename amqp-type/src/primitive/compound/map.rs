@@ -4,12 +4,10 @@ use crate::primitive::Primitive;
 use crate::serde::decode::Decode;
 use crate::serde::encode::{Encode, Encoded};
 use amqp_error::AppError;
-use amqp_utils::{read_bytes, read_bytes_4};
+use amqp_utils::sync_util::{read_bytes, read_bytes_4};
 use indexmap::IndexMap;
 use std::hash::Hash;
-use std::pin::Pin;
-use tokio_stream::StreamExt;
-use tokio_stream::{iter, Stream};
+use std::vec::IntoIter;
 
 #[derive(Debug, Eq, PartialEq, Clone)]
 pub struct Map(IndexMap<Primitive, Primitive>);
@@ -34,62 +32,55 @@ impl Encode for Map {
 }
 
 impl Decode for Map {
-    async fn try_decode(
-        constructor: u8,
-        stream: &mut Pin<Box<impl Stream<Item = u8>>>,
-    ) -> Result<Self, AppError>
+    fn try_decode(constructor: u8, stream: &mut IntoIter<u8>) -> Result<Self, AppError>
     where
         Self: Sized,
     {
         match constructor {
-            MAP_SHORT => Ok(parse_short_map(stream).await?),
-            MAP => Ok(parse_map(stream).await?),
+            MAP_SHORT => Ok(parse_short_map(stream)?),
+            MAP => Ok(parse_map(stream)?),
             illegal => Err(AppError::DeserializationIllegalConstructorError(illegal)),
         }
     }
 }
 
-async fn parse_short_map(stream: &mut Pin<Box<impl Stream<Item = u8>>>) -> Result<Map, AppError> {
+fn parse_short_map(stream: &mut IntoIter<u8>) -> Result<Map, AppError> {
     let size = stream
         .next()
-        .await
         .ok_or(AppError::IteratorEmptyOrTooShortError)?;
     let count = stream
         .next()
-        .await
         .ok_or(AppError::IteratorEmptyOrTooShortError)?;
     Ok(Map(parse_to_index_map(
         stream,
         size as usize,
         count as usize,
-    )
-    .await?))
+    )?))
 }
 
-async fn parse_map(stream: &mut Pin<Box<impl Stream<Item = u8>>>) -> Result<Map, AppError> {
-    let size = u32::from_be_bytes(read_bytes_4(stream).await?);
-    let count = u32::from_be_bytes(read_bytes_4(stream).await?);
+fn parse_map(stream: &mut IntoIter<u8>) -> Result<Map, AppError> {
+    let size = u32::from_be_bytes(read_bytes_4(stream)?);
+    let count = u32::from_be_bytes(read_bytes_4(stream)?);
     Ok(Map(parse_to_index_map(
         stream,
         size as usize,
         count as usize,
-    )
-    .await?))
+    )?))
 }
 
-async fn parse_to_index_map(
-    stream: &mut Pin<Box<impl Stream<Item = u8>>>,
+fn parse_to_index_map(
+    stream: &mut IntoIter<u8>,
     size: usize,
     count: usize,
 ) -> Result<IndexMap<Primitive, Primitive>, AppError> {
     if count % 2 != 0 {
         return Err(AppError::DeserializationMapContainsOddAmountOfElementsError);
     }
-    let mut buffer = Box::pin(iter(read_bytes(stream, size).await?));
+    let mut buffer = read_bytes(stream, size)?.into_iter();
     let mut result = IndexMap::with_capacity(count);
     for _ in 0..count / 2 {
-        let key = Box::pin(Primitive::try_decode(&mut buffer)).await?;
-        let value = Box::pin(Primitive::try_decode(&mut buffer)).await?;
+        let key = Primitive::try_decode(&mut buffer)?;
+        let value = Primitive::try_decode(&mut buffer)?;
         result.insert(key, value);
     }
     Ok(result)
@@ -110,7 +101,6 @@ impl From<IndexMap<Primitive, Primitive>> for Map {
 #[cfg(test)]
 mod test {
     use super::*;
-    use amqp_utils::ByteVecExt;
 
     use crate::constants::constructors::{INTEGER, MAP, MAP_SHORT, UNSIGNED_SHORT};
 
@@ -132,8 +122,8 @@ mod test {
         assert_eq!(val.encode().constructor(), 0xd1);
     }
 
-    #[tokio::test]
-    async fn try_decode_short_map_returns_correct_value() {
+    #[test]
+    fn try_decode_short_map_returns_correct_value() {
         let bytes = vec![
             8,
             2,
@@ -146,15 +136,13 @@ mod test {
             0x00,
             16,
         ];
-        let res = Map::try_decode(MAP_SHORT, &mut bytes.into_pinned_stream())
-            .await
-            .unwrap();
+        let res = Map::try_decode(MAP_SHORT, &mut bytes.into_iter()).unwrap();
         assert_eq!(res.0.len(), 1);
         assert!(matches!(&res.0[&Primitive::Int(21)], Primitive::Ushort(16)));
     }
 
-    #[tokio::test]
-    async fn try_decode_map_returns_correct_value() {
+    #[test]
+    fn try_decode_map_returns_correct_value() {
         let bytes = vec![
             0x00,
             0x00,
@@ -173,18 +161,15 @@ mod test {
             0x00,
             16,
         ];
-        let res = Map::try_decode(MAP, &mut bytes.into_pinned_stream())
-            .await
-            .unwrap();
+        let res = Map::try_decode(MAP, &mut bytes.into_iter()).unwrap();
         assert_eq!(res.0.len(), 1);
         assert!(matches!(&res.0[&Primitive::Int(21)], Primitive::Ushort(16)));
     }
 
-    #[tokio::test]
-    async fn try_decode_short_map_returns_error_if_constructor_is_wrong() {
+    #[test]
+    fn try_decode_short_map_returns_error_if_constructor_is_wrong() {
         let bytes = vec![5, 1, INTEGER, 0x00, 0x00, 0x00, 21];
-        let res =
-            Map::try_decode(ILLEGAL_ELEMENT_CONSTRUCTOR, &mut bytes.into_pinned_stream()).await;
+        let res = Map::try_decode(ILLEGAL_ELEMENT_CONSTRUCTOR, &mut bytes.into_iter());
         assert!(matches!(
             res,
             Err(AppError::DeserializationIllegalConstructorError(
@@ -193,8 +178,8 @@ mod test {
         ));
     }
 
-    #[tokio::test]
-    async fn try_decode_short_map_returns_error_if_element_constructor_is_wrong() {
+    #[test]
+    fn try_decode_short_map_returns_error_if_element_constructor_is_wrong() {
         let bytes = vec![
             8,
             2,
@@ -207,7 +192,7 @@ mod test {
             0x00,
             16,
         ];
-        let res = Map::try_decode(MAP_SHORT, &mut bytes.into_pinned_stream()).await;
+        let res = Map::try_decode(MAP_SHORT, &mut bytes.into_iter());
         assert!(matches!(
             res,
             Err(AppError::DeserializationIllegalConstructorError(
@@ -216,13 +201,12 @@ mod test {
         ));
     }
 
-    #[tokio::test]
-    async fn try_decode_map_returns_error_if_constructor_is_wrong() {
+    #[test]
+    fn try_decode_map_returns_error_if_constructor_is_wrong() {
         let bytes = vec![
             0x00, 0x00, 0x00, 4, 0x00, 0x00, 0x00, 1, INTEGER, 0x00, 0x00, 0x00, 0x15,
         ];
-        let res =
-            Map::try_decode(ILLEGAL_ELEMENT_CONSTRUCTOR, &mut bytes.into_pinned_stream()).await;
+        let res = Map::try_decode(ILLEGAL_ELEMENT_CONSTRUCTOR, &mut bytes.into_iter());
         assert!(matches!(
             res,
             Err(AppError::DeserializationIllegalConstructorError(
@@ -231,8 +215,8 @@ mod test {
         ));
     }
 
-    #[tokio::test]
-    async fn try_decode_map_returns_error_if_element_constructor_is_wrong() {
+    #[test]
+    fn try_decode_map_returns_error_if_element_constructor_is_wrong() {
         let bytes = vec![
             0x00,
             0x00,
@@ -251,7 +235,7 @@ mod test {
             0x00,
             16,
         ];
-        let res = Map::try_decode(MAP, &mut bytes.into_pinned_stream()).await;
+        let res = Map::try_decode(MAP, &mut bytes.into_iter());
         assert!(matches!(
             res,
             Err(AppError::DeserializationIllegalConstructorError(
@@ -260,22 +244,22 @@ mod test {
         ));
     }
 
-    #[tokio::test]
-    async fn try_decode_short_map_returns_error_number_of_elements_is_odd() {
+    #[test]
+    fn try_decode_short_map_returns_error_number_of_elements_is_odd() {
         let bytes = vec![5, 1, INTEGER, 0x00, 0x00, 0x00, 21];
-        let res = Map::try_decode(MAP_SHORT, &mut bytes.into_pinned_stream()).await;
+        let res = Map::try_decode(MAP_SHORT, &mut bytes.into_iter());
         assert!(matches!(
             res,
             Err(AppError::DeserializationMapContainsOddAmountOfElementsError)
         ));
     }
 
-    #[tokio::test]
-    async fn try_decode_map_returns_error_number_of_elements_is_odd() {
+    #[test]
+    fn try_decode_map_returns_error_number_of_elements_is_odd() {
         let bytes = vec![
             0x00, 0x00, 0x00, 5, 0x00, 0x00, 0x00, 1, INTEGER, 0x00, 0x00, 0x00, 21,
         ];
-        let res = Map::try_decode(MAP, &mut bytes.into_pinned_stream()).await;
+        let res = Map::try_decode(MAP, &mut bytes.into_iter());
         assert!(matches!(
             res,
             Err(AppError::DeserializationMapContainsOddAmountOfElementsError)

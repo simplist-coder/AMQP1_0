@@ -19,7 +19,4 @@ amqp-error = {path = "../amqp-error"}
 
 # External
 indexmap = "2.0.0"
-thiserror = {workspace = true}
-tokio = {workspace = true}
 uuid = {workspace = true}
-tokio-stream = {workspace = true}

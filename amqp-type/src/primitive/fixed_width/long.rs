@@ -2,9 +2,8 @@ use crate::constants::constructors::{LONG, SMALL_LONG};
 use crate::serde::decode::Decode;
 use crate::serde::encode::{Encode, Encoded};
 use amqp_error::AppError;
-use amqp_utils::read_bytes_8;
-use std::pin::Pin;
-use tokio_stream::{Stream, StreamExt};
+use amqp_utils::sync_util::read_bytes_8;
+use std::vec::IntoIter;
 
 impl Encode for i64 {
     fn encode(self) -> Encoded {
@@ -18,28 +17,25 @@ impl Encode for i64 {
 }
 
 impl Decode for i64 {
-    async fn try_decode(
-        constructor: u8,
-        stream: &mut Pin<Box<impl Stream<Item = u8>>>,
-    ) -> Result<Self, AppError>
+    fn try_decode(constructor: u8, stream: &mut IntoIter<u8>) -> Result<Self, AppError>
     where
         Self: Sized,
     {
         match constructor {
-            LONG => Ok(parse_i64(stream).await?),
-            SMALL_LONG => Ok(parse_small_i64(stream).await?),
+            LONG => Ok(parse_i64(stream)?),
+            SMALL_LONG => Ok(parse_small_i64(stream)?),
             c => Err(AppError::DeserializationIllegalConstructorError(c)),
         }
     }
 }
 
-async fn parse_i64(iter: &mut Pin<Box<impl Stream<Item = u8>>>) -> Result<i64, AppError> {
-    let byte_vals = read_bytes_8(iter).await?;
+fn parse_i64(iter: &mut IntoIter<u8>) -> Result<i64, AppError> {
+    let byte_vals = read_bytes_8(iter)?;
     Ok(i64::from_be_bytes(byte_vals))
 }
 
-async fn parse_small_i64(iter: &mut Pin<Box<impl Stream<Item = u8>>>) -> Result<i64, AppError> {
-    if let Some(val) = iter.next().await {
+fn parse_small_i64(iter: &mut IntoIter<u8>) -> Result<i64, AppError> {
+    if let Some(val) = iter.next() {
         Ok(i64::from(i8::from_be_bytes([val])))
     } else {
         Err(AppError::IteratorEmptyOrTooShortError)
@@ -49,7 +45,6 @@ async fn parse_small_i64(iter: &mut Pin<Box<impl Stream<Item = u8>>>) -> Result<
 #[cfg(test)]
 mod test {
     use super::*;
-    use amqp_utils::ByteVecExt;
 
     #[test]
     fn construct_long() {
@@ -92,56 +87,44 @@ mod test {
         assert_eq!(higher.encode().constructor(), 0x55);
     }
 
-    #[tokio::test]
-    async fn try_decode_returns_correct_value() {
+    #[test]
+    fn try_decode_returns_correct_value() {
         let val = vec![0x00, 0x00, 0x00, 0x00, 0x00, 0x10, 0x00, 0x10];
         assert_eq!(
-            i64::try_decode(0x81, &mut val.into_pinned_stream())
-                .await
-                .unwrap(),
+            i64::try_decode(0x81, &mut val.into_iter()).unwrap(),
             1_048_592
         );
     }
 
-    #[tokio::test]
-    async fn try_decode_returns_error_when_value_bytes_are_invalid() {
+    #[test]
+    fn try_decode_returns_error_when_value_bytes_are_invalid() {
         let val = vec![0x44];
-        assert!(i64::try_decode(0x66, &mut val.into_pinned_stream())
-            .await
-            .is_err());
+        assert!(i64::try_decode(0x66, &mut val.into_iter()).is_err());
     }
 
-    #[tokio::test]
-    async fn try_decode_returns_error_when_bytes_are_missing() {
+    #[test]
+    fn try_decode_returns_error_when_bytes_are_missing() {
         let val = vec![0x00, 0x00, 0x01];
-        assert!(i64::try_decode(0x81, &mut val.into_pinned_stream())
-            .await
-            .is_err());
+        assert!(i64::try_decode(0x81, &mut val.into_iter()).is_err());
     }
 
-    #[tokio::test]
-    async fn try_decode_can_decode_smalli64_values() {
+    #[test]
+    fn try_decode_can_decode_smalli64_values() {
         let positive = vec![100];
         let negative = (-100i8).to_be_bytes().to_vec();
         assert_eq!(
-            i64::try_decode(SMALL_LONG, &mut positive.into_pinned_stream())
-                .await
-                .unwrap(),
+            i64::try_decode(SMALL_LONG, &mut positive.into_iter()).unwrap(),
             100
         );
         assert_eq!(
-            i64::try_decode(SMALL_LONG, &mut negative.into_pinned_stream())
-                .await
-                .unwrap(),
+            i64::try_decode(SMALL_LONG, &mut negative.into_iter()).unwrap(),
             -100
         );
     }
 
-    #[tokio::test]
-    async fn try_decode_returns_error_when_parsing_small_i64_and_bytes_are_missing() {
+    #[test]
+    fn try_decode_returns_error_when_parsing_small_i64_and_bytes_are_missing() {
         let val = vec![];
-        assert!(i64::try_decode(0x55, &mut val.into_pinned_stream())
-            .await
-            .is_err());
+        assert!(i64::try_decode(0x55, &mut val.into_iter()).is_err());
     }
 }

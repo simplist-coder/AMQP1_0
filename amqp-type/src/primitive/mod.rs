@@ -25,8 +25,7 @@ use crate::serde::decode::Decode;
 use crate::serde::encode::{Encode, Encoded};
 use amqp_error::AppError;
 use std::hash::Hash;
-use std::pin::Pin;
-use tokio_stream::{Stream, StreamExt};
+use std::vec::IntoIter;
 
 #[derive(Debug, Hash, Eq, PartialEq, Clone)]
 pub enum Primitive {
@@ -88,53 +87,51 @@ impl Encode for Primitive {
 }
 
 impl Primitive {
-    pub async fn try_decode(stream: &mut Pin<Box<impl Stream<Item = u8>>>) -> Result<Self, AppError>
+    pub fn try_decode(stream: &mut IntoIter<u8>) -> Result<Self, AppError>
     where
         Self: Sized,
     {
-        match stream.next().await {
+        match stream.next() {
             None => Err(AppError::IteratorEmptyOrTooShortError),
-            Some(constructor) => Self::try_decode_with_constructor(constructor, stream).await,
+            Some(constructor) => Self::try_decode_with_constructor(constructor, stream),
         }
     }
 
-    pub async fn try_decode_with_constructor(
+    pub fn try_decode_with_constructor(
         constructor: u8,
-        stream: &mut Pin<Box<impl Stream<Item = u8>>>,
+        stream: &mut IntoIter<u8>,
     ) -> Result<Self, AppError>
     where
         Self: Sized,
     {
         match constructor {
             NULL => Ok(Self::Null),
-            BYTE => Ok(i8::try_decode(BYTE, stream).await?.into()),
-            CHAR => Ok(char::try_decode(CHAR, stream).await?.into()),
-            DECIMAL_32 => Ok(Decimal32::try_decode(DECIMAL_32, stream).await?.into()),
-            DECIMAL_64 => Ok(Decimal64::try_decode(DECIMAL_64, stream).await?.into()),
-            DOUBLE => Ok(Double::try_decode(DOUBLE, stream).await?.into()),
-            FLOAT => Ok(Float::try_decode(FLOAT, stream).await?.into()),
-            SHORT => Ok(i16::try_decode(SHORT, stream).await?.into()),
-            TIMESTAMP => Ok(Timestamp::try_decode(TIMESTAMP, stream).await?.into()),
-            UNSIGNED_BYTE => Ok(u8::try_decode(UNSIGNED_BYTE, stream).await?.into()),
-            UNSIGNED_SHORT => Ok(u16::try_decode(UNSIGNED_SHORT, stream).await?.into()),
-            UUID => Ok(Uuid::try_decode(UUID, stream).await?.into()),
-            x @ (BOOLEAN | BOOLEAN_TRUE | BOOLEAN_FALSE) => {
-                Ok(bool::try_decode(x, stream).await?.into())
-            }
-            x @ (SMALL_INTEGER | INTEGER) => Ok(i32::try_decode(x, stream).await?.into()),
-            x @ (SMALL_LONG | LONG) => Ok(i64::try_decode(x, stream).await?.into()),
+            BYTE => Ok(i8::try_decode(BYTE, stream)?.into()),
+            CHAR => Ok(char::try_decode(CHAR, stream)?.into()),
+            DECIMAL_32 => Ok(Decimal32::try_decode(DECIMAL_32, stream)?.into()),
+            DECIMAL_64 => Ok(Decimal64::try_decode(DECIMAL_64, stream)?.into()),
+            DOUBLE => Ok(Double::try_decode(DOUBLE, stream)?.into()),
+            FLOAT => Ok(Float::try_decode(FLOAT, stream)?.into()),
+            SHORT => Ok(i16::try_decode(SHORT, stream)?.into()),
+            TIMESTAMP => Ok(Timestamp::try_decode(TIMESTAMP, stream)?.into()),
+            UNSIGNED_BYTE => Ok(u8::try_decode(UNSIGNED_BYTE, stream)?.into()),
+            UNSIGNED_SHORT => Ok(u16::try_decode(UNSIGNED_SHORT, stream)?.into()),
+            UUID => Ok(Uuid::try_decode(UUID, stream)?.into()),
+            x @ (BOOLEAN | BOOLEAN_TRUE | BOOLEAN_FALSE) => Ok(bool::try_decode(x, stream)?.into()),
+            x @ (SMALL_INTEGER | INTEGER) => Ok(i32::try_decode(x, stream)?.into()),
+            x @ (SMALL_LONG | LONG) => Ok(i64::try_decode(x, stream)?.into()),
             x @ (UNSIGNED_INTEGER | SMALL_UNSIGNED_INTEGER | UNSIGNED_INTEGER_ZERO) => {
-                Ok(u32::try_decode(x, stream).await?.into())
+                Ok(u32::try_decode(x, stream)?.into())
             }
             x @ (UNSIGNED_LONG | SMALL_UNSIGNED_LONG | UNSIGNED_LONG_ZERO) => {
-                Ok(u64::try_decode(x, stream).await?.into())
+                Ok(u64::try_decode(x, stream)?.into())
             }
-            x @ (ARRAY_SHORT | ARRAY) => Ok(Array::try_decode(x, stream).await?.into()),
-            x @ (LIST_EMPTY | LIST_SHORT | LIST) => Ok(List::try_decode(x, stream).await?.into()),
-            x @ (MAP_SHORT | MAP) => Ok(Map::try_decode(x, stream).await?.into()),
-            x @ (BINARY_SHORT | BINARY) => Ok(Binary::try_decode(x, stream).await?.into()),
-            x @ (STRING_SHORT | STRING) => Ok(String::try_decode(x, stream).await?.into()),
-            x @ (SYMBOL | SYMBOL_SHORT) => Ok(Symbol::try_decode(x, stream).await?.into()),
+            x @ (ARRAY_SHORT | ARRAY) => Ok(Array::try_decode(x, stream)?.into()),
+            x @ (LIST_EMPTY | LIST_SHORT | LIST) => Ok(List::try_decode(x, stream)?.into()),
+            x @ (MAP_SHORT | MAP) => Ok(Map::try_decode(x, stream)?.into()),
+            x @ (BINARY_SHORT | BINARY) => Ok(Binary::try_decode(x, stream)?.into()),
+            x @ (STRING_SHORT | STRING) => Ok(String::try_decode(x, stream)?.into()),
+            x @ (SYMBOL | SYMBOL_SHORT) => Ok(Symbol::try_decode(x, stream)?.into()),
             other => Err(AppError::DeserializationIllegalConstructorError(other)),
         }
     }
@@ -294,7 +291,6 @@ impl From<Decimal128> for Primitive {
 mod tests {
     use super::*;
 
-    use amqp_utils::ByteVecExt;
     use indexmap::IndexMap;
 
     #[test]
@@ -303,190 +299,150 @@ mod tests {
         assert_eq!(val.encode().constructor(), 0x40);
     }
 
-    #[tokio::test]
-    async fn test_encode_decode_round_trip_null() {
+    #[test]
+    fn test_encode_decode_round_trip_null() {
         let before = Primitive::Null;
         let encoded: Vec<u8> = before.clone().encode().into();
-        let decoded = Primitive::try_decode(&mut encoded.into_pinned_stream())
-            .await
-            .unwrap();
+        let decoded = Primitive::try_decode(&mut encoded.into_iter()).unwrap();
         assert_eq!(decoded, before);
     }
-    #[tokio::test]
-    async fn test_encode_decode_round_trip_boolean() {
+    #[test]
+    fn test_encode_decode_round_trip_boolean() {
         let before = Primitive::Boolean(false);
         let encoded: Vec<u8> = before.clone().encode().into();
-        let decoded = Primitive::try_decode(&mut encoded.into_pinned_stream())
-            .await
-            .unwrap();
+        let decoded = Primitive::try_decode(&mut encoded.into_iter()).unwrap();
         assert_eq!(decoded, before);
     }
-    #[tokio::test]
-    async fn test_encode_decode_round_trip_ubyte() {
+    #[test]
+    fn test_encode_decode_round_trip_ubyte() {
         let before = Primitive::Ubyte(10);
         let encoded: Vec<u8> = before.clone().encode().into();
-        let decoded = Primitive::try_decode(&mut encoded.into_pinned_stream())
-            .await
-            .unwrap();
+        let decoded = Primitive::try_decode(&mut encoded.into_iter()).unwrap();
         assert_eq!(decoded, before);
     }
-    #[tokio::test]
-    async fn test_encode_decode_round_trip_ushort() {
+    #[test]
+    fn test_encode_decode_round_trip_ushort() {
         let before = Primitive::Ushort(100);
         let encoded: Vec<u8> = before.clone().encode().into();
-        let decoded = Primitive::try_decode(&mut encoded.into_pinned_stream())
-            .await
-            .unwrap();
+        let decoded = Primitive::try_decode(&mut encoded.into_iter()).unwrap();
         assert_eq!(decoded, before);
     }
-    #[tokio::test]
-    async fn test_encode_decode_round_trip_uint() {
+    #[test]
+    fn test_encode_decode_round_trip_uint() {
         let before = Primitive::Uint(100);
         let encoded: Vec<u8> = before.clone().encode().into();
-        let decoded = Primitive::try_decode(&mut encoded.into_pinned_stream())
-            .await
-            .unwrap();
+        let decoded = Primitive::try_decode(&mut encoded.into_iter()).unwrap();
         assert_eq!(decoded, before);
     }
-    #[tokio::test]
-    async fn test_encode_decode_round_trip_ulong() {
+    #[test]
+    fn test_encode_decode_round_trip_ulong() {
         let before = Primitive::Ulong(100);
         let encoded: Vec<u8> = before.clone().encode().into();
-        let decoded = Primitive::try_decode(&mut encoded.into_pinned_stream())
-            .await
-            .unwrap();
+        let decoded = Primitive::try_decode(&mut encoded.into_iter()).unwrap();
         assert_eq!(decoded, before);
     }
-    #[tokio::test]
-    async fn test_encode_decode_round_trip_byte() {
+    #[test]
+    fn test_encode_decode_round_trip_byte() {
         let before = Primitive::Byte(100);
         let encoded: Vec<u8> = before.clone().encode().into();
-        let decoded = Primitive::try_decode(&mut encoded.into_pinned_stream())
-            .await
-            .unwrap();
+        let decoded = Primitive::try_decode(&mut encoded.into_iter()).unwrap();
         assert_eq!(decoded, before);
     }
-    #[tokio::test]
-    async fn test_encode_decode_round_trip_short() {
+    #[test]
+    fn test_encode_decode_round_trip_short() {
         let before = Primitive::Short(100);
         let encoded: Vec<u8> = before.clone().encode().into();
-        let decoded = Primitive::try_decode(&mut encoded.into_pinned_stream())
-            .await
-            .unwrap();
+        let decoded = Primitive::try_decode(&mut encoded.into_iter()).unwrap();
         assert_eq!(decoded, before);
     }
-    #[tokio::test]
-    async fn test_encode_decode_round_trip_int() {
+    #[test]
+    fn test_encode_decode_round_trip_int() {
         let before = Primitive::Int(100);
         let encoded: Vec<u8> = before.clone().encode().into();
-        let decoded = Primitive::try_decode(&mut encoded.into_pinned_stream())
-            .await
-            .unwrap();
+        let decoded = Primitive::try_decode(&mut encoded.into_iter()).unwrap();
         assert_eq!(decoded, before);
     }
-    #[tokio::test]
-    async fn test_encode_decode_round_trip_long() {
+    #[test]
+    fn test_encode_decode_round_trip_long() {
         let before = Primitive::Long(100);
         let encoded: Vec<u8> = before.clone().encode().into();
-        let decoded = Primitive::try_decode(&mut encoded.into_pinned_stream())
-            .await
-            .unwrap();
+        let decoded = Primitive::try_decode(&mut encoded.into_iter()).unwrap();
         assert_eq!(decoded, before);
     }
-    #[tokio::test]
-    async fn test_encode_decode_round_trip_float() {
+    #[test]
+    fn test_encode_decode_round_trip_float() {
         let before = Primitive::Float(1.0.into());
         let encoded: Vec<u8> = before.clone().encode().into();
-        let decoded = Primitive::try_decode(&mut encoded.into_pinned_stream())
-            .await
-            .unwrap();
+        let decoded = Primitive::try_decode(&mut encoded.into_iter()).unwrap();
         assert_eq!(decoded, before);
     }
-    #[tokio::test]
-    async fn test_encode_decode_round_trip_double() {
+    #[test]
+    fn test_encode_decode_round_trip_double() {
         let before = Primitive::Double(100.0.into());
         let encoded: Vec<u8> = before.clone().encode().into();
-        let decoded = Primitive::try_decode(&mut encoded.into_pinned_stream())
-            .await
-            .unwrap();
+        let decoded = Primitive::try_decode(&mut encoded.into_iter()).unwrap();
         assert_eq!(decoded, before);
     }
-    #[tokio::test]
-    async fn test_encode_decode_round_trip_decimal32() {
+    #[test]
+    fn test_encode_decode_round_trip_decimal32() {
         let before = Primitive::Decimal32(100.0.into());
         let encoded: Vec<u8> = before.clone().encode().into();
-        let decoded = Primitive::try_decode(&mut encoded.into_pinned_stream())
-            .await
-            .unwrap();
+        let decoded = Primitive::try_decode(&mut encoded.into_iter()).unwrap();
         assert_eq!(decoded, before);
     }
-    #[tokio::test]
-    async fn test_encode_decode_round_trip_decimal64() {
+    #[test]
+    fn test_encode_decode_round_trip_decimal64() {
         let before = Primitive::Decimal64(100.0.into());
         let encoded: Vec<u8> = before.clone().encode().into();
-        let decoded = Primitive::try_decode(&mut encoded.into_pinned_stream())
-            .await
-            .unwrap();
+        let decoded = Primitive::try_decode(&mut encoded.into_iter()).unwrap();
         assert_eq!(decoded, before);
     }
-    #[tokio::test]
+    #[test]
     #[ignore]
     // Ignored because f128 is not implemented yet
-    async fn test_encode_decode_round_trip_decimal128() {
+    fn test_encode_decode_round_trip_decimal128() {
         let before = Primitive::Decimal128(Decimal128());
         let encoded: Vec<u8> = before.clone().encode().into();
-        let decoded = Primitive::try_decode(&mut encoded.into_pinned_stream())
-            .await
-            .unwrap();
+        let decoded = Primitive::try_decode(&mut encoded.into_iter()).unwrap();
         assert_eq!(decoded, before);
     }
-    #[tokio::test]
-    async fn test_encode_decode_round_trip_timestamp() {
+    #[test]
+    fn test_encode_decode_round_trip_timestamp() {
         let before = Primitive::Timestamp(10000.into());
         let encoded: Vec<u8> = before.clone().encode().into();
-        let decoded = Primitive::try_decode(&mut encoded.into_pinned_stream())
-            .await
-            .unwrap();
+        let decoded = Primitive::try_decode(&mut encoded.into_iter()).unwrap();
         assert_eq!(decoded, before);
     }
-    #[tokio::test]
-    async fn test_encode_decode_round_trip_uuid() {
+    #[test]
+    fn test_encode_decode_round_trip_uuid() {
         let before = Primitive::Uuid(uuid::Uuid::new_v4().into());
         let encoded: Vec<u8> = before.clone().encode().into();
-        let decoded = Primitive::try_decode(&mut encoded.into_pinned_stream())
-            .await
-            .unwrap();
+        let decoded = Primitive::try_decode(&mut encoded.into_iter()).unwrap();
         assert_eq!(decoded, before);
     }
-    #[tokio::test]
-    async fn test_encode_decode_round_trip_binary() {
+    #[test]
+    fn test_encode_decode_round_trip_binary() {
         let before = Primitive::Binary(vec![1, 2, 3, 4, 5].into());
         let encoded: Vec<u8> = before.clone().encode().into();
-        let decoded = Primitive::try_decode(&mut encoded.into_pinned_stream())
-            .await
-            .unwrap();
+        let decoded = Primitive::try_decode(&mut encoded.into_iter()).unwrap();
         assert_eq!(decoded, before);
     }
-    #[tokio::test]
-    async fn test_encode_decode_round_trip_string() {
+    #[test]
+    fn test_encode_decode_round_trip_string() {
         let before = Primitive::String("Hello World".to_string());
         let encoded: Vec<u8> = before.clone().encode().into();
-        let decoded = Primitive::try_decode(&mut encoded.into_pinned_stream())
-            .await
-            .unwrap();
+        let decoded = Primitive::try_decode(&mut encoded.into_iter()).unwrap();
         assert_eq!(decoded, before);
     }
-    #[tokio::test]
-    async fn test_encode_decode_round_trip_symbol() {
+    #[test]
+    fn test_encode_decode_round_trip_symbol() {
         let before = Primitive::Symbol(Symbol::new("book:seller:entry".to_string()).unwrap());
         let encoded: Vec<u8> = before.clone().encode().into();
-        let decoded = Primitive::try_decode(&mut encoded.into_pinned_stream())
-            .await
-            .unwrap();
+        let decoded = Primitive::try_decode(&mut encoded.into_iter()).unwrap();
         assert_eq!(decoded, before);
     }
-    #[tokio::test]
-    async fn test_encode_decode_round_trip_list() {
+    #[test]
+    fn test_encode_decode_round_trip_list() {
         let before = Primitive::List(
             vec![
                 Primitive::String("Hello world".to_string()),
@@ -496,13 +452,11 @@ mod tests {
             .into(),
         );
         let encoded: Vec<u8> = before.clone().encode().into();
-        let decoded = Primitive::try_decode(&mut encoded.into_pinned_stream())
-            .await
-            .unwrap();
+        let decoded = Primitive::try_decode(&mut encoded.into_iter()).unwrap();
         assert_eq!(decoded, before);
     }
-    #[tokio::test]
-    async fn test_encode_decode_round_trip_map() {
+    #[test]
+    fn test_encode_decode_round_trip_map() {
         let map: IndexMap<Primitive, Primitive> = [
             (
                 Primitive::String("Hello world".to_string()),
@@ -523,13 +477,11 @@ mod tests {
         .into();
         let before = Primitive::Map(map.into());
         let encoded: Vec<u8> = before.clone().encode().into();
-        let decoded = Primitive::try_decode(&mut encoded.into_pinned_stream())
-            .await
-            .unwrap();
+        let decoded = Primitive::try_decode(&mut encoded.into_iter()).unwrap();
         assert_eq!(decoded, before);
     }
-    #[tokio::test]
-    async fn test_encode_decode_round_trip_array() {
+    #[test]
+    fn test_encode_decode_round_trip_array() {
         let before = Primitive::Array(
             vec![
                 Primitive::Int(-100),
@@ -539,9 +491,7 @@ mod tests {
             .into(),
         );
         let encoded: Vec<u8> = before.clone().encode().into();
-        let decoded = Primitive::try_decode(&mut encoded.into_pinned_stream())
-            .await
-            .unwrap();
+        let decoded = Primitive::try_decode(&mut encoded.into_iter()).unwrap();
         assert_eq!(decoded, before);
     }
 }
