@@ -1,4 +1,4 @@
-use crate::constants::constructors::CHAR;
+use crate::constants::CHAR;
 use crate::primitive::fixed_width::char;
 use crate::serde::decode::Decode;
 use crate::serde::encode::{Encode, Encoded};
@@ -36,7 +36,7 @@ fn parse_char(iter: &mut IntoIter<u8>) -> Result<char, AppError> {
 mod test {
     use super::*;
 
-    use crate::constants::constructors::CHAR;
+    use crate::constants::CHAR;
 
     #[test]
     fn construct_char() {

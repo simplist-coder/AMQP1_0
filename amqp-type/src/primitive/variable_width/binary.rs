@@ -1,4 +1,4 @@
-use crate::constants::constructors::{BINARY, BINARY_SHORT};
+use crate::constants::{BINARY, BINARY_SHORT};
 use crate::serde::decode::Decode;
 use crate::serde::encode::{Encode, Encoded};
 use amqp_error::AppError;

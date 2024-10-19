@@ -1,4 +1,4 @@
-use crate::constants::constructors::TIMESTAMP;
+use crate::constants::TIMESTAMP;
 use crate::serde::decode::Decode;
 use crate::serde::encode::{Encode, Encoded};
 use amqp_error::AppError;
@@ -41,7 +41,7 @@ impl From<i64> for Timestamp {
 mod test {
     use super::*;
 
-    use crate::constants::constructors::TIMESTAMP;
+    use crate::constants::TIMESTAMP;
 
     #[test]
     fn construct_timestamp() {

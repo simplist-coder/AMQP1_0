@@ -1,6 +1,4 @@
-use crate::constants::constructors::{
-    SMALL_UNSIGNED_INTEGER, UNSIGNED_INTEGER, UNSIGNED_INTEGER_ZERO,
-};
+use crate::constants::{SMALL_UNSIGNED_INTEGER, UNSIGNED_INTEGER, UNSIGNED_INTEGER_ZERO};
 use crate::serde::decode::Decode;
 use crate::serde::encode::{Encode, Encoded};
 use amqp_error::AppError;

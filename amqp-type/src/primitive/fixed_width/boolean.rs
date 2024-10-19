@@ -1,6 +1,6 @@
-use crate::constants::constructors::BOOLEAN;
-use crate::constants::constructors::BOOLEAN_FALSE;
-use crate::constants::constructors::BOOLEAN_TRUE;
+use crate::constants::BOOLEAN;
+use crate::constants::BOOLEAN_FALSE;
+use crate::constants::BOOLEAN_TRUE;
 use crate::serde::decode::Decode;
 use crate::serde::encode::{Encode, Encoded};
 use amqp_error::AppError;

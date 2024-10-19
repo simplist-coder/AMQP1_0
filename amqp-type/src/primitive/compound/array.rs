@@ -1,4 +1,4 @@
-use crate::constants::constructors::{ARRAY, ARRAY_SHORT, NULL};
+use crate::constants::{ARRAY, ARRAY_SHORT, NULL};
 use crate::primitive::compound::encoded_vec::EncodedVec;
 use crate::primitive::Primitive;
 use crate::serde::decode::Decode;
@@ -103,7 +103,7 @@ impl From<Vec<Primitive>> for Array {
 mod test {
     use super::*;
 
-    use crate::constants::constructors::{INTEGER, UNSIGNED_BYTE};
+    use crate::constants::{INTEGER, UNSIGNED_BYTE};
 
     #[test]
     fn construct_empty_array() {

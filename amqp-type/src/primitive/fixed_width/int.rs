@@ -1,4 +1,4 @@
-use crate::constants::constructors::{INTEGER, SMALL_INTEGER};
+use crate::constants::{INTEGER, SMALL_INTEGER};
 use crate::serde::decode::Decode;
 use crate::serde::encode::{Encode, Encoded};
 use amqp_error::AppError;

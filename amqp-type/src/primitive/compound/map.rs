@@ -1,4 +1,4 @@
-use crate::constants::constructors::{MAP, MAP_SHORT};
+use crate::constants::{MAP, MAP_SHORT};
 use crate::primitive::compound::encoded_vec::EncodedVec;
 use crate::primitive::Primitive;
 use crate::serde::decode::Decode;
@@ -102,7 +102,7 @@ impl From<IndexMap<Primitive, Primitive>> for Map {
 mod test {
     use super::*;
 
-    use crate::constants::constructors::{INTEGER, MAP, MAP_SHORT, UNSIGNED_SHORT};
+    use crate::constants::{INTEGER, MAP, MAP_SHORT, UNSIGNED_SHORT};
 
     const ILLEGAL_ELEMENT_CONSTRUCTOR: u8 = 0x99;
 

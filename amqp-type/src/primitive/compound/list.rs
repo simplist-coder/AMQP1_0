@@ -1,4 +1,4 @@
-use crate::constants::constructors::{LIST, LIST_EMPTY, LIST_SHORT};
+use crate::constants::{LIST, LIST_EMPTY, LIST_SHORT};
 use crate::primitive::compound::encoded_vec::EncodedVec;
 use crate::primitive::Primitive;
 use crate::serde::decode::Decode;
@@ -92,7 +92,7 @@ impl From<Vec<Primitive>> for List {
 mod test {
     use super::*;
 
-    use crate::constants::constructors::{INTEGER, UNSIGNED_SHORT};
+    use crate::constants::{INTEGER, UNSIGNED_SHORT};
     #[test]
     fn construct_empty_list() {
         let val = List(vec![]);

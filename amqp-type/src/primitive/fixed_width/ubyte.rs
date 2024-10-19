@@ -1,4 +1,4 @@
-use crate::constants::constructors::UNSIGNED_BYTE;
+use crate::constants::UNSIGNED_BYTE;
 use crate::serde::decode::Decode;
 use crate::serde::encode::{Encode, Encoded};
 use amqp_error::AppError;

@@ -1,4 +1,4 @@
-use crate::constants::constructors::UUID;
+use crate::constants::UUID;
 use crate::serde::decode::Decode;
 use crate::serde::encode::{Encode, Encoded};
 use amqp_error::AppError;
@@ -41,7 +41,7 @@ impl From<uuid::Uuid> for Uuid {
 mod test {
     use super::*;
 
-    use crate::constants::constructors::UUID;
+    use crate::constants::UUID;
 
     #[test]
     fn construct_uuid() {

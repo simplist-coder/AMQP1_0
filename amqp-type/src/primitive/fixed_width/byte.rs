@@ -1,4 +1,4 @@
-use crate::constants::constructors::BYTE;
+use crate::constants::BYTE;
 use crate::serde::decode::Decode;
 use crate::serde::encode::{Encode, Encoded};
 use amqp_error::AppError;
@@ -34,7 +34,7 @@ fn parse_i8(iter: &mut IntoIter<u8>) -> Result<i8, AppError> {
 mod test {
     use super::*;
 
-    use crate::constants::constructors::BYTE;
+    use crate::constants::BYTE;
 
     #[test]
     fn construct_byte() {
