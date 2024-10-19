@@ -1,14 +1,12 @@
-pub mod specifics;
-
-use crate::composite::performative::specifics::attach::Attach;
-use crate::composite::performative::specifics::begin::Begin;
-use crate::composite::performative::specifics::close::Close;
-use crate::composite::performative::specifics::detach::Detach;
-use crate::composite::performative::specifics::disposition::Disposition;
-use crate::composite::performative::specifics::end::End;
-use crate::composite::performative::specifics::flow::Flow;
-use crate::composite::performative::specifics::open::Open;
-use crate::composite::performative::specifics::transfer::Transfer;
+use crate::frame::performatives::attach::Attach;
+use crate::frame::performatives::begin::Begin;
+use crate::frame::performatives::close::Close;
+use crate::frame::performatives::detach::Detach;
+use crate::frame::performatives::disposition::Disposition;
+use crate::frame::performatives::end::End;
+use crate::frame::performatives::flow::Flow;
+use crate::frame::performatives::open::Open;
+use crate::frame::performatives::transfer::Transfer;
 use amqp_error::AppError;
 use std::pin::Pin;
 use tokio_stream::Stream;

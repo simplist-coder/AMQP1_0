@@ -1,4 +1,6 @@
 pub mod amqp_frame;
+pub mod performative;
+pub mod performatives;
 pub mod sasl_frame;
 
 use crate::constants::{AMQP_FRAME, SASL_FRAME};

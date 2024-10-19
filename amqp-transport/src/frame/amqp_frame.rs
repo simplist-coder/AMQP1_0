@@ -1,5 +1,5 @@
+use crate::frame::performative::Performative;
 use amqp_error::AppError;
-use amqp_type::composite::performative::Performative;
 use std::pin::Pin;
 use std::vec::IntoIter;
 use tokio_stream::Stream;

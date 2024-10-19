@@ -1,5 +1,3 @@
-pub mod performative;
-
 use crate::constants::constructors::DESCRIBED_TYPE;
 use crate::primitive::compound::list::List;
 use crate::primitive::variable_width::symbol::Symbol;
