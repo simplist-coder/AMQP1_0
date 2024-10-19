@@ -98,7 +98,7 @@ impl Encoded {
     }
 
     pub fn into_bytes(self) -> Vec<u8> {
-        self.into()
+        self.serialize()
     }
 }
 
@@ -189,7 +189,7 @@ impl Encoded {
         }
     }
 
-    pub(crate) fn serialize(self) -> Vec<u8> {
+    fn serialize(self) -> Vec<u8> {
         match self {
             Encoded::Empty { constructor } => encode_empty(Some(constructor)),
             Encoded::Fixed { constructor, data } => encode_fixed(Some(constructor), data),
@@ -216,7 +216,7 @@ impl Encoded {
 
 impl From<Encoded> for Vec<u8> {
     fn from(value: Encoded) -> Self {
-        value.serialize()
+        value.into_bytes()
     }
 }
 

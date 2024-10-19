@@ -61,8 +61,8 @@ mod test {
     #[test]
     #[cfg(not(feature = "zero-length-encoding"))]
     fn bool_gets_encoded_correctly() {
-        assert_eq!(true.encode().serialize(), vec![0x56, 0x01]);
-        assert_eq!(false.encode().serialize(), vec![0x56, 0x00]);
+        assert_eq!(true.encode().into_bytes(), vec![0x56, 0x01]);
+        assert_eq!(false.encode().into_bytes(), vec![0x56, 0x00]);
     }
 
     #[test]

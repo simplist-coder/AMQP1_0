@@ -53,9 +53,9 @@ mod test {
         non_ascii.extend(('ñ' as u32).to_be_bytes().to_vec());
         utf_8.extend(('😊' as u32).to_be_bytes().to_vec());
 
-        assert_eq!(ascii, 'a'.encode().serialize());
-        assert_eq!(non_ascii, 'ñ'.encode().serialize());
-        assert_eq!(utf_8, '😊'.encode().serialize());
+        assert_eq!(ascii, 'a'.encode().into_bytes());
+        assert_eq!(non_ascii, 'ñ'.encode().into_bytes());
+        assert_eq!(utf_8, '😊'.encode().into_bytes());
     }
 
     #[test]

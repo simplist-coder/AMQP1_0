@@ -15,10 +15,10 @@ pub struct Composite(Descriptor, List);
 impl Encode for Composite {
     fn encode(self) -> Encoded {
         let descriptor = match self.0 {
-            Descriptor::Symbol(x) => x.encode().serialize(),
-            Descriptor::Code(x) => x.encode().serialize(),
+            Descriptor::Symbol(x) => x.encode().into_bytes(),
+            Descriptor::Code(x) => x.encode().into_bytes(),
         };
-        let data = self.1.encode().serialize();
+        let data = self.1.encode().into_bytes();
         Encoded::new_composite(DESCRIBED_TYPE, descriptor, data)
     }
 }
@@ -31,3 +31,6 @@ impl Decode for Composite {
         todo!()
     }
 }
+
+#[cfg(test)]
+mod tests {}

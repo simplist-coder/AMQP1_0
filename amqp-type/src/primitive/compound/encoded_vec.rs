@@ -16,18 +16,22 @@ impl EncodedVec {
         res
     }
 
-    pub(crate) fn serialize(self) -> Vec<u8> {
+    fn serialize(self) -> Vec<u8> {
         let mut res = Vec::new();
         for val in self.0 {
-            let mut enc: Vec<u8> = val.serialize();
+            let mut enc: Vec<u8> = val.into_bytes();
             res.append(&mut enc);
         }
         res
+    }
+
+    pub(crate) fn into_bytes(self) -> Vec<u8> {
+        self.serialize()
     }
 }
 
 impl From<EncodedVec> for Vec<u8> {
     fn from(value: EncodedVec) -> Self {
-        value.serialize()
+        value.into_bytes()
     }
 }

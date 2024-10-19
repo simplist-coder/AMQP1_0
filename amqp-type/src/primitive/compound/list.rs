@@ -18,7 +18,7 @@ impl Encode for List {
             .into_iter()
             .map(crate::serde::encode::Encode::encode)
             .collect();
-        let encoded = EncodedVec::new(encoded_elements).serialize();
+        let encoded = EncodedVec::new(encoded_elements).into_bytes();
         match (count, encoded.len()) {
             (0, _) => LIST_EMPTY.into(),
             (len, size) if len <= 255 && size < 256 => {
