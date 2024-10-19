@@ -1,4 +1,4 @@
-use amqp_type::amqp_type::AmqpType;
+use amqp_type::composite::performative::performative::Performative;
 use amqp_type::error::AppError;
 use std::pin::Pin;
 use tokio_stream::Stream;
@@ -9,7 +9,7 @@ pub struct AmqpFrame {
     size: u32,
     doff: u8,
     channel: u16,
-    amqp_type: AmqpType,
+    amqp_type: Performative,
 }
 
 impl AmqpFrame {

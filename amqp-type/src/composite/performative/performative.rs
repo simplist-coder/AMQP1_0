@@ -32,4 +32,10 @@ impl Performative {
     {
         todo!()
     }
+
+    /// performatives always contain the payload,
+    /// which is the rest of the frame body, after the performative
+    pub fn payload(&self) -> Vec<u8> {
+        todo!()
+    }
 }

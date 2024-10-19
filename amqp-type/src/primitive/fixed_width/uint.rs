@@ -12,10 +12,9 @@ impl Encode for u32 {
     fn encode(self) -> Encoded {
         match self {
             0 => Encoded::new_empty(UNSIGNED_INTEGER_ZERO),
-            x if x > 0 && x <= 255 => Encoded::new_fixed(
-                SMALL_UNSIGNED_INTEGER,
-                (x.clone() as u8).to_be_bytes().to_vec(),
-            ),
+            x if x > 0 && x <= 255 => {
+                Encoded::new_fixed(SMALL_UNSIGNED_INTEGER, (x as u8).to_be_bytes().to_vec())
+            }
             _ => Encoded::new_fixed(UNSIGNED_INTEGER, self.to_be_bytes().to_vec()),
         }
     }

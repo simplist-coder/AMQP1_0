@@ -10,10 +10,9 @@ impl Encode for u64 {
     fn encode(self) -> Encoded {
         match self {
             0 => Encoded::new_empty(UNSIGNED_LONG_ZERO),
-            x if x > 0 && x <= 255 => Encoded::new_fixed(
-                SMALL_UNSIGNED_LONG,
-                (x.clone() as u8).to_be_bytes().to_vec(),
-            ),
+            x if x > 0 && x <= 255 => {
+                Encoded::new_fixed(SMALL_UNSIGNED_LONG, (x as u8).to_be_bytes().to_vec())
+            }
             _ => Encoded::new_fixed(UNSIGNED_LONG, self.to_be_bytes().to_vec()),
         }
     }
@@ -37,6 +36,8 @@ impl Decode for u64 {
 }
 
 async fn parse_ulong(iter: &mut Pin<Box<impl Stream<Item = u8>>>) -> Result<u64, AppError> {
+    let _abs = Box::pin(vec!["Hello"]);
+
     let byte_vals = read_bytes_8(iter).await?;
     Ok(u64::from_be_bytes(byte_vals))
 }

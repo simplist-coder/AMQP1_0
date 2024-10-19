@@ -8,6 +8,12 @@ members = [
 ]
 resolver = "2"
 
+[workspace.lints.clippy]
+correctness = "deny"
+suspicious = "warn"
+perf = "warn"
+pedantic = "warn"
+
 [workspace.dependencies]
 # Internal
 
