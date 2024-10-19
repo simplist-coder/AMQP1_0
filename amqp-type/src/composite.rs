@@ -110,8 +110,8 @@ mod tests {
     fn test_encode_decode_round_trip_composite() {
         let desc = Symbol::new("Hello".to_owned()).unwrap().into();
         let list = vec![
-            Primitive::String("World".to_owned()).into(),
-            Primitive::Boolean(true).into(),
+            Primitive::String("World".to_owned()),
+            Primitive::Boolean(true),
             Primitive::List(
                 vec![
                     Primitive::Binary(vec![1, 2, 3, 4, 5].into()),
