@@ -19,7 +19,7 @@ use amqp_error::AppError;
 use amqp_type::composite::{Composite, Descriptor};
 use std::vec::IntoIter;
 
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Clone)]
 pub enum Performative {
     Open(Open),
     Begin(Begin),
