@@ -1,7 +1,9 @@
 use amqp_error::AppError;
-use amqp_type::alias::{Fields, IetfLanguageTag, Milliseconds};
 use amqp_type::composite::Composite;
 use amqp_type::primitive::variable_width::symbol::Symbol;
+use amqp_type::restricted::duration::Milliseconds;
+use amqp_type::restricted::fields::Fields;
+use amqp_type::restricted::ietf_language_tag::IetfLanguageTag;
 use std::vec::IntoIter;
 
 #[derive(Debug, Clone)]

@@ -6,6 +6,8 @@ use crate::serde::encode::{Encode, Encoded};
 use amqp_error::AppError;
 use std::vec::IntoIter;
 
+pub mod transport;
+
 pub trait CompositeType: From<Composite> + Into<Composite> {}
 
 #[derive(Debug, Eq, PartialEq, Clone)]

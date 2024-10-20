@@ -1,11 +1,10 @@
 use amqp_error::AppError;
-use amqp_type::alias::Fields;
 use amqp_type::composite::Composite;
 use amqp_type::primitive::variable_width::symbol::Symbol;
+use amqp_type::restricted::fields::Fields;
+use amqp_type::restricted::handle::Handle;
+use amqp_type::restricted::transfer_number::TransferNumber;
 use std::vec::IntoIter;
-
-type TransferNumber = u32;
-type Handle = u32;
 
 #[derive(Debug, Clone)]
 pub struct Begin {
