@@ -8,9 +8,9 @@ use crate::frame::performatives::flow::Flow;
 use crate::frame::performatives::open::Open;
 use crate::frame::performatives::transfer::Transfer;
 use amqp_error::AppError;
-use std::pin::Pin;
-use tokio_stream::Stream;
+use std::vec::IntoIter;
 
+#[derive(Debug, Copy, Clone)]
 pub enum Performative {
     Open(Open),
     Begin(Begin),
@@ -24,9 +24,11 @@ pub enum Performative {
 }
 
 impl Performative {
-    pub async fn try_decode(
-        _stream: &mut Pin<Box<impl Stream<Item = u8>>>,
-    ) -> Result<Self, AppError>
+    pub fn encode(self) -> Vec<u8> {
+        todo!()
+    }
+
+    pub fn try_decode(_stream: &mut IntoIter<u8>) -> Result<Self, AppError>
     where
         Self: Sized,
     {

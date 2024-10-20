@@ -1,3 +1,5 @@
+use amqp_utils::vec::VecExt;
+
 pub trait Encode {
     fn encode(self) -> Encoded;
 }
@@ -219,15 +221,6 @@ impl From<Encoded> for Vec<u8> {
         value.into_bytes()
     }
 }
-
-/// From: <https://www.reddit.com/r/rust/comments/kul4qz/vec_prepend_insert_from_slice>/
-trait VecExt<T>: AsMut<Vec<T>> {
-    fn prepend(&mut self, other: &mut Vec<T>) {
-        self.as_mut().splice(..0, other.drain(..));
-    }
-}
-
-impl<T> VecExt<T> for Vec<T> {}
 
 impl From<u8> for Encoded {
     fn from(value: u8) -> Self {

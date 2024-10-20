@@ -31,7 +31,8 @@ impl Frame {
         Self: Sized,
     {
         let size = u32::from_be_bytes(read_bytes_4(stream).await?);
-        let mut buffer = read_bytes(stream, size as usize).await?.into_iter();
+        // size adjusted by -4 to account for already read size bytes
+        let mut buffer = read_bytes(stream, size as usize - 4).await?.into_iter();
         let doff = buffer
             .next()
             .ok_or(AppError::IteratorEmptyOrTooShortError)?;
