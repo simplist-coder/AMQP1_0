@@ -58,6 +58,10 @@ impl Symbol {
         verify_ascii_char_set(&string)?;
         Ok(Symbol(string))
     }
+
+    pub fn as_str(&self) -> &str {
+        &self.0
+    }
 }
 
 impl TryFrom<String> for Symbol {

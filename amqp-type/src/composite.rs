@@ -83,6 +83,14 @@ impl Composite {
             .ok_or(AppError::IteratorEmptyOrTooShortError)?;
         Composite::try_decode(constr, stream)
     }
+
+    pub fn descriptor(&self) -> &Descriptor {
+        &self.0
+    }
+
+    pub fn data(&self) -> &List {
+        &self.1
+    }
 }
 
 impl Composite {

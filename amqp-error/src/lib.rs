@@ -16,4 +16,6 @@ pub enum AppError {
     DeserializationMapContainsOddAmountOfElementsError,
     #[error("Symbols must only contain ASCII Characters")]
     IllegalNonASCIICharacterInSymbol,
+    #[error("Invalid Performative")]
+    InvalidPerformative,
 }
