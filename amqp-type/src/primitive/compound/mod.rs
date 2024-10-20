@@ -1,4 +1,4 @@
-pub(crate) mod array;
+pub mod array;
 mod encoded_vec;
-pub(crate) mod list;
-pub(crate) mod map;
+pub mod list;
+pub mod map;

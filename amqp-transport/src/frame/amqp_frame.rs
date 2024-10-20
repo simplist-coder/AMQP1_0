@@ -5,7 +5,7 @@ use amqp_utils::sync_util::read_bytes_2;
 use amqp_utils::vec::VecExt;
 use std::vec::IntoIter;
 
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Clone)]
 pub struct AmqpFrame {
     channel: u16,
     performative: Performative,

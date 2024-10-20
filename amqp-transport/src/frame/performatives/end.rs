@@ -10,7 +10,7 @@ impl End {
         todo!()
     }
 
-    pub fn try_decode(stream: Composite, stream0: &mut IntoIter<u8>) -> Result<Self, AppError> {
+    pub fn try_decode(composite: Composite, body: &mut IntoIter<u8>) -> Result<Self, AppError> {
         todo!()
     }
 }
