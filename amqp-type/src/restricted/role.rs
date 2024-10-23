@@ -1,3 +1,5 @@
+use crate::primitive::Primitive;
+
 /// # Role
 /// Link endpoint role.
 ///
@@ -11,21 +13,40 @@
 /// Valid Values:
 /// - false: Sender
 /// - true: Receiver
+///
+/// ```
+///# use amqp_type::restricted::role::Role;
+/// assert_eq!(Role::new(true), Role::Receiver);
+/// assert_eq!(Role::new(false), Role::Sender);
+/// ```
 
-#[derive(Debug, Clone, Copy)]
-pub struct Role(bool);
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum Role {
+    Sender,
+    Receiver,
+}
 
 impl Role {
     pub fn new(value: bool) -> Self {
-        Self(value)
+        match value {
+            true => Self::Receiver,
+            false => Self::Sender,
+        }
     }
+}
 
-    pub fn is_sender(&self) -> bool {
-        self.0 == false
+impl From<Role> for Primitive {
+    fn from(value: Role) -> Self {
+        Primitive::Boolean(value.into())
     }
+}
 
-    pub fn is_receiver(&self) -> bool {
-        self.0 == true
+impl From<Role> for bool {
+    fn from(value: Role) -> Self {
+        match value {
+            Role::Sender => false,
+            Role::Receiver => true,
+        }
     }
 }
 
@@ -34,12 +55,12 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_role_is_sender_is_true_for_inner_value_false() {
-        assert_eq!(Role::new(false).is_sender(), true);
+    fn test_role_true_is_receiver() {
+        assert_eq!(Role::new(true), Role::Receiver);
     }
 
     #[test]
-    fn test_role_is_receiver_is_true_for_inner_value_true() {
-        assert_eq!(Role::new(true).is_sender(), true);
+    fn test_role_false_is_sender() {
+        assert_eq!(Role::new(false), Role::Sender);
     }
 }

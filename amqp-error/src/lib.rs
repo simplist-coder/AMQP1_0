@@ -18,4 +18,6 @@ pub enum AppError {
     IllegalNonASCIICharacterInSymbol,
     #[error("Invalid Performative")]
     InvalidPerformative,
+    #[error("Invalid sender settle mode")]
+    InvalidSenderSettleMode,
 }
