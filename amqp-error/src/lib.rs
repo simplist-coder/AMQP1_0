@@ -22,4 +22,6 @@ pub enum AppError {
     InvalidSenderSettleMode,
     #[error("Invalid receiver settle mode")]
     InvalidReceiverSettleMode,
+    #[error("Delivery Tag is too long")]
+    DeliveryTagIsTooLong,
 }
