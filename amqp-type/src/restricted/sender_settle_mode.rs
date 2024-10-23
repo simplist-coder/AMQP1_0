@@ -1,3 +1,4 @@
+use crate::primitive::Primitive;
 use amqp_error::AppError;
 
 /// # Sender Settle Mode
@@ -34,6 +35,22 @@ impl SenderSettleMode {
     }
 }
 
+impl From<SenderSettleMode> for u8 {
+    fn from(value: SenderSettleMode) -> Self {
+        match value {
+            SenderSettleMode::Unsettled => 0,
+            SenderSettleMode::Settled => 1,
+            SenderSettleMode::Mixed => 2,
+        }
+    }
+}
+
+impl From<SenderSettleMode> for Primitive {
+    fn from(value: SenderSettleMode) -> Self {
+        Primitive::Ubyte(u8::from(value))
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -54,5 +71,21 @@ mod tests {
             SenderSettleMode::new(10),
             Err(AppError::InvalidSenderSettleMode)
         ));
+    }
+
+    #[test]
+    fn test_sender_settle_mode_into_primitive() {
+        assert_eq!(
+            Primitive::from(SenderSettleMode::Unsettled),
+            Primitive::Ubyte(0)
+        );
+        assert_eq!(
+            Primitive::from(SenderSettleMode::Settled),
+            Primitive::Ubyte(1)
+        );
+        assert_eq!(
+            Primitive::from(SenderSettleMode::Mixed),
+            Primitive::Ubyte(2)
+        );
     }
 }

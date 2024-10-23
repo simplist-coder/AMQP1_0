@@ -20,4 +20,6 @@ pub enum AppError {
     InvalidPerformative,
     #[error("Invalid sender settle mode")]
     InvalidSenderSettleMode,
+    #[error("Invalid receiver settle mode")]
+    InvalidReceiverSettleMode,
 }

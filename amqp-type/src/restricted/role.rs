@@ -37,7 +37,7 @@ impl Role {
 
 impl From<Role> for Primitive {
     fn from(value: Role) -> Self {
-        Primitive::Boolean(value.into())
+        Primitive::Boolean(bool::from(value))
     }
 }
 
@@ -62,5 +62,19 @@ mod tests {
     #[test]
     fn test_role_false_is_sender() {
         assert_eq!(Role::new(false), Role::Sender);
+    }
+
+    #[test]
+    fn test_role_into_bool() {
+        let value_true: bool = Role::new(true).into();
+        let value_false: bool = Role::new(false).into();
+        assert_eq!(value_true, true);
+        assert_eq!(value_false, false);
+    }
+
+    #[test]
+    fn test_into_primitive() {
+        assert_eq!(Primitive::from(Role::Receiver), Primitive::Boolean(true));
+        assert_eq!(Primitive::from(Role::Sender), Primitive::Boolean(false));
     }
 }
