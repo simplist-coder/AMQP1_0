@@ -137,9 +137,15 @@ impl Primitive {
     }
 }
 
-impl From<Option<Primitive>> for Primitive {
-    fn from(value: Option<Primitive>) -> Self {
-        value.unwrap_or_else(|| Primitive::Null)
+impl<T> From<Option<T>> for Primitive
+where
+    T: Into<Primitive>,
+{
+    fn from(value: Option<T>) -> Self {
+        match value {
+            None => Primitive::Null,
+            Some(val) => val.into(),
+        }
     }
 }
 

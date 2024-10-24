@@ -26,7 +26,7 @@ impl ReceiverSettleMode {
         match value {
             0 => Ok(ReceiverSettleMode::First),
             1 => Ok(ReceiverSettleMode::Second),
-            _ => Err(AppError::InvalidSenderSettleMode),
+            _ => Err(AppError::InvalidReceiverSettleMode),
         }
     }
 }

@@ -14,7 +14,7 @@ pub struct Map(IndexMap<Primitive, Primitive>);
 
 impl Encode for Map {
     fn encode(self) -> Encoded {
-        let mut res: Vec<Encoded> = Vec::new();
+        let mut res: Vec<Encoded> = Vec::with_capacity(self.0.len());
         let mut count = 0;
         for (key, value) in self.0 {
             let k = key.encode();
