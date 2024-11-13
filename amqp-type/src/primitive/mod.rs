@@ -1,4 +1,5 @@
 pub mod compound;
+mod constructor;
 pub mod fixed_width;
 pub mod variable_width;
 

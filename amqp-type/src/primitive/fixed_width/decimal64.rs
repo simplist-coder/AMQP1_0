@@ -100,7 +100,7 @@ mod test {
 
     #[test]
     fn test_illegal_constructor_deserialization() {
-        let illegal_constructor = 0xFF; // Assuming this is not DECIMAL_64
+        let illegal_constructor = 0xFF; // Assuming this is not Decimal64
         let bytes = vec![ /* other bytes */];
 
         match Decimal64::try_decode(illegal_constructor, &mut bytes.into_iter()) {
