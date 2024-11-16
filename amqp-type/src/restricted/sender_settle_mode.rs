@@ -1,5 +1,6 @@
+use crate::error::amqp_error::AmqpError;
 use crate::primitive::Primitive;
-use amqp_error::AppError;
+use crate::error::AppError;
 
 /// # Sender Settle Mode
 /// Settlement policy for a Sender.
@@ -30,7 +31,7 @@ impl SenderSettleMode {
             0 => Ok(Self::Unsettled),
             1 => Ok(Self::Settled),
             2 => Ok(Self::Mixed),
-            _ => Err(AppError::InvalidSenderSettleMode),
+            _ => Err(AmqpError::InvalidField)?,
         }
     }
 }
@@ -69,7 +70,7 @@ mod tests {
     fn test_sender_settle_mode_error() {
         assert!(matches!(
             SenderSettleMode::new(10),
-            Err(AppError::InvalidSenderSettleMode)
+            Err(AppError::Amqp(AmqpError::InvalidField))
         ));
     }
 

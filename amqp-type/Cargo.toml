@@ -14,9 +14,8 @@ zero-length-encoding = []
 
 [dependencies]
 # Internal
-amqp-utils = {path = "../amqp-utils" }
-amqp-error = {path = "../amqp-error"}
 
 # External
 indexmap = "2.0.0"
 uuid = {workspace = true}
+tokio-stream = {workspace = true}

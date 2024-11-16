@@ -1,8 +1,9 @@
 use crate::constants::BYTE;
 use crate::serde::decode::Decode;
 use crate::serde::encode::{Encode, Encoded};
-use amqp_error::AppError;
+use crate::error::AppError;
 use std::vec::IntoIter;
+use crate::error::amqp_error::AmqpError;
 
 impl Encode for i8 {
     fn encode(self) -> Encoded {
@@ -17,7 +18,7 @@ impl Decode for i8 {
     {
         match constructor {
             BYTE => Ok(parse_i8(stream)?),
-            other => Err(AppError::DeserializationIllegalConstructorError(other)),
+            _ => Err(AmqpError::DecodeError)?,
         }
     }
 }
@@ -26,7 +27,7 @@ fn parse_i8(iter: &mut IntoIter<u8>) -> Result<i8, AppError> {
     if let Some(val) = iter.next() {
         Ok(i8::from_be_bytes([val]))
     } else {
-        Err(AppError::IteratorEmptyOrTooShortError)
+        Err(AmqpError::FrameSizeTooSmall)?
     }
 }
 

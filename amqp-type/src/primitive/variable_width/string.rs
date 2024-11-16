@@ -1,9 +1,10 @@
 use crate::constants::{STRING, STRING_SHORT};
 use crate::serde::decode::Decode;
 use crate::serde::encode::{Encode, Encoded};
-use amqp_error::AppError;
-use amqp_utils::sync_util::{read_bytes, read_bytes_4};
+use crate::error::AppError;
+use crate::utils::sync_util::{read_bytes, read_bytes_4};
 use std::vec::IntoIter;
+use crate::error::amqp_error::AmqpError;
 
 impl Encode for String {
     fn encode(self) -> Encoded {
@@ -24,7 +25,7 @@ impl Decode for String {
         match constructor {
             STRING_SHORT => Ok(parse_small_string(stream)?),
             STRING => Ok(parse_large_string(stream)?),
-            illegal => Err(AppError::DeserializationIllegalConstructorError(illegal)),
+            _ => Err(AmqpError::DecodeError.into()),
         }
     }
 }
@@ -32,7 +33,7 @@ impl Decode for String {
 fn parse_small_string(iter: &mut IntoIter<u8>) -> Result<String, AppError> {
     match iter.next() {
         Some(size) => Ok(String::from_utf8(read_bytes(iter, size as usize)?)?),
-        None => Err(AppError::IteratorEmptyOrTooShortError),
+        None => Err(AmqpError::FrameSizeTooSmall)?,
     }
 }
 
@@ -118,7 +119,7 @@ mod test {
         let result = String::try_decode(0xFF, &mut data.into_iter());
         assert!(matches!(
             result,
-            Err(AppError::DeserializationIllegalConstructorError(0xFF))
+            Err(AppError::Amqp(AmqpError::DecodeError))
         ));
     }
 
@@ -128,7 +129,7 @@ mod test {
         let result = String::try_decode(STRING, &mut data.into_iter());
         assert!(matches!(
             result,
-            Err(AppError::IteratorEmptyOrTooShortError)
+            Err(AppError::Amqp(AmqpError::DecodeError))
         ));
     }
 

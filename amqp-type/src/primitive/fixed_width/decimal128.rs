@@ -1,6 +1,6 @@
 use crate::serde::decode::Decode;
 use crate::serde::encode::{Encode, Encoded};
-use amqp_error::AppError;
+use crate::error::AppError;
 use std::vec::IntoIter;
 
 #[derive(Debug, Hash, Eq, PartialEq, Clone)]

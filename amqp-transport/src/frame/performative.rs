@@ -15,9 +15,10 @@ use crate::frame::performatives::end::End;
 use crate::frame::performatives::flow::Flow;
 use crate::frame::performatives::open::Open;
 use crate::frame::performatives::transfer::Transfer;
-use amqp_error::AppError;
+use amqp_type::error::AppError;
 use amqp_type::composite::{Composite, Descriptor};
 use std::vec::IntoIter;
+use amqp_type::error::amqp_error::AmqpError;
 
 #[derive(Debug, Clone)]
 pub enum Performative {
@@ -73,7 +74,7 @@ impl Performative {
             PERFORMATIVE_CODE_DETACH => Ok(Detach::try_decode(composite, stream)?.into()),
             PERFORMATIVE_CODE_END => Ok(End::try_decode(composite, stream)?.into()),
             PERFORMATIVE_CODE_CLOSE => Ok(Close::try_decode(composite, stream)?.into()),
-            _ => Err(AppError::InvalidPerformative),
+            _ => Err(AmqpError::DecodeError)?
         }
     }
 
@@ -94,7 +95,7 @@ impl Performative {
             PERFORMATIVE_SYMBOL_DETACH => Ok(Detach::try_decode(composite, stream)?.into()),
             PERFORMATIVE_SYMBOL_END => Ok(End::try_decode(composite, stream)?.into()),
             PERFORMATIVE_SYMBOL_CLOSE => Ok(Close::try_decode(composite, stream)?.into()),
-            _ => Err(AppError::InvalidPerformative),
+            _ => Err(AmqpError::DecodeError)?
         }
     }
 
@@ -102,15 +103,15 @@ impl Performative {
     // which is the rest of the frame body, after the performative
     pub fn payload(&self) -> Vec<u8> {
         match self {
-            Performative::Open(x) => todo!(),
-            Performative::Begin(x) => todo!(),
-            Performative::Attach(x) => todo!(),
-            Performative::Flow(x) => todo!(),
-            Performative::Transfer(x) => todo!(),
-            Performative::Disposition(x) => todo!(),
-            Performative::Detach(x) => todo!(),
-            Performative::End(x) => todo!(),
-            Performative::Close(x) => todo!(),
+            Performative::Open(_) => todo!(),
+            Performative::Begin(_) => todo!(),
+            Performative::Attach(_) => todo!(),
+            Performative::Flow(_) => todo!(),
+            Performative::Transfer(_) => todo!(),
+            Performative::Disposition(_) => todo!(),
+            Performative::Detach(_) => todo!(),
+            Performative::End(_) => todo!(),
+            Performative::Close(_) => todo!(),
         }
     }
 }

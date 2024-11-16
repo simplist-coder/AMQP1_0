@@ -1,8 +1,9 @@
 use crate::constants::UNSIGNED_BYTE;
 use crate::serde::decode::Decode;
 use crate::serde::encode::{Encode, Encoded};
-use amqp_error::AppError;
+use crate::error::AppError;
 use std::vec::IntoIter;
+use crate::error::amqp_error::AmqpError;
 
 impl Encode for u8 {
     fn encode(self) -> Encoded {
@@ -18,7 +19,7 @@ impl Decode for u8 {
         let val = stream.next();
         match (constructor, val) {
             (UNSIGNED_BYTE, Some(x)) => Ok(x),
-            (c, _) => Err(AppError::DeserializationIllegalConstructorError(c)),
+            _ => Err(AmqpError::DecodeError)?
         }
     }
 }

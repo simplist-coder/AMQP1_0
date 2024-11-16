@@ -3,8 +3,9 @@ use crate::primitive::compound::list::List;
 use crate::primitive::variable_width::symbol::Symbol;
 use crate::serde::decode::Decode;
 use crate::serde::encode::{Encode, Encoded};
-use amqp_error::AppError;
+use crate::error::AppError;
 use std::vec::IntoIter;
+use crate::error::amqp_error::AmqpError;
 
 pub mod transport;
 
@@ -40,7 +41,7 @@ impl Decode for Descriptor {
             UNSIGNED_LONG | SMALL_UNSIGNED_LONG => {
                 u64::try_decode(constructor, stream).map(Descriptor::Code)
             }
-            illegal => Err(AppError::DeserializationIllegalConstructorError(illegal)),
+            _ => Err(AmqpError::DecodeError)?,
         }
     }
 }
@@ -59,17 +60,15 @@ impl Decode for Composite {
         Self: Sized,
     {
         if constructor != DESCRIBED_TYPE {
-            return Err(AppError::DeserializationIllegalConstructorError(
-                constructor,
-            ));
+            return Err(AmqpError::DecodeError)?;
         }
         let descr_constr = stream
             .next()
-            .ok_or(AppError::IteratorEmptyOrTooShortError)?;
+            .ok_or(AmqpError::FrameSizeTooSmall)?;
         let descriptor = Descriptor::try_decode(descr_constr, stream)?;
         let list_constr = stream
             .next()
-            .ok_or(AppError::IteratorEmptyOrTooShortError)?;
+            .ok_or(AmqpError::FrameSizeTooSmall)?;
         let list = List::try_decode(list_constr, stream)?;
         Ok(Composite(descriptor, list))
     }
@@ -82,7 +81,7 @@ impl Composite {
     {
         let constr = stream
             .next()
-            .ok_or(AppError::IteratorEmptyOrTooShortError)?;
+            .ok_or(AmqpError::DecodeError)?;
         Composite::try_decode(constr, stream)
     }
 
@@ -213,7 +212,7 @@ mod tests {
         let decoded = Composite::try_decode_without_constructor(&mut raw.into_iter()).unwrap_err();
         assert!(matches!(
             decoded,
-            AppError::DeserializationIllegalConstructorError(5)
+            AppError::Amqp(AmqpError::DecodeError)
         ));
     }
 
@@ -223,7 +222,7 @@ mod tests {
         let decoded = Descriptor::try_decode(5, &mut raw.into_iter()).unwrap_err();
         assert!(matches!(
             decoded,
-            AppError::DeserializationIllegalConstructorError(5)
+            AppError::Amqp(AmqpError::DecodeError)
         ));
     }
 }

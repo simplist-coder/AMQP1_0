@@ -1,5 +1,6 @@
+use crate::error::amqp_error::AmqpError;
 use crate::primitive::Primitive;
-use amqp_error::AppError;
+use crate::error::AppError;
 
 /// # Receiver Settle Mode
 /// Settlement policy for a Receiver
@@ -26,7 +27,7 @@ impl ReceiverSettleMode {
         match value {
             0 => Ok(ReceiverSettleMode::First),
             1 => Ok(ReceiverSettleMode::Second),
-            _ => Err(AppError::InvalidReceiverSettleMode),
+            _ => Err(AmqpError::InvalidField)?,
         }
     }
 }
@@ -66,7 +67,7 @@ mod tests {
     fn test_receiver_settle_mode_error() {
         assert!(matches!(
             ReceiverSettleMode::new(5),
-            Err(AppError::InvalidReceiverSettleMode)
+            Err(AppError::Amqp(AmqpError::InvalidField))
         ))
     }
 

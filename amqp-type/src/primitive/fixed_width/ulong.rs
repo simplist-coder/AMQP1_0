@@ -1,9 +1,10 @@
 use crate::constants::{SMALL_UNSIGNED_LONG, UNSIGNED_LONG, UNSIGNED_LONG_ZERO};
 use crate::serde::decode::Decode;
 use crate::serde::encode::{Encode, Encoded};
-use amqp_error::AppError;
-use amqp_utils::sync_util::read_bytes_8;
+use crate::error::AppError;
+use crate::utils::sync_util::read_bytes_8;
 use std::vec::IntoIter;
+use crate::error::amqp_error::AmqpError;
 
 impl Encode for u64 {
     fn encode(self) -> Encoded {
@@ -26,7 +27,7 @@ impl Decode for u64 {
             UNSIGNED_LONG => Ok(parse_ulong(stream)?),
             SMALL_UNSIGNED_LONG => Ok(parse_small_ulong(stream)?),
             UNSIGNED_LONG_ZERO => Ok(0),
-            c => Err(AppError::DeserializationIllegalConstructorError(c)),
+            _ => Err(AmqpError::DecodeError)?
         }
     }
 }
@@ -42,7 +43,7 @@ fn parse_small_ulong(iter: &mut IntoIter<u8>) -> Result<u64, AppError> {
     if let Some(val) = iter.next() {
         Ok(u64::from(val))
     } else {
-        Err(AppError::IteratorEmptyOrTooShortError)
+        Err(AmqpError::FrameSizeTooSmall)?
     }
 }
 

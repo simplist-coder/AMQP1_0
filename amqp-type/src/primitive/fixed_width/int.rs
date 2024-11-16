@@ -1,9 +1,10 @@
 use crate::constants::{INTEGER, SMALL_INTEGER};
 use crate::serde::decode::Decode;
 use crate::serde::encode::{Encode, Encoded};
-use amqp_error::AppError;
-use amqp_utils::sync_util::read_bytes_4;
+use crate::error::AppError;
+use crate::utils::sync_util::read_bytes_4;
 use std::vec::IntoIter;
+use crate::error::amqp_error::AmqpError;
 
 impl Encode for i32 {
     fn encode(self) -> Encoded {
@@ -24,7 +25,7 @@ impl Decode for i32 {
         match constructor {
             INTEGER => Ok(parse_i32(stream)?),
             SMALL_INTEGER => Ok(parse_small_i32(stream)?),
-            c => Err(AppError::DeserializationIllegalConstructorError(c)),
+            _ => Err(AmqpError::DecodeError)?,
         }
     }
 }
@@ -38,7 +39,7 @@ fn parse_small_i32(iter: &mut IntoIter<u8>) -> Result<i32, AppError> {
     if let Some(val) = iter.next() {
         Ok(i32::from(i8::from_be_bytes([val])))
     } else {
-        Err(AppError::IteratorEmptyOrTooShortError)
+        Err(AmqpError::FrameSizeTooSmall)?
     }
 }
 

@@ -3,11 +3,12 @@ use crate::primitive::compound::encoded_vec::EncodedVec;
 use crate::primitive::Primitive;
 use crate::serde::decode::Decode;
 use crate::serde::encode::{Encode, Encoded};
-use amqp_error::AppError;
-use amqp_utils::sync_util::{read_bytes, read_bytes_4};
+use crate::error::AppError;
+use crate::utils::sync_util::{read_bytes, read_bytes_4};
 use indexmap::IndexMap;
 use std::hash::Hash;
 use std::vec::IntoIter;
+use crate::error::amqp_error::AmqpError;
 
 #[derive(Debug, Eq, PartialEq, Clone)]
 pub struct Map(IndexMap<Primitive, Primitive>);
@@ -39,7 +40,7 @@ impl Decode for Map {
         match constructor {
             MAP_SHORT => Ok(parse_short_map(stream)?),
             MAP => Ok(parse_map(stream)?),
-            illegal => Err(AppError::DeserializationIllegalConstructorError(illegal)),
+            _ => Err(AmqpError::DecodeError)?
         }
     }
 }
@@ -47,10 +48,10 @@ impl Decode for Map {
 fn parse_short_map(stream: &mut IntoIter<u8>) -> Result<Map, AppError> {
     let size = stream
         .next()
-        .ok_or(AppError::IteratorEmptyOrTooShortError)?;
+        .ok_or(AmqpError::FrameSizeTooSmall)?;
     let count = stream
         .next()
-        .ok_or(AppError::IteratorEmptyOrTooShortError)?;
+        .ok_or(AmqpError::FrameSizeTooSmall)?;
     Ok(Map(parse_to_index_map(
         stream,
         size as usize,
@@ -74,7 +75,7 @@ fn parse_to_index_map(
     count: usize,
 ) -> Result<IndexMap<Primitive, Primitive>, AppError> {
     if count % 2 != 0 {
-        return Err(AppError::DeserializationMapContainsOddAmountOfElementsError);
+        return Err(AmqpError::InvalidField)?;
     }
     let mut buffer = read_bytes(stream, size)?.into_iter();
     let mut result = IndexMap::with_capacity(count);
@@ -172,9 +173,7 @@ mod test {
         let res = Map::try_decode(ILLEGAL_ELEMENT_CONSTRUCTOR, &mut bytes.into_iter());
         assert!(matches!(
             res,
-            Err(AppError::DeserializationIllegalConstructorError(
-                ILLEGAL_ELEMENT_CONSTRUCTOR
-            ))
+            Err(AppError::Amqp(AmqpError::DecodeError))
         ));
     }
 
@@ -195,9 +194,7 @@ mod test {
         let res = Map::try_decode(MAP_SHORT, &mut bytes.into_iter());
         assert!(matches!(
             res,
-            Err(AppError::DeserializationIllegalConstructorError(
-                ILLEGAL_ELEMENT_CONSTRUCTOR
-            ))
+            Err(AppError::Amqp(AmqpError::DecodeError))
         ));
     }
 
@@ -209,9 +206,7 @@ mod test {
         let res = Map::try_decode(ILLEGAL_ELEMENT_CONSTRUCTOR, &mut bytes.into_iter());
         assert!(matches!(
             res,
-            Err(AppError::DeserializationIllegalConstructorError(
-                ILLEGAL_ELEMENT_CONSTRUCTOR
-            ))
+            Err(AppError::Amqp(AmqpError::DecodeError))
         ));
     }
 
@@ -238,9 +233,7 @@ mod test {
         let res = Map::try_decode(MAP, &mut bytes.into_iter());
         assert!(matches!(
             res,
-            Err(AppError::DeserializationIllegalConstructorError(
-                ILLEGAL_ELEMENT_CONSTRUCTOR
-            ))
+            Err(AppError::Amqp(AmqpError::DecodeError))
         ));
     }
 
@@ -250,7 +243,7 @@ mod test {
         let res = Map::try_decode(MAP_SHORT, &mut bytes.into_iter());
         assert!(matches!(
             res,
-            Err(AppError::DeserializationMapContainsOddAmountOfElementsError)
+            Err(AppError::Amqp(AmqpError::InvalidField))
         ));
     }
 
@@ -262,7 +255,7 @@ mod test {
         let res = Map::try_decode(MAP, &mut bytes.into_iter());
         assert!(matches!(
             res,
-            Err(AppError::DeserializationMapContainsOddAmountOfElementsError)
+            Err(AppError::Amqp(AmqpError::InvalidField))
         ));
     }
 }

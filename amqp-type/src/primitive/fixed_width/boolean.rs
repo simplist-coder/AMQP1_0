@@ -3,8 +3,9 @@ use crate::constants::BOOLEAN_FALSE;
 use crate::constants::BOOLEAN_TRUE;
 use crate::serde::decode::Decode;
 use crate::serde::encode::{Encode, Encoded};
-use amqp_error::AppError;
+use crate::error::AppError;
 use std::vec::IntoIter;
+use crate::error::amqp_error::AmqpError;
 
 #[cfg(not(feature = "zero-length-encoding"))]
 impl Encode for bool {
@@ -40,10 +41,10 @@ impl Decode for bool {
                 match (constructor, val) {
                     (BOOLEAN, Some(0x00)) => Ok(false),
                     (BOOLEAN, Some(0x01)) => Ok(true),
-                    (c, _) => Err(AppError::DeserializationIllegalConstructorError(c)),
+                    (_, _) => Err(AmqpError::DecodeError)?,
                 }
             }
-            c => Err(AppError::DeserializationIllegalConstructorError(c)),
+            _ => Err(AmqpError::DecodeError)?,
         }
     }
 }

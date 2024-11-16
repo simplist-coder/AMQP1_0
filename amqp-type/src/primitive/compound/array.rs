@@ -3,9 +3,10 @@ use crate::primitive::compound::encoded_vec::EncodedVec;
 use crate::primitive::Primitive;
 use crate::serde::decode::Decode;
 use crate::serde::encode::{Encode, Encoded};
-use amqp_error::AppError;
-use amqp_utils::sync_util::{read_bytes, read_bytes_4};
+use crate::error::AppError;
+use crate::utils::sync_util::{read_bytes, read_bytes_4};
 use std::vec::IntoIter;
+use crate::error::amqp_error::AmqpError;
 
 #[derive(Debug, Hash, Eq, PartialEq, Clone)]
 pub struct Array(Vec<Primitive>);
@@ -41,7 +42,7 @@ impl Decode for Array {
         match constructor {
             ARRAY_SHORT => Ok(parse_short_array(stream)?),
             ARRAY => Ok(parse_array(stream)?),
-            illegal => Err(AppError::DeserializationIllegalConstructorError(illegal)),
+            _ => Err(AmqpError::DecodeError.into()),
         }
     }
 }
@@ -49,13 +50,13 @@ impl Decode for Array {
 fn parse_short_array(stream: &mut IntoIter<u8>) -> Result<Array, AppError> {
     let size = stream
         .next()
-        .ok_or(AppError::IteratorEmptyOrTooShortError)?;
+        .ok_or(AmqpError::FrameSizeTooSmall)?;
     let count = stream
         .next()
-        .ok_or(AppError::IteratorEmptyOrTooShortError)?;
+        .ok_or(AmqpError::FrameSizeTooSmall)?;
     let element_constructor = stream
         .next()
-        .ok_or(AppError::IteratorEmptyOrTooShortError)?;
+        .ok_or(AmqpError::FrameSizeTooSmall)?;
     Ok(Array(parse_raw_to_vec(
         stream,
         size as usize,
@@ -69,7 +70,7 @@ fn parse_array(stream: &mut IntoIter<u8>) -> Result<Array, AppError> {
     let count = u32::from_be_bytes(read_bytes_4(stream)?);
     let element_constructor = stream
         .next()
-        .ok_or(AppError::IteratorEmptyOrTooShortError)?;
+        .ok_or(AmqpError::FrameSizeTooSmall)?;
     Ok(Array(parse_raw_to_vec(
         stream,
         size as usize,
@@ -227,7 +228,7 @@ mod test {
         let res = Array::try_decode(0x99, &mut bytes.into_iter());
         assert!(matches!(
             res,
-            Err(AppError::DeserializationIllegalConstructorError(_))
+            Err(AppError::Amqp(AmqpError::DecodeError))
         ));
     }
 
@@ -240,7 +241,7 @@ mod test {
         let res = Array::try_decode(ARRAY_SHORT, &mut bytes.into_iter());
         assert!(matches!(
             res,
-            Err(AppError::DeserializationIllegalConstructorError(_))
+            Err(AppError::Amqp(AmqpError::DecodeError))
         ));
     }
 
@@ -252,7 +253,7 @@ mod test {
         let res = Array::try_decode(0x99, &mut bytes.into_iter());
         assert!(matches!(
             res,
-            Err(AppError::DeserializationIllegalConstructorError(_))
+            Err(AppError::Amqp(AmqpError::DecodeError))
         ));
     }
 
@@ -266,7 +267,7 @@ mod test {
         let res = Array::try_decode(ARRAY, &mut bytes.into_iter());
         assert!(matches!(
             res,
-            Err(AppError::DeserializationIllegalConstructorError(_))
+            Err(AppError::Amqp(AmqpError::DecodeError))
         ));
     }
 }

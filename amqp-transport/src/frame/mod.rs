@@ -6,10 +6,11 @@ pub mod sasl_frame;
 use crate::constants::{AMQP_FRAME, SASL_FRAME};
 use crate::frame::amqp_frame::AmqpFrame;
 use crate::frame::sasl_frame::SaslFrame;
-use amqp_error::AppError;
-use amqp_utils::async_util::{read_bytes, read_bytes_4};
+use amqp_type::error::AppError;
+use amqp_type::utils::async_util::{read_bytes, read_bytes_4};
 use std::pin::Pin;
 use tokio_stream::Stream;
+use amqp_type::error::amqp_error::AmqpError;
 
 pub enum Frame {
     AmqpFrame(AmqpFrame),
@@ -35,14 +36,14 @@ impl Frame {
         let mut buffer = read_bytes(stream, size as usize - 4).await?.into_iter();
         let doff = buffer
             .next()
-            .ok_or(AppError::IteratorEmptyOrTooShortError)?;
+            .ok_or(AmqpError::DecodeError)?;
         let frame_type = buffer
             .next()
-            .ok_or(AppError::IteratorEmptyOrTooShortError)?;
+            .ok_or(AmqpError::DecodeError)?;
         match frame_type {
             AMQP_FRAME => AmqpFrame::try_decode(doff, &mut buffer).map(Frame::AmqpFrame),
             SASL_FRAME => SaslFrame::try_decode(doff, &mut buffer).map(Frame::SaslFrame),
-            illegal => Err(AppError::DeserializationIllegalConstructorError(illegal)),
+            _ => Err(AmqpError::DecodeError)?
         }
     }
 }

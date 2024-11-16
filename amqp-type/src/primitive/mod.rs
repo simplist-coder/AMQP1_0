@@ -1,5 +1,4 @@
 pub mod compound;
-mod constructor;
 pub mod fixed_width;
 pub mod variable_width;
 
@@ -24,9 +23,10 @@ use crate::primitive::variable_width::binary::Binary;
 use crate::primitive::variable_width::symbol::Symbol;
 use crate::serde::decode::Decode;
 use crate::serde::encode::{Encode, Encoded};
-use amqp_error::AppError;
+use crate::error::AppError;
 use std::hash::Hash;
 use std::vec::IntoIter;
+use crate::error::amqp_error::AmqpError;
 
 #[derive(Debug, Hash, Eq, PartialEq, Clone)]
 pub enum Primitive {
@@ -93,7 +93,7 @@ impl Primitive {
         Self: Sized,
     {
         match stream.next() {
-            None => Err(AppError::IteratorEmptyOrTooShortError),
+            None => Err(AmqpError::FrameSizeTooSmall)?,
             Some(constructor) => Self::try_decode_with_constructor(constructor, stream),
         }
     }
@@ -133,7 +133,7 @@ impl Primitive {
             x @ (BINARY_SHORT | BINARY) => Ok(Binary::try_decode(x, stream)?.into()),
             x @ (STRING_SHORT | STRING) => Ok(String::try_decode(x, stream)?.into()),
             x @ (SYMBOL | SYMBOL_SHORT) => Ok(Symbol::try_decode(x, stream)?.into()),
-            other => Err(AppError::DeserializationIllegalConstructorError(other)),
+            _ => Err(AmqpError::DecodeError)?,
         }
     }
 }

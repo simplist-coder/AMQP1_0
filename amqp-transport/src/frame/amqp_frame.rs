@@ -1,8 +1,8 @@
 use crate::constants::AMQP_FRAME;
 use crate::frame::performative::Performative;
-use amqp_error::AppError;
-use amqp_utils::sync_util::read_bytes_2;
-use amqp_utils::vec::VecExt;
+use amqp_type::error::AppError;
+use amqp_type::utils::sync_util::read_bytes_2;
+use amqp_type::utils::vec::VecExt;
 use std::vec::IntoIter;
 
 #[derive(Debug, Clone)]

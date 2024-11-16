@@ -1,4 +1,4 @@
-use amqp_error::AppError;
+use amqp_type::error::AppError;
 use amqp_type::composite::Composite;
 use std::vec::IntoIter;
 

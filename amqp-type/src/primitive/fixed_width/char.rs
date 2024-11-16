@@ -2,9 +2,10 @@ use crate::constants::CHAR;
 use crate::primitive::fixed_width::char;
 use crate::serde::decode::Decode;
 use crate::serde::encode::{Encode, Encoded};
-use amqp_error::AppError;
-use amqp_utils::sync_util::read_bytes_4;
+use crate::error::AppError;
+use crate::utils::sync_util::read_bytes_4;
 use std::vec::IntoIter;
+use crate::error::amqp_error::AmqpError;
 
 impl Encode for char {
     fn encode(self) -> Encoded {
@@ -19,7 +20,7 @@ impl Decode for char {
     {
         match constructor {
             CHAR => Ok(parse_char(stream)?),
-            c => Err(AppError::DeserializationIllegalConstructorError(c)),
+            _ => Err(AmqpError::DecodeError)?,
         }
     }
 }
@@ -27,7 +28,7 @@ impl Decode for char {
 fn parse_char(iter: &mut IntoIter<u8>) -> Result<char, AppError> {
     let byte_vals = read_bytes_4(iter)?;
     match char::from_u32(u32::from_be_bytes(byte_vals)) {
-        None => Err(AppError::InvalidChar),
+        None => Err(AmqpError::DecodeError)?,
         Some(c) => Ok(c),
     }
 }
@@ -73,34 +74,29 @@ mod test {
         let illegal_constructor = 0xFF;
         let bytes = vec![];
 
-        match char::try_decode(illegal_constructor, &mut bytes.into_iter()) {
-            Ok(_) => panic!("Expected an error, but deserialization succeeded"),
-            Err(AppError::DeserializationIllegalConstructorError(c)) => {
-                assert_eq!(illegal_constructor, c);
-            }
-            Err(e) => panic!("Unexpected error type: {e:?}"),
-        }
+        assert!(matches!(
+            char::try_decode(illegal_constructor, &mut bytes.into_iter()),
+            Err(AppError::Amqp(AmqpError::DecodeError))
+        ));
     }
 
     #[test]
     fn test_empty_iterator_deserialization() {
         let bytes = vec![]; // Empty vector
 
-        match char::try_decode(CHAR, &mut bytes.into_iter()) {
-            Ok(_) => panic!("Expected an error, but deserialization succeeded"),
-            Err(AppError::IteratorEmptyOrTooShortError) => (), // Expected outcome
-            Err(e) => panic!("Unexpected error type: {e:?}"),
-        }
+        assert!(matches!(
+            char::try_decode(CHAR, &mut bytes.into_iter()),
+            Err(AppError::Amqp(AmqpError::DecodeError))
+        ));
     }
 
     #[test]
     fn test_invalid_char_deserialization() {
         let bytes = vec![CHAR, 0xFF, 0xFF, 0xFF, 0xFF]; // Invalid Unicode sequence
 
-        match char::try_decode(CHAR, &mut bytes.into_iter()) {
-            Ok(_) => panic!("Expected an error, but deserialization succeeded"),
-            Err(AppError::InvalidChar) => (), // Expected outcome
-            Err(e) => panic!("Unexpected error type: {e:?}"),
-        }
+        assert!(matches!(
+            char::try_decode(CHAR, &mut bytes.into_iter()),
+            Err(AppError::Amqp(AmqpError::DecodeError))
+        ));
     }
 }

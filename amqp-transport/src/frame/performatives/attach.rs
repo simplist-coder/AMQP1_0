@@ -1,4 +1,4 @@
-use amqp_error::AppError;
+use amqp_type::error::AppError;
 use amqp_type::composite::transport::source::Source;
 use amqp_type::composite::transport::target::Target;
 use amqp_type::composite::Composite;

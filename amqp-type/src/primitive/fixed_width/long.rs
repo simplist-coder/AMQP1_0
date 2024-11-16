@@ -1,9 +1,10 @@
 use crate::constants::{LONG, SMALL_LONG};
 use crate::serde::decode::Decode;
 use crate::serde::encode::{Encode, Encoded};
-use amqp_error::AppError;
-use amqp_utils::sync_util::read_bytes_8;
+use crate::error::AppError;
+use crate::utils::sync_util::read_bytes_8;
 use std::vec::IntoIter;
+use crate::error::amqp_error::AmqpError;
 
 impl Encode for i64 {
     fn encode(self) -> Encoded {
@@ -24,7 +25,7 @@ impl Decode for i64 {
         match constructor {
             LONG => Ok(parse_i64(stream)?),
             SMALL_LONG => Ok(parse_small_i64(stream)?),
-            c => Err(AppError::DeserializationIllegalConstructorError(c)),
+            _ => Err(AmqpError::DecodeError)?,
         }
     }
 }
@@ -38,7 +39,7 @@ fn parse_small_i64(iter: &mut IntoIter<u8>) -> Result<i64, AppError> {
     if let Some(val) = iter.next() {
         Ok(i64::from(i8::from_be_bytes([val])))
     } else {
-        Err(AppError::IteratorEmptyOrTooShortError)
+        Err(AmqpError::FrameSizeTooSmall)?
     }
 }
 

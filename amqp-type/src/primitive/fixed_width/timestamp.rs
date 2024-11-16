@@ -1,8 +1,9 @@
 use crate::constants::TIMESTAMP;
+use crate::error::amqp_error::AmqpError;
+use crate::error::AppError;
 use crate::serde::decode::Decode;
 use crate::serde::encode::{Encode, Encoded};
-use amqp_error::AppError;
-use amqp_utils::sync_util::read_bytes_8;
+use crate::utils::sync_util::read_bytes_8;
 use std::vec::IntoIter;
 
 #[derive(Debug, Hash, Eq, PartialEq, Clone)]
@@ -21,7 +22,7 @@ impl Decode for Timestamp {
     {
         match constructor {
             TIMESTAMP => Ok(parse_timestamp(stream)?),
-            c => Err(AppError::DeserializationIllegalConstructorError(c)),
+            _ => Err(AmqpError::DecodeError)?,
         }
     }
 }
@@ -82,23 +83,19 @@ mod test {
         let illegal_constructor = 0xFF;
         let bytes = vec![];
 
-        match Timestamp::try_decode(illegal_constructor, &mut bytes.into_iter()) {
-            Ok(_) => panic!("Expected an error, but deserialization succeeded"),
-            Err(AppError::DeserializationIllegalConstructorError(c)) => {
-                assert_eq!(illegal_constructor, c);
-            }
-            Err(e) => panic!("Unexpected error type: {e:?}"),
-        }
+        assert!(matches!(
+            Timestamp::try_decode(illegal_constructor, &mut bytes.into_iter()),
+            Err(AppError::Amqp(AmqpError::DecodeError))
+        ));
     }
 
     #[test]
     fn test_incomplete_iterator_timestamp_decoding() {
         let data = vec![TIMESTAMP]; // Missing the 8 bytes for the timestamp
 
-        match Timestamp::try_decode(TIMESTAMP, &mut data.into_iter()) {
-            Ok(_) => panic!("Expected an error, but deserialization succeeded"),
-            Err(AppError::IteratorEmptyOrTooShortError) => (), // Expected outcome
-            Err(e) => panic!("Unexpected error type: {e:?}"),
-        }
+        assert!(matches!(
+            Timestamp::try_decode(TIMESTAMP, &mut data.into_iter()),
+            Err(AppError::Amqp(AmqpError::DecodeError))
+        ));
     }
 }

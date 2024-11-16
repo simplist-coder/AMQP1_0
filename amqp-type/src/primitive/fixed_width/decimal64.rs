@@ -1,10 +1,11 @@
 use crate::constants::DECIMAL_64;
 use crate::serde::decode::Decode;
 use crate::serde::encode::{Encode, Encoded};
-use amqp_error::AppError;
-use amqp_utils::sync_util::read_bytes_8;
+use crate::error::AppError;
+use crate::utils::sync_util::read_bytes_8;
 use std::hash::{Hash, Hasher};
 use std::vec::IntoIter;
+use crate::error::amqp_error::AmqpError;
 
 #[derive(Debug, Copy, Clone)]
 pub struct Decimal64(f64);
@@ -22,7 +23,7 @@ impl Decode for Decimal64 {
     {
         match constructor {
             DECIMAL_64 => Ok(parse_decimal64(stream)?),
-            c => Err(AppError::DeserializationIllegalConstructorError(c)),
+            _ => Err(AmqpError::DecodeError)?,
         }
     }
 }
@@ -103,23 +104,19 @@ mod test {
         let illegal_constructor = 0xFF; // Assuming this is not Decimal64
         let bytes = vec![ /* other bytes */];
 
-        match Decimal64::try_decode(illegal_constructor, &mut bytes.into_iter()) {
-            Ok(_) => panic!("Expected an error, but deserialization succeeded"),
-            Err(AppError::DeserializationIllegalConstructorError(c)) => {
-                assert_eq!(illegal_constructor, c);
-            }
-            Err(e) => panic!("Unexpected error type: {e:?}"),
-        }
+        assert!(matches!(
+            Decimal64::try_decode(illegal_constructor, &mut bytes.into_iter()),
+            Err(AppError::Amqp(AmqpError::DecodeError))
+        ))
     }
 
     #[test]
     fn test_empty_iterator_deserialization() {
         let bytes = vec![]; // Empty vector
 
-        match Decimal64::try_decode(DECIMAL_64, &mut bytes.into_iter()) {
-            Ok(_) => panic!("Expected an error, but deserialization succeeded"),
-            Err(AppError::IteratorEmptyOrTooShortError) => (), // Expected outcome
-            Err(e) => panic!("Unexpected error type: {e:?}"),
-        }
+        assert!(matches!(
+            Decimal64::try_decode(DECIMAL_64, &mut bytes.into_iter()),
+            Err(AppError::Amqp(AmqpError::DecodeError))
+        ))
     }
 }

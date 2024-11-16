@@ -1,4 +1,4 @@
-use amqp_error::AppError;
+use crate::error::AppError;
 use std::vec::IntoIter;
 
 pub(crate) trait Decode {

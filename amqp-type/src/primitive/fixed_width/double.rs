@@ -1,10 +1,11 @@
 use crate::constants::DOUBLE;
 use crate::serde::decode::Decode;
 use crate::serde::encode::{Encode, Encoded};
-use amqp_error::AppError;
-use amqp_utils::sync_util::read_bytes_8;
+use crate::error::AppError;
+use crate::utils::sync_util::read_bytes_8;
 use std::hash::Hash;
 use std::vec::IntoIter;
+use crate::error::amqp_error::AmqpError;
 
 /// Crate assumes nothing about the values being passed to it.
 /// Any kind of f64 value is handled as is.
@@ -29,7 +30,7 @@ impl Decode for Double {
     {
         match constructor {
             DOUBLE => Ok(parse_f64(stream)?),
-            c => Err(AppError::DeserializationIllegalConstructorError(c)),
+            _ => Err(AmqpError::DecodeError)?,
         }
     }
 }

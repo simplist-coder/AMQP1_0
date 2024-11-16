@@ -1,5 +1,5 @@
-use crate::validation::verify_bytes_read_eq;
-use amqp_error::AppError;
+use crate::utils::validation::verify_bytes_read_eq;
+use crate::error::AppError;
 use std::vec::IntoIter;
 
 pub fn read_bytes(

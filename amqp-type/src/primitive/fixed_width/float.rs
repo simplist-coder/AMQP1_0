@@ -1,10 +1,11 @@
 use crate::constants::FLOAT;
 use crate::serde::decode::Decode;
 use crate::serde::encode::{Encode, Encoded};
-use amqp_error::AppError;
-use amqp_utils::sync_util::read_bytes_4;
+use crate::error::AppError;
+use crate::utils::sync_util::read_bytes_4;
 use std::hash::Hash;
 use std::vec::IntoIter;
+use crate::error::amqp_error::AmqpError;
 
 #[derive(Debug, Copy, Clone)]
 pub struct Float(f32);
@@ -22,7 +23,7 @@ impl Decode for Float {
     {
         match constructor {
             FLOAT => Ok(parse_f32(stream)?),
-            c => Err(AppError::DeserializationIllegalConstructorError(c)),
+            _ => Err(AmqpError::DecodeError)?,
         }
     }
 }

@@ -3,9 +3,10 @@ use crate::primitive::compound::encoded_vec::EncodedVec;
 use crate::primitive::Primitive;
 use crate::serde::decode::Decode;
 use crate::serde::encode::{Encode, Encoded};
-use amqp_error::AppError;
-use amqp_utils::sync_util::{read_bytes, read_bytes_4};
+use crate::error::AppError;
+use crate::utils::sync_util::{read_bytes, read_bytes_4};
 use std::vec::IntoIter;
+use crate::error::amqp_error::AmqpError;
 
 #[derive(Debug, Hash, Eq, PartialEq, Clone)]
 pub struct List(Vec<Primitive>);
@@ -38,7 +39,7 @@ impl Decode for List {
             LIST_EMPTY => Ok(List(vec![])),
             LIST_SHORT => Ok(parse_short_list(stream)?),
             LIST => Ok(parse_list(stream)?),
-            illegal => Err(AppError::DeserializationIllegalConstructorError(illegal)),
+            _ => Err(AmqpError::DecodeError)?,
         }
     }
 }
@@ -46,10 +47,10 @@ impl Decode for List {
 fn parse_short_list(stream: &mut IntoIter<u8>) -> Result<List, AppError> {
     let size = stream
         .next()
-        .ok_or(AppError::IteratorEmptyOrTooShortError)?;
+        .ok_or(AmqpError::FrameSizeTooSmall)?;
     let count = stream
         .next()
-        .ok_or(AppError::IteratorEmptyOrTooShortError)?;
+        .ok_or(AmqpError::FrameSizeTooSmall)?;
     Ok(List(parse_list_to_vec(
         stream,
         size as usize,
@@ -161,7 +162,7 @@ mod test {
         let res = List::try_decode(0x99, &mut bytes.into_iter());
         assert!(matches!(
             res,
-            Err(AppError::DeserializationIllegalConstructorError(0x99))
+            Err(AppError::Amqp(AmqpError::DecodeError))
         ));
     }
 
@@ -174,7 +175,7 @@ mod test {
         let res = List::try_decode(LIST_SHORT, &mut bytes.into_iter());
         assert!(matches!(
             res,
-            Err(AppError::DeserializationIllegalConstructorError(0x99))
+            Err(AppError::Amqp(AmqpError::DecodeError))
         ));
     }
 
@@ -186,7 +187,7 @@ mod test {
         let res = List::try_decode(0x98, &mut bytes.into_iter());
         assert!(matches!(
             res,
-            Err(AppError::DeserializationIllegalConstructorError(0x98))
+            Err(AppError::Amqp(AmqpError::DecodeError))
         ));
     }
 
@@ -199,7 +200,7 @@ mod test {
         let res = List::try_decode(LIST, &mut bytes.into_iter());
         assert!(matches!(
             res,
-            Err(AppError::DeserializationIllegalConstructorError(0x99))
+            Err(AppError::Amqp(AmqpError::DecodeError))
         ));
     }
 

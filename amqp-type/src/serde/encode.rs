@@ -1,4 +1,4 @@
-use amqp_utils::vec::VecExt;
+use crate::utils::vec::VecExt;
 
 pub trait Encode {
     fn encode(self) -> Encoded;

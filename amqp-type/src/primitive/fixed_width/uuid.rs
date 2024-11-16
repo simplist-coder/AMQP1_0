@@ -1,9 +1,10 @@
 use crate::constants::UUID;
 use crate::serde::decode::Decode;
 use crate::serde::encode::{Encode, Encoded};
-use amqp_error::AppError;
-use amqp_utils::sync_util::read_bytes_16;
+use crate::error::AppError;
+use crate::utils::sync_util::read_bytes_16;
 use std::vec::IntoIter;
+use crate::error::amqp_error::AmqpError;
 
 #[derive(Debug, Hash, Eq, PartialEq, Clone)]
 pub struct Uuid(uuid::Uuid);
@@ -21,7 +22,7 @@ impl Decode for Uuid {
     {
         match constructor {
             UUID => Ok(parse_uuid(stream)?),
-            c => Err(AppError::DeserializationIllegalConstructorError(c)),
+            _ => Err(AmqpError::DecodeError)?
         }
     }
 }
@@ -78,7 +79,7 @@ mod test {
         let decoded = Uuid::try_decode(0x99, &mut bytes.into_iter());
         assert!(matches!(
             decoded,
-            Err(AppError::DeserializationIllegalConstructorError(_))
+            Err(AppError::Amqp(AmqpError::DecodeError))
         ));
     }
 
@@ -88,7 +89,7 @@ mod test {
         let decoded = Uuid::try_decode(UUID, &mut short_bytes.into_iter());
         assert!(matches!(
             decoded,
-            Err(AppError::IteratorEmptyOrTooShortError)
+            Err(AppError::Amqp(AmqpError::DecodeError))
         ));
     }
 
@@ -98,7 +99,7 @@ mod test {
         let decoded = Uuid::try_decode(UUID, &mut val.into_iter());
         assert!(matches!(
             decoded,
-            Err(AppError::IteratorEmptyOrTooShortError)
+            Err(AppError::Amqp(AmqpError::DecodeError))
         ));
     }
 }

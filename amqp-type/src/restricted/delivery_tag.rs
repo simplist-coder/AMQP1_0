@@ -1,6 +1,7 @@
+use crate::error::amqp_error::AmqpError;
 use crate::primitive::variable_width::binary::Binary;
 use crate::primitive::Primitive;
-use amqp_error::AppError;
+use crate::error::AppError;
 
 /// # Delivery Tag
 ///
@@ -15,7 +16,7 @@ impl DeliveryTag {
     pub fn new(bytes: Vec<u8>) -> Result<Self, AppError> {
         match bytes.len() {
             0..=32 => Ok(Self(Binary::from(bytes))),
-            _ => Err(AppError::DeliveryTagIsTooLong),
+            _ => Err(AmqpError::InvalidField)?,
         }
     }
 }
@@ -50,7 +51,7 @@ mod tests {
         let data = vec![1].repeat(33);
         assert!(matches!(
             DeliveryTag::new(data),
-            Err(AppError::DeliveryTagIsTooLong)
+            Err(AppError::Amqp(AmqpError::InvalidField))
         ));
     }
 

@@ -1,9 +1,10 @@
 use crate::constants::{SYMBOL, SYMBOL_SHORT};
 use crate::serde::decode::Decode;
 use crate::serde::encode::{Encode, Encoded};
-use amqp_error::AppError;
-use amqp_utils::sync_util::{read_bytes, read_bytes_4};
+use crate::error::AppError;
+use crate::utils::sync_util::{read_bytes, read_bytes_4};
 use std::vec::IntoIter;
+use crate::error::amqp_error::AmqpError;
 
 #[derive(Debug, Hash, Eq, PartialEq, Clone)]
 pub struct Symbol(String);
@@ -25,14 +26,14 @@ impl Decode for Symbol {
         match constructor {
             SYMBOL_SHORT => Ok(parse_short_symbol(stream)?),
             SYMBOL => Ok(parse_symbol(stream)?),
-            illegal => Err(AppError::DeserializationIllegalConstructorError(illegal)),
+            _ => Err(AmqpError::DecodeError)?
         }
     }
 }
 
 fn parse_short_symbol(stream: &mut IntoIter<u8>) -> Result<Symbol, AppError> {
     match stream.next() {
-        None => Err(AppError::IteratorEmptyOrTooShortError),
+        None => Err(AmqpError::FrameSizeTooSmall)?,
         Some(size) => Ok(Symbol::new(String::from_utf8(read_bytes(
             stream,
             size as usize,
@@ -49,7 +50,7 @@ fn verify_ascii_char_set(string: &str) -> Result<(), AppError> {
     let mut chars = string.chars();
     match chars.all(|c| c.is_ascii()) {
         true => Ok(()),
-        false => Err(AppError::IllegalNonASCIICharacterInSymbol),
+        false => Err(AmqpError::InvalidField)?,
     }
 }
 
@@ -130,7 +131,7 @@ mod test {
         let result = Symbol::try_decode(0xFF, &mut data.into_iter());
         assert!(matches!(
             result,
-            Err(AppError::DeserializationIllegalConstructorError(0xFF))
+            Err(AppError::Amqp(AmqpError::DecodeError))
         ));
     }
 
@@ -140,7 +141,7 @@ mod test {
         let result = Symbol::try_decode(SYMBOL, &mut data.into_iter());
         assert!(matches!(
             result,
-            Err(AppError::IteratorEmptyOrTooShortError)
+            Err(AppError::Amqp(AmqpError::DecodeError))
         ));
     }
 
@@ -150,7 +151,7 @@ mod test {
         let result = Symbol::try_decode(SYMBOL_SHORT, &mut data.into_iter());
         assert!(matches!(
             result,
-            Err(AppError::IllegalNonASCIICharacterInSymbol)
+            Err(AppError::Amqp(AmqpError::InvalidField))
         ));
     }
 }
