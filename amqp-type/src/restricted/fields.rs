@@ -31,7 +31,7 @@ impl From<IndexMap<Symbol, Primitive>> for Map {
     }
 }
 
-impl From<Fields> for Primitive {
+impl From<Fields> for   Primitive {
     fn from(value: Fields) -> Self {
         Primitive::Map(value.0)
     }

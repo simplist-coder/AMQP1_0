@@ -41,7 +41,7 @@ fn parse_small_uint(iter: &mut IntoIter<u8>) -> Result<u32, AppError> {
     if let Some(val) = iter.next() {
         Ok(u32::from(val))
     } else {
-        Err(AmqpError::FrameSizeTooSmall)?
+        Err(AmqpError::DecodeError)?
     }
 }
 

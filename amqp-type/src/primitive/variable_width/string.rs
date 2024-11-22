@@ -33,7 +33,7 @@ impl Decode for String {
 fn parse_small_string(iter: &mut IntoIter<u8>) -> Result<String, AppError> {
     match iter.next() {
         Some(size) => Ok(String::from_utf8(read_bytes(iter, size as usize)?)?),
-        None => Err(AmqpError::FrameSizeTooSmall)?,
+        None => Err(AmqpError::DecodeError)?,
     }
 }
 

@@ -27,7 +27,7 @@ fn parse_i8(iter: &mut IntoIter<u8>) -> Result<i8, AppError> {
     if let Some(val) = iter.next() {
         Ok(i8::from_be_bytes([val]))
     } else {
-        Err(AmqpError::FrameSizeTooSmall)?
+        Err(AmqpError::DecodeError)?
     }
 }
 

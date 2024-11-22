@@ -64,11 +64,11 @@ impl Decode for Composite {
         }
         let descr_constr = stream
             .next()
-            .ok_or(AmqpError::FrameSizeTooSmall)?;
+            .ok_or(AmqpError::DecodeError)?;
         let descriptor = Descriptor::try_decode(descr_constr, stream)?;
         let list_constr = stream
             .next()
-            .ok_or(AmqpError::FrameSizeTooSmall)?;
+            .ok_or(AmqpError::DecodeError)?;
         let list = List::try_decode(list_constr, stream)?;
         Ok(Composite(descriptor, list))
     }
@@ -89,8 +89,12 @@ impl Composite {
         &self.0
     }
 
-    pub fn data(&self) -> &List {
-        &self.1
+    pub fn inner(&self) -> (&Descriptor, &List) {
+        (&self.0, &self.1)
+    }
+
+    pub fn into_inner(self) -> (Descriptor, List) {
+        (self.0, self.1)
     }
 }
 

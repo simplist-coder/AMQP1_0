@@ -34,7 +34,7 @@ impl Decode for Binary {
 fn parse_small_binary(iter: &mut IntoIter<u8>) -> Result<Binary, AppError> {
     match iter.next() {
         Some(size) => Ok(Binary(read_bytes(iter, size as usize)?)),
-        None => Err(AmqpError::FrameSizeTooSmall)?,
+        None => Err(AmqpError::DecodeError)?,
     }
 }
 
@@ -127,7 +127,7 @@ mod test {
         let result = Binary::try_decode(BINARY_SHORT, &mut data.into_iter());
         assert!(matches!(
             result,
-            Err(AppError::Amqp(AmqpError::FrameSizeTooSmall))
+            Err(AppError::Amqp(AmqpError::DecodeError))
         ));
     }
 }

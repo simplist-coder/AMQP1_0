@@ -47,10 +47,10 @@ impl Decode for List {
 fn parse_short_list(stream: &mut IntoIter<u8>) -> Result<List, AppError> {
     let size = stream
         .next()
-        .ok_or(AmqpError::FrameSizeTooSmall)?;
+        .ok_or(AmqpError::DecodeError)?;
     let count = stream
         .next()
-        .ok_or(AmqpError::FrameSizeTooSmall)?;
+        .ok_or(AmqpError::DecodeError)?;
     Ok(List(parse_list_to_vec(
         stream,
         size as usize,
@@ -83,11 +83,22 @@ fn parse_list_to_vec(
     Ok(result)
 }
 
+impl List {
+    pub fn inner(&self) -> &[Primitive] {
+        &self.0
+    }
+
+    pub fn into_inner(self) -> Vec<Primitive> {
+        self.0
+    }
+}
+
 impl From<Vec<Primitive>> for List {
     fn from(value: Vec<Primitive>) -> Self {
         List(value)
     }
 }
+
 
 #[cfg(test)]
 mod test {

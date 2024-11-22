@@ -13,6 +13,16 @@ use crate::error::amqp_error::AmqpError;
 #[derive(Debug, Eq, PartialEq, Clone)]
 pub struct Map(IndexMap<Primitive, Primitive>);
 
+impl Map {
+    pub fn inner(&self) -> &IndexMap<Primitive, Primitive> {
+        &self.0
+    }
+
+    pub fn into_inner(self) -> IndexMap<Primitive, Primitive> {
+        self.0
+    }
+}
+
 impl Encode for Map {
     fn encode(self) -> Encoded {
         let mut res: Vec<Encoded> = Vec::with_capacity(self.0.len());
@@ -48,10 +58,10 @@ impl Decode for Map {
 fn parse_short_map(stream: &mut IntoIter<u8>) -> Result<Map, AppError> {
     let size = stream
         .next()
-        .ok_or(AmqpError::FrameSizeTooSmall)?;
+        .ok_or(AmqpError::DecodeError)?;
     let count = stream
         .next()
-        .ok_or(AmqpError::FrameSizeTooSmall)?;
+        .ok_or(AmqpError::DecodeError)?;
     Ok(Map(parse_to_index_map(
         stream,
         size as usize,

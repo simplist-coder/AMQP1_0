@@ -93,7 +93,7 @@ impl Primitive {
         Self: Sized,
     {
         match stream.next() {
-            None => Err(AmqpError::FrameSizeTooSmall)?,
+            None => Err(AmqpError::DecodeError)?,
             Some(constructor) => Self::try_decode_with_constructor(constructor, stream),
         }
     }
@@ -291,6 +291,22 @@ impl From<Decimal64> for Primitive {
 impl From<Decimal128> for Primitive {
     fn from(value: Decimal128) -> Self {
         Primitive::Decimal128(value)
+    }
+}
+
+impl Primitive {
+    pub fn into_string(self) -> Option<String> {
+        match self {
+            Primitive::String(s) => Some(s),
+            _ => None,
+        }
+    }
+
+    pub fn into_u16(self) -> Option<u16> {
+        match self {
+            Primitive::Ushort(s) => Some(s),
+            _ => None,
+        }
     }
 }
 

@@ -9,6 +9,12 @@ use crate::error::amqp_error::AmqpError;
 #[derive(Debug, Hash, Eq, PartialEq, Clone)]
 pub struct Symbol(String);
 
+impl Symbol {
+    pub fn inner(&self) -> &str {
+        &self.0
+    }
+}
+
 impl Encode for Symbol {
     fn encode(self) -> Encoded {
         match self.0.len() {
@@ -33,7 +39,7 @@ impl Decode for Symbol {
 
 fn parse_short_symbol(stream: &mut IntoIter<u8>) -> Result<Symbol, AppError> {
     match stream.next() {
-        None => Err(AmqpError::FrameSizeTooSmall)?,
+        None => Err(AmqpError::DecodeError)?,
         Some(size) => Ok(Symbol::new(String::from_utf8(read_bytes(
             stream,
             size as usize,

@@ -43,7 +43,7 @@ fn parse_small_ulong(iter: &mut IntoIter<u8>) -> Result<u64, AppError> {
     if let Some(val) = iter.next() {
         Ok(u64::from(val))
     } else {
-        Err(AmqpError::FrameSizeTooSmall)?
+        Err(AmqpError::DecodeError)?
     }
 }
 

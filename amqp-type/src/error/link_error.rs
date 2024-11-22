@@ -1,9 +1,25 @@
-use crate::error::ErrorCondition;
+use crate::error::{AppError, ErrorCondition};
 use crate::primitive::variable_width::symbol::Symbol;
 use crate::primitive::Primitive;
 use crate::restricted::fields::Fields;
 use indexmap::IndexMap;
+use std::env;
 use std::fmt::{Display, Formatter};
+use crate::config::Config;
+
+const AMQP_LINK_DETACH_FORCED: &'static str = "amqp:link:detach-forced";
+const AMQP_LINK_TRANSFER_LIMIT_EXCEEDED: &'static str = "amqp:link:transfer-limit-exceeded";
+const AMQP_LINK_MESSAGE_SIZE_EXCEEDED: &'static str = "amqp:link:message-size-exceeded";
+const AMQP_LINK_REDIRECT: &'static str = "amqp:link:redirect";
+const AMQP_LINK_STOLEN: &'static str = "amqp:link:stolen";
+
+pub(crate) const TAGS: [&'static str; 5] = [
+    AMQP_LINK_DETACH_FORCED,
+    AMQP_LINK_TRANSFER_LIMIT_EXCEEDED,
+    AMQP_LINK_MESSAGE_SIZE_EXCEEDED,
+    AMQP_LINK_REDIRECT,
+    AMQP_LINK_STOLEN,
+];
 
 #[derive(Debug)]
 pub enum LinkError {
@@ -11,10 +27,10 @@ pub enum LinkError {
     TransferLimitExceeded,
     MessageSizeExceeded,
     Redirect {
-        host_name: String,
-        network_host: String,
-        port: u16,
-        address: String,
+        host_name: Option<String>,
+        network_host: Option<String>,
+        port: Option<u16>,
+        address: Option<String>,
     },
     Stolen,
 }
@@ -31,6 +47,11 @@ impl Display for LinkError {
     }
 }
 
+const HOST_NAME: &'static str = "hostname";
+const NETWORK_HOST: &'static str = "network-host";
+const PORT: &'static str = "port";
+const ADDRESS: &'static str = "address";
+
 impl ErrorCondition for LinkError {
     fn error_condition(&self) -> Symbol {
         self.to_string()
@@ -38,7 +59,7 @@ impl ErrorCondition for LinkError {
             .expect("LinkError to Symbol conversion must never fail.")
     }
 
-    fn description(&self) -> Option<String> {
+    fn amqp_description(&self) -> Option<String> {
         let desc = match self {
             LinkError::DetachForced => "An operator intervened to detach for some reason.",
             LinkError::TransferLimitExceeded => "The peer sent more Message transfers than currently allowed on the link.",
@@ -56,31 +77,85 @@ impl ErrorCondition for LinkError {
             LinkError::TransferLimitExceeded => None,
             LinkError::MessageSizeExceeded => None,
             LinkError::Stolen => None,
-            LinkError::Redirect {
-                host_name,
-                network_host,
-                port,
-                address,
-            } => {
+            LinkError::Redirect {..} => {
+                let host_name = env::var("AMQP_LINK_REDIRECT_HOST_NAME").ok();
+                let network_host = env::var("AMQP_LINK_REDIRECT_NETWORK_HOST").ok();
+                let address = env::var("AMQP_LINK_REDIRECT_ADDRESS").ok();
+                let port = env::var("AMQP_LINK_REDIRECT_PORT")
+                    .ok()
+                    .map(|port| port.parse::<u16>().ok())
+                    .expect("Port must be parsable into a u16.");
                 let mut map = IndexMap::with_capacity(4);
                 map.insert(
-                    Symbol::new("hostname".to_string()).expect("Must not fail"),
-                    Primitive::String(host_name.clone()),
+                    Symbol::new(HOST_NAME.to_string()).expect("Must not fail"),
+                    host_name.into(),
                 );
                 map.insert(
-                    Symbol::new("network-host".to_string()).expect("Must not fail"),
-                    Primitive::String(network_host.clone()),
+                    Symbol::new(NETWORK_HOST.to_string()).expect("Must not fail"),
+                    network_host.into(),
                 );
                 map.insert(
-                    Symbol::new("port".to_string()).expect("Must not fail"),
-                    Primitive::Ushort(port.clone()),
+                    Symbol::new(PORT.to_string()).expect("Must not fail"),
+                    port.into(),
                 );
                 map.insert(
-                    Symbol::new("address".to_string()).expect("Must not fail"),
-                    Primitive::String(address.clone()),
+                    Symbol::new(ADDRESS.to_string()).expect("Must not fail"),
+                    address.into(),
                 );
                 Some(Fields::new(map))
             }
+        }
+    }
+}
+
+impl TryFrom<(Option<Primitive>, Option<Primitive>, Option<Primitive>)> for LinkError {
+    type Error = AppError;
+
+    fn try_from((condition, _, info): (Option<Primitive>, Option<Primitive>, Option<Primitive>)) -> Result<Self, Self::Error> {
+        if let Some(Primitive::Symbol(s)) = condition {
+            match s.inner() {
+                AMQP_LINK_DETACH_FORCED => Err(LinkError::DetachForced)?,
+                AMQP_LINK_TRANSFER_LIMIT_EXCEEDED => Err(LinkError::TransferLimitExceeded)?,
+                AMQP_LINK_MESSAGE_SIZE_EXCEEDED => Err(LinkError::MessageSizeExceeded)?,
+                AMQP_LINK_STOLEN => Err(LinkError::Stolen)?,
+                AMQP_LINK_REDIRECT => {
+                    if let Some(Primitive::Map(info)) = info {
+                        let mut values = info.into_inner();
+                        let host_name = values
+                            .remove(&Primitive::from(HOST_NAME))
+                            .map(|v| v.into_string())
+                            .flatten();
+                        let network_host = values
+                            .remove(&Primitive::from(NETWORK_HOST))
+                            .map(|v| v.into_string())
+                            .flatten();
+                        let address = values
+                            .remove(&Primitive::from(ADDRESS))
+                            .map(|v|v.into_string())
+                            .flatten();
+                        let port = values
+                            .remove(&Primitive::from(PORT))
+                            .map(|v| v.into_u16())
+                            .flatten();
+                        Err(LinkError::Redirect {
+                            host_name,
+                            network_host,
+                            port,
+                            address
+                        })?
+                    } else {
+                        Err(LinkError::Redirect {
+                            host_name: None,
+                            network_host: None,
+                            port: None,
+                            address: None
+                        })?
+                    }
+                },
+                _ => Err(AppError::SpecificationNonCompliantError),
+            }
+        } else {
+            Err(AppError::SpecificationNonCompliantError)
         }
     }
 }

@@ -50,13 +50,13 @@ impl Decode for Array {
 fn parse_short_array(stream: &mut IntoIter<u8>) -> Result<Array, AppError> {
     let size = stream
         .next()
-        .ok_or(AmqpError::FrameSizeTooSmall)?;
+        .ok_or(AmqpError::DecodeError)?;
     let count = stream
         .next()
-        .ok_or(AmqpError::FrameSizeTooSmall)?;
+        .ok_or(AmqpError::DecodeError)?;
     let element_constructor = stream
         .next()
-        .ok_or(AmqpError::FrameSizeTooSmall)?;
+        .ok_or(AmqpError::DecodeError)?;
     Ok(Array(parse_raw_to_vec(
         stream,
         size as usize,
@@ -70,7 +70,7 @@ fn parse_array(stream: &mut IntoIter<u8>) -> Result<Array, AppError> {
     let count = u32::from_be_bytes(read_bytes_4(stream)?);
     let element_constructor = stream
         .next()
-        .ok_or(AmqpError::FrameSizeTooSmall)?;
+        .ok_or(AmqpError::DecodeError)?;
     Ok(Array(parse_raw_to_vec(
         stream,
         size as usize,
