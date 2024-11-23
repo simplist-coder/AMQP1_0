@@ -120,21 +120,21 @@ impl TryFrom<(Option<Primitive>, Option<Primitive>, Option<Primitive>)> for Link
                 AMQP_LINK_REDIRECT => {
                     if let Some(Primitive::Map(info)) = info {
                         let mut values = info.into_inner();
-                        let host_name = values
-                            .remove(&Primitive::from(HOST_NAME))
-                            .map(|v| v.into_string())
-                            .flatten();
-                        let network_host = values
-                            .remove(&Primitive::from(NETWORK_HOST))
-                            .map(|v| v.into_string())
-                            .flatten();
                         let address = values
-                            .remove(&Primitive::from(ADDRESS))
-                            .map(|v|v.into_string())
+                            .pop()
+                            .map(|(_, v)|v.into_string())
                             .flatten();
                         let port = values
-                            .remove(&Primitive::from(PORT))
-                            .map(|v| v.into_u16())
+                            .pop()
+                            .map(|(_, v)| v.into_u16())
+                            .flatten();
+                        let network_host = values
+                            .pop()
+                            .map(|(_, v)| v.into_string())
+                            .flatten();
+                        let host_name = values
+                            .pop()
+                            .map(|(_, v)| v.into_string())
                             .flatten();
                         Err(LinkError::Redirect {
                             host_name,
@@ -160,3 +160,30 @@ impl TryFrom<(Option<Primitive>, Option<Primitive>, Option<Primitive>)> for Link
 }
 
 impl std::error::Error for LinkError {}
+
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+
+
+    #[test]
+    fn test_link_error_info() {
+        env::set_var("AMQP_LINK_REDIRECT_HOST_NAME", "localhost");
+        env::set_var("AMQP_LINK_REDIRECT_NETWORK_HOST", "127.0.0.1");
+        env::set_var("AMQP_LINK_REDIRECT_PORT", "9876");
+        env::set_var("AMQP_LINK_REDIRECT_ADDRESS", "15");
+        let expected = Fields::new([
+            (HOST_NAME.to_string().try_into().unwrap(), Primitive::from(Some("localhost".to_string()))),
+            (NETWORK_HOST.to_string().try_into().unwrap(), Some("127.0.0.1".to_string()).into()),
+            (PORT.to_string().try_into().unwrap(), Some(9876_u16).into()),
+            (ADDRESS.to_string().try_into().unwrap(), Some("15".to_string()).into()),
+        ].into());
+
+        assert_eq!(LinkError::DetachForced.info(), None);
+        assert_eq!(LinkError::TransferLimitExceeded.info(), None);
+        assert_eq!(LinkError::MessageSizeExceeded.info(), None);
+        assert_eq!(LinkError::Redirect { host_name: None, network_host: None, port: None, address: None }.info().unwrap(), expected);
+    }
+}
