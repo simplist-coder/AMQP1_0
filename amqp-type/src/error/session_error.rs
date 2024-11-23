@@ -1,9 +1,9 @@
+use crate::config::Config;
 use crate::error::{AppError, ErrorCondition};
 use crate::primitive::variable_width::symbol::Symbol;
+use crate::primitive::Primitive;
 use crate::restricted::fields::Fields;
 use std::fmt::{Display, Formatter};
-use crate::config::Config;
-use crate::primitive::Primitive;
 
 const AMQP_SESSION_WINDOW_VIOLATION: &'static str = "amqp:session:window-violation";
 const AMQP_SESSION_ERRANT_LINK: &'static str = "amqp:session:errant-link";
@@ -61,8 +61,20 @@ impl ErrorCondition for SessionError {
 impl TryFrom<(Option<Primitive>, Option<Primitive>, Option<Primitive>)> for SessionError {
     type Error = AppError;
 
-    fn try_from(value: (Option<Primitive>, Option<Primitive>, Option<Primitive>)) -> Result<Self, Self::Error> {
-        todo!()
+    fn try_from(
+        (condition, _, _): (Option<Primitive>, Option<Primitive>, Option<Primitive>),
+    ) -> Result<Self, Self::Error> {
+        if let Some(Primitive::Symbol(symbol)) = condition {
+            match symbol.inner() {
+                AMQP_SESSION_WINDOW_VIOLATION => Err(SessionError::WindowViolation)?,
+                AMQP_SESSION_ERRANT_LINK => Err(SessionError::ErrantLink)?,
+                AMQP_SESSION_HANDLE_IN_USE => Err(SessionError::HandleInUse)?,
+                AMQP_SESSION_UNATTACHED_HANDLE => Err(SessionError::UnattachedHandle)?,
+                _ => Err(AppError::SpecificationNonCompliantError),
+            }
+        } else {
+            Err(AppError::SpecificationNonCompliantError)
+        }
     }
 }
 impl std::error::Error for SessionError {}

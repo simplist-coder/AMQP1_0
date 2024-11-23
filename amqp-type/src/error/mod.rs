@@ -216,7 +216,7 @@ mod tests {
         ))
     }
 
-    /*#[test]
+    #[test]
     fn test_round_trip_session_error() {
         let error = AppError::Session(SessionError::HandleInUse);
         let encoded = error.encode().into_bytes();
@@ -224,5 +224,5 @@ mod tests {
             AppError::try_decode_without_constructor(&mut encoded.into_iter()),
             Err(AppError::Session(SessionError::HandleInUse))
         ))
-    }*/
+    }
 }
