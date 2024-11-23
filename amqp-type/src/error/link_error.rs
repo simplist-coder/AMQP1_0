@@ -167,6 +167,89 @@ mod tests {
     use super::*;
 
 
+    #[test]
+    fn test_try_from_link_error_detach_forced() {
+        let error = (
+            Some(Primitive::Symbol(
+                Symbol::with_ascii(AMQP_LINK_DETACH_FORCED),
+            )),
+            None,
+            None,
+        );
+        assert!(matches!(
+            LinkError::try_from(error),
+            Err(AppError::Link(LinkError::DetachForced))
+        ));
+    }
+    #[test]
+    fn test_try_from_link_error_transfer_limit_exceeded() {
+        let error = (
+            Some(Primitive::Symbol(
+                Symbol::with_ascii(AMQP_LINK_TRANSFER_LIMIT_EXCEEDED),
+            )),
+            None,
+            None,
+        );
+        assert!(matches!(
+            LinkError::try_from(error),
+            Err(AppError::Link(LinkError::TransferLimitExceeded))
+        ));
+    }
+    #[test]
+    fn test_try_from_link_error_message_size_exceeded() {
+        let error = (
+            Some(Primitive::Symbol(
+                Symbol::with_ascii(AMQP_LINK_MESSAGE_SIZE_EXCEEDED),
+            )),
+            None,
+            None,
+        );
+        assert!(matches!(
+            LinkError::try_from(error),
+            Err(AppError::Link(LinkError::MessageSizeExceeded))
+        ));
+    }
+    #[test]
+    fn test_try_from_link_error_stolen() {
+        let error = (
+            Some(Primitive::Symbol(
+                Symbol::with_ascii(AMQP_LINK_STOLEN),
+            )),
+            None,
+            None,
+        );
+        assert!(matches!(
+            LinkError::try_from(error),
+            Err(AppError::Link(LinkError::Stolen))
+        ));
+    }
+    #[test]
+    fn test_try_from_link_error_redirect() {
+        let redirect_args = {
+            let mut args = IndexMap::new();
+            args.insert(Symbol::with_ascii(HOST_NAME), "localhost".into());
+            args.insert(Symbol::with_ascii(NETWORK_HOST), "127.0.0.1".into());
+            args.insert(Symbol::with_ascii(PORT), 9876_u16.into());
+            args.insert(Symbol::with_ascii(ADDRESS), "15".into());
+            Some(Fields::new(args).into())
+        };
+        let error = (
+            Some(Primitive::Symbol(
+                Symbol::with_ascii(AMQP_LINK_REDIRECT),
+            )),
+            None,
+            redirect_args
+        );
+        match LinkError::try_from(error) {
+            Err(AppError::Link(LinkError::Redirect { host_name, network_host, port, address })) => {
+                assert_eq!(host_name, Some("localhost".to_string()));
+                assert_eq!(port, Some(9876_u16.into()));
+                assert_eq!(address, Some("15".into()));
+                assert_eq!(network_host, Some("127.0.0.1".to_string()));
+            }
+            result => panic!("Expected LinkError::Redirect but was: {:?}", result),
+        }
+    }
 
     #[test]
     fn test_link_error_info() {
