@@ -66,6 +66,11 @@ impl Symbol {
         Ok(Symbol(string))
     }
 
+    pub fn with_ascii(string: &str) -> Self {
+        verify_ascii_char_set(&string).expect("String contains non ASCII characters");
+        Symbol(string.to_owned())
+    }
+
     pub fn as_str(&self) -> &str {
         &self.0
     }

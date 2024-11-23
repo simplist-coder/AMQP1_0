@@ -121,20 +121,20 @@ impl TryFrom<(Option<Primitive>, Option<Primitive>, Option<Primitive>)> for Link
                     if let Some(Primitive::Map(info)) = info {
                         let mut values = info.into_inner();
                         let address = values
-                            .pop()
-                            .map(|(_, v)|v.into_string())
+                            .remove(&Primitive::Symbol(Symbol::with_ascii(ADDRESS)))
+                            .map(|v|v.into_string())
                             .flatten();
                         let port = values
-                            .pop()
-                            .map(|(_, v)| v.into_u16())
+                            .remove(&Primitive::Symbol(Symbol::with_ascii(PORT)))
+                            .map(|v| v.into_u16())
                             .flatten();
                         let network_host = values
-                            .pop()
-                            .map(|(_, v)| v.into_string())
+                            .remove(&Primitive::Symbol(Symbol::with_ascii(NETWORK_HOST)))
+                            .map(|v| v.into_string())
                             .flatten();
                         let host_name = values
-                            .pop()
-                            .map(|(_, v)| v.into_string())
+                            .remove(&Primitive::Symbol(Symbol::with_ascii(HOST_NAME)))
+                            .map(|v| v.into_string())
                             .flatten();
                         Err(LinkError::Redirect {
                             host_name,
@@ -175,10 +175,10 @@ mod tests {
         env::set_var("AMQP_LINK_REDIRECT_PORT", "9876");
         env::set_var("AMQP_LINK_REDIRECT_ADDRESS", "15");
         let expected = Fields::new([
-            (HOST_NAME.to_string().try_into().unwrap(), Primitive::from(Some("localhost".to_string()))),
-            (NETWORK_HOST.to_string().try_into().unwrap(), Some("127.0.0.1".to_string()).into()),
-            (PORT.to_string().try_into().unwrap(), Some(9876_u16).into()),
-            (ADDRESS.to_string().try_into().unwrap(), Some("15".to_string()).into()),
+            (Symbol::with_ascii(HOST_NAME).into(), Primitive::from(Some("localhost".to_string()))),
+            (Symbol::with_ascii(NETWORK_HOST).into(), Some("127.0.0.1".to_string()).into()),
+            (Symbol::with_ascii(PORT).into(), Some(9876_u16).into()),
+            (Symbol::with_ascii(ADDRESS).into(), Some("15".to_string()).into()),
         ].into());
 
         assert_eq!(LinkError::DetachForced.info(), None);

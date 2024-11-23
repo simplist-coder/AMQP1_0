@@ -1,14 +1,14 @@
 use crate::constants::{MAP, MAP_SHORT};
+use crate::error::amqp_error::AmqpError;
+use crate::error::AppError;
 use crate::primitive::compound::encoded_vec::EncodedVec;
 use crate::primitive::Primitive;
 use crate::serde::decode::Decode;
 use crate::serde::encode::{Encode, Encoded};
-use crate::error::AppError;
 use crate::utils::sync_util::{read_bytes, read_bytes_4};
 use indexmap::IndexMap;
 use std::hash::Hash;
 use std::vec::IntoIter;
-use crate::error::amqp_error::AmqpError;
 
 #[derive(Debug, Eq, PartialEq, Clone)]
 pub struct Map(IndexMap<Primitive, Primitive>);
@@ -20,6 +20,22 @@ impl Map {
 
     pub fn into_inner(self) -> IndexMap<Primitive, Primitive> {
         self.0
+    }
+
+    pub fn get<T>(&self, key: T) -> Option<&Primitive>
+    where
+        T: Into<Primitive>,
+    {
+        let primitive: Primitive = key.into();
+        self.0.get(&primitive)
+    }
+
+    pub fn remove<T>(&mut self, key: T) -> Option<Primitive>
+    where
+        T: Into<Primitive>,
+    {
+        let primitive: Primitive = key.into();
+        self.0.remove(&primitive)
     }
 }
 
@@ -50,18 +66,14 @@ impl Decode for Map {
         match constructor {
             MAP_SHORT => Ok(parse_short_map(stream)?),
             MAP => Ok(parse_map(stream)?),
-            _ => Err(AmqpError::DecodeError)?
+            _ => Err(AmqpError::DecodeError)?,
         }
     }
 }
 
 fn parse_short_map(stream: &mut IntoIter<u8>) -> Result<Map, AppError> {
-    let size = stream
-        .next()
-        .ok_or(AmqpError::DecodeError)?;
-    let count = stream
-        .next()
-        .ok_or(AmqpError::DecodeError)?;
+    let size = stream.next().ok_or(AmqpError::DecodeError)?;
+    let count = stream.next().ok_or(AmqpError::DecodeError)?;
     Ok(Map(parse_to_index_map(
         stream,
         size as usize,
@@ -114,6 +126,7 @@ mod test {
     use super::*;
 
     use crate::constants::{INTEGER, MAP, MAP_SHORT, UNSIGNED_SHORT};
+    use crate::primitive::variable_width::symbol::Symbol;
 
     const ILLEGAL_ELEMENT_CONSTRUCTOR: u8 = 0x99;
 
@@ -181,10 +194,7 @@ mod test {
     fn try_decode_short_map_returns_error_if_constructor_is_wrong() {
         let bytes = vec![5, 1, INTEGER, 0x00, 0x00, 0x00, 21];
         let res = Map::try_decode(ILLEGAL_ELEMENT_CONSTRUCTOR, &mut bytes.into_iter());
-        assert!(matches!(
-            res,
-            Err(AppError::Amqp(AmqpError::DecodeError))
-        ));
+        assert!(matches!(res, Err(AppError::Amqp(AmqpError::DecodeError))));
     }
 
     #[test]
@@ -202,10 +212,7 @@ mod test {
             16,
         ];
         let res = Map::try_decode(MAP_SHORT, &mut bytes.into_iter());
-        assert!(matches!(
-            res,
-            Err(AppError::Amqp(AmqpError::DecodeError))
-        ));
+        assert!(matches!(res, Err(AppError::Amqp(AmqpError::DecodeError))));
     }
 
     #[test]
@@ -214,10 +221,7 @@ mod test {
             0x00, 0x00, 0x00, 4, 0x00, 0x00, 0x00, 1, INTEGER, 0x00, 0x00, 0x00, 0x15,
         ];
         let res = Map::try_decode(ILLEGAL_ELEMENT_CONSTRUCTOR, &mut bytes.into_iter());
-        assert!(matches!(
-            res,
-            Err(AppError::Amqp(AmqpError::DecodeError))
-        ));
+        assert!(matches!(res, Err(AppError::Amqp(AmqpError::DecodeError))));
     }
 
     #[test]
@@ -241,20 +245,14 @@ mod test {
             16,
         ];
         let res = Map::try_decode(MAP, &mut bytes.into_iter());
-        assert!(matches!(
-            res,
-            Err(AppError::Amqp(AmqpError::DecodeError))
-        ));
+        assert!(matches!(res, Err(AppError::Amqp(AmqpError::DecodeError))));
     }
 
     #[test]
     fn try_decode_short_map_returns_error_number_of_elements_is_odd() {
         let bytes = vec![5, 1, INTEGER, 0x00, 0x00, 0x00, 21];
         let res = Map::try_decode(MAP_SHORT, &mut bytes.into_iter());
-        assert!(matches!(
-            res,
-            Err(AppError::Amqp(AmqpError::InvalidField))
-        ));
+        assert!(matches!(res, Err(AppError::Amqp(AmqpError::InvalidField))));
     }
 
     #[test]
@@ -263,9 +261,16 @@ mod test {
             0x00, 0x00, 0x00, 5, 0x00, 0x00, 0x00, 1, INTEGER, 0x00, 0x00, 0x00, 21,
         ];
         let res = Map::try_decode(MAP, &mut bytes.into_iter());
-        assert!(matches!(
-            res,
-            Err(AppError::Amqp(AmqpError::InvalidField))
-        ));
+        assert!(matches!(res, Err(AppError::Amqp(AmqpError::InvalidField))));
+    }
+
+    #[test]
+    fn test_can_access_map_by_primitive() {
+        let mut map = IndexMap::new();
+        map.insert(Symbol::with_ascii("hello").into(), 15.into());
+        let m = Map(map);
+
+        let option = m.get(Symbol::with_ascii("hello")).unwrap();
+        assert_eq!(option, &Primitive::Int(15));
     }
 }

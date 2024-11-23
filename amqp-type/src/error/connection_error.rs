@@ -51,7 +51,7 @@ impl ErrorCondition for ConnectionError {
         let desc = match self {
             ConnectionError::ConnectionForced => "An operator intervened to close the Connection for some reason. The client may retry at some later date.",
             ConnectionError::FramingError => "A valid frame header cannot be formed from the incoming byte stream.",
-            ConnectionError::Redirect{..} => "The container is no longer available on the current connection. The peer should attempt reconnection to the container using the details provided in the info map."
+            ConnectionError::Redirect { .. } => "The container is no longer available on the current connection. The peer should attempt reconnection to the container using the details provided in the info map."
         }.to_string();
         Some(desc)
     }
@@ -104,11 +104,19 @@ impl TryFrom<(Option<Primitive>, Option<Primitive>, Option<Primitive>)> for Conn
                 AMQP_CONNECTION_FORCED => Err(ConnectionError::ConnectionForced)?,
                 AMQP_CONNECTION_FRAMING_ERROR => Err(ConnectionError::FramingError)?,
                 AMQP_CONNECTION_REDIRECT => {
-                    if let Some(Primitive::Map(info)) = info {
-                        let mut values = info.into_inner();
-                        let port = values.pop().map(|(_, v)| v.into_u16()).flatten();
-                        let network_host = values.pop().map(|(_, v)| v.into_string()).flatten();
-                        let host_name = values.pop().map(|(_, v)| v.into_string()).flatten();
+                    if let Some(Primitive::Map(mut info)) = info {
+                        let port = info
+                            .remove(Symbol::with_ascii(PORT))
+                            .map(|v| v.into_u16())
+                            .flatten();
+                        let network_host = info
+                            .remove(Symbol::with_ascii(NETWORK_HOST))
+                            .map(|v| v.into_string())
+                            .flatten();
+                        let host_name = info
+                            .remove(Symbol::with_ascii(HOST_NAME))
+                            .map(|v| v.into_string())
+                            .flatten();
                         Err(ConnectionError::Redirect {
                             host_name,
                             network_host,
@@ -183,18 +191,9 @@ mod tests {
     fn test_try_from_connection_error_redirect_values() {
         let redirect_args = {
             let mut args = IndexMap::new();
-            args.insert(
-                Symbol::new(HOST_NAME.to_string()).expect("Must not fail"),
-                "localhost".into(),
-            );
-            args.insert(
-                Symbol::new(NETWORK_HOST.to_string()).expect("Must not fail"),
-                "127.0.0.1".into(),
-            );
-            args.insert(
-                Symbol::new(PORT.to_string()).expect("Must not fail"),
-                9876_u16.into(),
-            );
+            args.insert(Symbol::with_ascii(HOST_NAME), "localhost".into());
+            args.insert(Symbol::with_ascii(NETWORK_HOST), "127.0.0.1".into());
+            args.insert(Symbol::with_ascii(PORT), 9876_u16.into());
             Some(Fields::new(args).into())
         };
         let error = (
@@ -223,14 +222,32 @@ mod tests {
         env::set_var("AMQP_CONNECTION_REDIRECT_HOST_NAME", "localhost");
         env::set_var("AMQP_CONNECTION_REDIRECT_NETWORK_HOST", "127.0.0.1");
         env::set_var("AMQP_CONNECTION_REDIRECT_PORT", "9876");
-        let expected = Fields::new([
-            (HOST_NAME.to_string().try_into().unwrap(), Primitive::from(Some("localhost".to_string()))),
-            (NETWORK_HOST.to_string().try_into().unwrap(), Some("127.0.0.1".to_string()).into()),
-            (PORT.to_string().try_into().unwrap(), Some(9876_u16).into()),
-        ].into());
+        let expected = Fields::new(
+            [
+                (
+                    HOST_NAME.to_string().try_into().unwrap(),
+                    Primitive::from(Some("localhost".to_string())),
+                ),
+                (
+                    NETWORK_HOST.to_string().try_into().unwrap(),
+                    Some("127.0.0.1".to_string()).into(),
+                ),
+                (PORT.to_string().try_into().unwrap(), Some(9876_u16).into()),
+            ]
+            .into(),
+        );
 
         assert_eq!(ConnectionError::ConnectionForced.info(), None);
         assert_eq!(ConnectionError::FramingError.info(), None);
-        assert_eq!(ConnectionError::Redirect { host_name: None, network_host: None, port: None }.info().unwrap(), expected);
+        assert_eq!(
+            ConnectionError::Redirect {
+                host_name: None,
+                network_host: None,
+                port: None
+            }
+            .info()
+            .unwrap(),
+            expected
+        );
     }
 }
