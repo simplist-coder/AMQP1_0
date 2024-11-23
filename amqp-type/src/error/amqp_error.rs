@@ -3,7 +3,6 @@ use crate::primitive::variable_width::symbol::Symbol;
 use crate::primitive::Primitive;
 use crate::restricted::fields::Fields;
 use std::fmt::{Display, Formatter};
-use crate::config::Config;
 
 const AMQP_INTERNAL_ERROR: &'static str = "amqp:internal-error";
 const AMQP_NOT_FOUND: &'static str = "amqp:not-found";

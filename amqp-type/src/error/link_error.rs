@@ -5,7 +5,6 @@ use crate::restricted::fields::Fields;
 use indexmap::IndexMap;
 use std::env;
 use std::fmt::{Display, Formatter};
-use crate::config::Config;
 
 const AMQP_LINK_DETACH_FORCED: &'static str = "amqp:link:detach-forced";
 const AMQP_LINK_TRANSFER_LIMIT_EXCEEDED: &'static str = "amqp:link:transfer-limit-exceeded";

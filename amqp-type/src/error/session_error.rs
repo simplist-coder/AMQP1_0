@@ -1,4 +1,3 @@
-use crate::config::Config;
 use crate::error::{AppError, ErrorCondition};
 use crate::primitive::variable_width::symbol::Symbol;
 use crate::primitive::Primitive;
