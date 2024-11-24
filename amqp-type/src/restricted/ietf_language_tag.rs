@@ -1,4 +1,8 @@
+use std::vec::IntoIter;
+use crate::error::AppError;
 use crate::primitive::variable_width::symbol::Symbol;
+use crate::serde::decode::Decode;
+use crate::serde::encode::{Encode, Encoded};
 
 /// # IETF Language Tag
 ///
@@ -17,6 +21,51 @@ use crate::primitive::variable_width::symbol::Symbol;
 /// this uses a hyphen separator, not an underscore).
 #[derive(Debug, Clone)]
 pub struct IetfLanguageTag(Symbol);
+
+impl IetfLanguageTag {
+    pub fn new(value: String) -> Self {
+        match VALID_LANGUAGE_CODES.contains(&value.as_str()) {
+            true => {
+                match Symbol::new(value) {
+                    Ok(valid) => Self(valid),
+                    Err(_) => {
+                        Self::default()
+                    }
+                }
+            }
+            false => Self::default()
+        }
+    }
+
+    pub fn inner(&self) -> &str {
+        &self.0.inner()
+    }
+
+    pub fn into_inner(self) -> Symbol {
+        self.0
+    }
+}
+
+impl Encode for IetfLanguageTag {
+    fn encode(self) -> Encoded {
+        self.into_inner().encode()
+    }
+}
+
+impl Decode for IetfLanguageTag {
+    fn try_decode(constructor: u8, stream: &mut IntoIter<u8>) -> Result<Self, AppError>
+    where
+        Self: Sized
+    {
+        Symbol::try_decode(constructor, stream).map(Self)
+    }
+}
+
+impl Default for IetfLanguageTag {
+    fn default() -> Self {
+        Self(Symbol::with_ascii("en-us"))
+    }
+}
 
 const VALID_LANGUAGE_CODES: [&'static str; 284] = [
     "aa", "ab", "ae", "af", "ak", "am", "an", "ar", "ar-ae", "ar-bh", "ar-dz", "ar-eg", "ar-iq",
@@ -41,3 +90,20 @@ const VALID_LANGUAGE_CODES: [&'static str; 284] = [
     "tl", "tn", "to", "tr", "ts", "tt", "tw", "ty", "ug", "uk", "ur", "us", "uz", "ve", "vi", "vo",
     "wa", "wo", "xh", "yi", "yo", "za", "zh", "zh-cn", "zh-hk", "zh-mo", "zh-sg", "zh-tw", "zu",
 ];
+
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_ietf_language_tag_should_contain_only_valid_ietf_codes() {
+        assert_eq!("de-at", IetfLanguageTag::new("de-at".into()).inner());
+    }
+
+    #[test]
+    fn test_ietf_language_tag_falls_back_to_en_us_as_default() {
+        assert_eq!("en-us", IetfLanguageTag::new("invalid".into()).inner());
+    }
+
+}
