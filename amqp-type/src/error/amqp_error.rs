@@ -147,7 +147,6 @@ impl std::error::Error for AmqpError {}
 mod tests {
     use super::*;
 
-    fn tag_to_error_pattern() {}
 
     #[test]
     fn test_try_from_triple_for_all_amqp_errors() {

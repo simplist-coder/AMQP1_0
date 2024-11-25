@@ -48,7 +48,7 @@ impl IetfLanguageTag {
 
 impl Encode for IetfLanguageTag {
     fn encode(self) -> Encoded {
-        self.into_inner().encode()
+        self.0.encode()
     }
 }
 
