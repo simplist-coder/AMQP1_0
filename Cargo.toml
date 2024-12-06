@@ -4,7 +4,7 @@ members = [
   "amqp-transport",
   "amqp-messaging",
   "amqp-transaction",
-  "amqp-security",
+  "amqp-security", "amqp-derive",
 ]
 resolver = "2"
 

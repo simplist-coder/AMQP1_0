@@ -91,6 +91,10 @@ impl List {
     pub fn into_inner(self) -> Vec<Primitive> {
         self.0
     }
+
+    pub fn pop_front(&mut self) -> Primitive {
+        self.0.remove(0)
+    }
 }
 
 impl From<Vec<Primitive>> for List {

@@ -107,15 +107,15 @@ impl TryFrom<(Option<Primitive>, Option<Primitive>, Option<Primitive>)> for Conn
                     if let Some(Primitive::Map(mut info)) = info {
                         let port = info
                             .remove(Symbol::with_ascii(PORT))
-                            .map(|v| v.into_u16())
+                            .map(|v| v.try_into().ok())
                             .flatten();
                         let network_host = info
                             .remove(Symbol::with_ascii(NETWORK_HOST))
-                            .map(|v| v.into_string())
+                            .map(|v| v.try_into().ok())
                             .flatten();
                         let host_name = info
                             .remove(Symbol::with_ascii(HOST_NAME))
-                            .map(|v| v.into_string())
+                            .map(|v| v.try_into().ok())
                             .flatten();
                         Err(ConnectionError::Redirect {
                             host_name,

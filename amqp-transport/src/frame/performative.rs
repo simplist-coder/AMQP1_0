@@ -16,7 +16,7 @@ use crate::frame::performatives::flow::Flow;
 use crate::frame::performatives::open::Open;
 use crate::frame::performatives::transfer::Transfer;
 use amqp_type::error::AppError;
-use amqp_type::composite::{Composite, Descriptor};
+use amqp_type::primitive::composite::{Composite, Descriptor};
 use std::vec::IntoIter;
 use amqp_type::error::amqp_error::AmqpError;
 

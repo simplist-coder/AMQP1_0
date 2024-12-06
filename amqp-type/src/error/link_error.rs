@@ -122,19 +122,19 @@ impl TryFrom<(Option<Primitive>, Option<Primitive>, Option<Primitive>)> for Link
                         let mut values = info.into_inner();
                         let address = values
                             .remove(&Primitive::Symbol(Symbol::with_ascii(ADDRESS)))
-                            .map(|v|v.into_string())
+                            .map(|v|v.try_into().ok())
                             .flatten();
                         let port = values
                             .remove(&Primitive::Symbol(Symbol::with_ascii(PORT)))
-                            .map(|v| v.into_u16())
+                            .map(|v| v.try_into().ok())
                             .flatten();
                         let network_host = values
                             .remove(&Primitive::Symbol(Symbol::with_ascii(NETWORK_HOST)))
-                            .map(|v| v.into_string())
+                            .map(|v| v.try_into().ok())
                             .flatten();
                         let host_name = values
                             .remove(&Primitive::Symbol(Symbol::with_ascii(HOST_NAME)))
-                            .map(|v| v.into_string())
+                            .map(|v| v.try_into().ok())
                             .flatten();
                         Err(LinkError::Redirect {
                             host_name,

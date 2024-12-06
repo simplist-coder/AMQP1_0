@@ -14,6 +14,11 @@ use std::vec::IntoIter;
 pub struct Map(IndexMap<Primitive, Primitive>);
 
 impl Map {
+
+    pub fn new(data: IndexMap<Primitive, Primitive>) -> Self {
+        Self(data)
+    }
+
     pub fn inner(&self) -> &IndexMap<Primitive, Primitive> {
         &self.0
     }
@@ -115,9 +120,16 @@ impl Hash for Map {
     }
 }
 
-impl From<IndexMap<Primitive, Primitive>> for Map {
-    fn from(value: IndexMap<Primitive, Primitive>) -> Self {
-        Map(value)
+impl<K, V> From<IndexMap<K, V>> for Map
+where
+    K: Into<Primitive>,
+    V: Into<Primitive>,
+{
+    fn from(value: IndexMap<K, V>) -> Self {
+        Map(value
+            .into_iter()
+            .map(|(k, v)| (k.into(), v.into()))
+            .collect())
     }
 }
 

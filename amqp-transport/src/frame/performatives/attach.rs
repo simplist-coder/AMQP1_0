@@ -1,7 +1,7 @@
 use amqp_type::error::AppError;
-use amqp_type::composite::transport::source::Source;
-use amqp_type::composite::transport::target::Target;
-use amqp_type::composite::Composite;
+use amqp_type::primitive::composite::transport::source::Source;
+use amqp_type::primitive::composite::transport::target::Target;
+use amqp_type::primitive::composite::Composite;
 use amqp_type::primitive::compound::map::Map;
 use amqp_type::primitive::variable_width::symbol::Symbol;
 use amqp_type::restricted::fields::Fields;
@@ -35,7 +35,7 @@ impl Attach {
         todo!()
     }
 
-    pub fn try_decode(composite: Composite, body: &mut IntoIter<u8>) -> Result<Self, AppError> {
+    pub fn try_decode(_composite: Composite, _body: &mut IntoIter<u8>) -> Result<Self, AppError> {
         todo!()
     }
 }

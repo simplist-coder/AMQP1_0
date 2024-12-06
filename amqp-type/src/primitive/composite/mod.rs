@@ -6,15 +6,19 @@ use crate::serde::encode::{Encode, Encoded};
 use crate::error::AppError;
 use std::vec::IntoIter;
 use crate::error::amqp_error::AmqpError;
+use crate::primitive::Primitive;
 
 pub mod transport;
+pub mod builder;
 
-pub trait CompositeType: From<Composite> + Into<Composite> {}
+pub trait CompositeType: TryFrom<Primitive> + Into<Primitive> {
+    fn descriptor(&self) -> Descriptor;
+}
 
-#[derive(Debug, Eq, PartialEq, Clone)]
+#[derive(Debug, Eq, PartialEq, Clone, Hash)]
 pub struct Composite(Descriptor, List);
 
-#[derive(Debug, Eq, PartialEq, Clone)]
+#[derive(Debug, Eq, PartialEq, Clone, Hash)]
 pub enum Descriptor {
     Symbol(Symbol),
     Code(u64),
@@ -75,6 +79,10 @@ impl Decode for Composite {
 }
 
 impl Composite {
+    pub fn new(descriptor: Descriptor, list: List) -> Self {
+        Composite(descriptor, list)
+    }
+
     pub fn try_decode_without_constructor(stream: &mut IntoIter<u8>) -> Result<Self, AppError>
     where
         Self: Sized,
@@ -96,11 +104,9 @@ impl Composite {
     pub fn into_inner(self) -> (Descriptor, List) {
         (self.0, self.1)
     }
-}
 
-impl Composite {
-    pub fn new(descriptor: Descriptor, list: List) -> Self {
-        Composite(descriptor, list)
+    pub fn pop_front(&mut self) -> Primitive {
+        self.1.pop_front()
     }
 }
 

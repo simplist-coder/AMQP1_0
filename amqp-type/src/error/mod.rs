@@ -1,4 +1,4 @@
-use crate::composite::{Composite, Descriptor};
+use crate::primitive::composite::{Composite, Descriptor};
 use crate::error::amqp_error::AmqpError;
 use crate::error::connection_error::ConnectionError;
 use crate::error::link_error::LinkError;

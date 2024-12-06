@@ -21,16 +21,6 @@ impl Fields {
     }
 }
 
-impl From<IndexMap<Symbol, Primitive>> for Map {
-    fn from(value: IndexMap<Symbol, Primitive>) -> Self {
-        let mut res = IndexMap::with_capacity(value.len());
-        for (k, v) in value {
-            res.insert(Primitive::Symbol(k), v);
-        }
-        Map::from(res)
-    }
-}
-
 impl From<Fields> for   Primitive {
     fn from(value: Fields) -> Self {
         Primitive::Map(value.0)
