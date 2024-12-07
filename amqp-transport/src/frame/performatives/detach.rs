@@ -2,7 +2,7 @@ use amqp_type::error::AppError;
 use amqp_type::primitive::composite::Composite;
 use std::vec::IntoIter;
 
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, PartialEq)]
 pub struct Detach {}
 
 impl Detach {

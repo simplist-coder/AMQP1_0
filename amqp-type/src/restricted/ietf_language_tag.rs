@@ -1,5 +1,7 @@
 use std::vec::IntoIter;
+use crate::error::amqp_error::AmqpError;
 use crate::error::AppError;
+use crate::primitive::Primitive;
 use crate::primitive::variable_width::symbol::Symbol;
 use crate::serde::decode::Decode;
 use crate::serde::encode::{Encode, Encoded};
@@ -19,7 +21,7 @@ use crate::serde::encode::{Encode, Encoded};
 ///
 /// All AMQP implementations should understand at the least the IETF language tag en-US (note that
 /// this uses a hyphen separator, not an underscore).
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct IetfLanguageTag(Symbol);
 
 impl IetfLanguageTag {
@@ -64,6 +66,25 @@ impl Decode for IetfLanguageTag {
 impl Default for IetfLanguageTag {
     fn default() -> Self {
         Self(Symbol::with_ascii("en-us"))
+    }
+}
+
+impl From<IetfLanguageTag> for Primitive {
+    fn from(value: IetfLanguageTag) -> Self {
+        Primitive::Symbol(value.0)
+    }
+}
+
+impl TryFrom<Primitive> for IetfLanguageTag {
+    type Error = AppError;
+
+    fn try_from(value: Primitive) -> Result<Self, Self::Error> {
+        match value {
+            Primitive::Symbol(s) => {
+                Ok(IetfLanguageTag(s))
+            }
+            _ => Err(AmqpError::DecodeError)?
+        }
     }
 }
 

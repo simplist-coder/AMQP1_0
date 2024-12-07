@@ -2,6 +2,8 @@ use crate::primitive::compound::map::Map;
 use crate::primitive::variable_width::symbol::Symbol;
 use crate::primitive::Primitive;
 use indexmap::IndexMap;
+use crate::error::amqp_error::AmqpError;
+use crate::error::AppError;
 
 /// # Fields
 /// A mapping from field name to value.
@@ -19,11 +21,52 @@ impl Fields {
     pub fn new(map: IndexMap<Symbol, Primitive>) -> Self {
         Fields(Map::from(map))
     }
+
+    fn verify_has_symbol_keys(map: &Map) -> Result<(), <Fields as TryFrom<Primitive>>::Error> {
+        if let Some((k, _)) = map.inner().first() {
+            // Field only allows Symbols as keys in its Map, so we need to
+            // return an error if that is not the case, in order to remain compliant to the protocol
+            if !matches!(k, Primitive::Symbol(_)) {
+                Err(AmqpError::DecodeError)?
+            }
+        }
+        Ok(())
+    }
 }
 
-impl From<Fields> for   Primitive {
+impl From<Fields> for Primitive {
     fn from(value: Fields) -> Self {
         Primitive::Map(value.0)
+    }
+}
+
+impl TryFrom<Primitive> for Fields {
+    type Error = AppError;
+
+    fn try_from(value: Primitive) -> Result<Self, Self::Error> {
+        let map: Map = value.try_into()?;
+        Self::verify_has_symbol_keys(&map)?;
+        Ok(Fields(map))
+    }
+}
+
+impl TryFrom<Primitive> for Option<Fields> {
+    type Error = AppError;
+
+    fn try_from(value: Primitive) -> Result<Self, Self::Error> {
+        let opt: Option<Map> = value.try_into()?;
+        match opt {
+            None => Ok(None),
+            Some(map) => {Ok(Some(Fields(map)))}
+        }
+    }
+}
+
+impl TryFrom<Map> for Fields {
+    type Error = AppError;
+
+    fn try_from(value: Map) -> Result<Self, Self::Error> {
+        Primitive::Map(value).try_into()
     }
 }
 

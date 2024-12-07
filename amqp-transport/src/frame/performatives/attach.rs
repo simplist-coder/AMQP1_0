@@ -12,7 +12,7 @@ use amqp_type::restricted::sender_settle_mode::SenderSettleMode;
 use amqp_type::restricted::sequence_no::SequenceNumber;
 use std::vec::IntoIter;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Attach {
     name: String,
     handle: Handle,

@@ -100,6 +100,16 @@ impl From<Vec<Primitive>> for Array {
     }
 }
 
+impl Array {
+    pub fn inner(&self) -> &[Primitive] {
+        &self.0
+    }
+
+    pub fn into_inner(self) -> Vec<Primitive> {
+        self.0
+    }
+}
+
 #[cfg(test)]
 mod test {
     use super::*;

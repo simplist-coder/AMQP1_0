@@ -133,6 +133,15 @@ where
     }
 }
 
+impl From<Vec<(Primitive, Primitive)>> for Map {
+    fn from(value: Vec<(Primitive, Primitive)>) -> Self {
+        let m = value
+            .into_iter()
+            .collect();
+        Map(m)
+    }
+}
+
 #[cfg(test)]
 mod test {
     use super::*;

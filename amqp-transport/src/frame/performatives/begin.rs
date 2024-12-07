@@ -6,7 +6,7 @@ use amqp_type::restricted::handle::Handle;
 use amqp_type::restricted::transfer_number::TransferNumber;
 use std::vec::IntoIter;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Begin {
     remote_channel: Option<u16>,
     next_outgoing_id: TransferNumber,

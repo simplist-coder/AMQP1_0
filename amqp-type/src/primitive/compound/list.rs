@@ -97,9 +97,10 @@ impl List {
     }
 }
 
-impl From<Vec<Primitive>> for List {
-    fn from(value: Vec<Primitive>) -> Self {
-        List(value)
+impl<T> From<Vec<T>> for List
+where T: Into<Primitive> {
+    fn from(value: Vec<T>) -> Self {
+        List(value.into_iter().map(T::into).collect())
     }
 }
 

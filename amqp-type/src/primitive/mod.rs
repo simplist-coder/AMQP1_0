@@ -157,403 +157,68 @@ where
     }
 }
 
-impl From<bool> for Primitive {
-    fn from(value: bool) -> Self {
-        Primitive::Boolean(value)
-    }
-}
 
-impl TryFrom<Primitive> for bool {
-    type Error = AppError;
-
-    fn try_from(value: Primitive) -> Result<Self, Self::Error> {
-        match value {
-            Primitive::Boolean(v) => Ok(v),
-            _ => Err(AmqpError::DecodeError)?,
+macro_rules! impl_primitive_for {
+    ($t:ty, $pattern:path) => {
+        impl From<$t> for Primitive {
+            fn from(value: $t) -> Self {
+                $pattern(value)
+            }
         }
-    }
-}
 
-impl From<Timestamp> for Primitive {
-    fn from(value: Timestamp) -> Self {
-        Primitive::Timestamp(value)
-    }
-}
+        impl TryFrom<Primitive> for $t {
+            type Error = AppError;
 
-impl TryFrom<Primitive> for Timestamp {
-    type Error = AppError;
-
-    fn try_from(value: Primitive) -> Result<Self, Self::Error> {
-        match value {
-            Primitive::Timestamp(v) => Ok(v),
-            _ => Err(AmqpError::DecodeError)?,
+            fn try_from(value: Primitive) -> Result<Self, Self::Error> {
+                match value {
+                    $pattern(v) => Ok(v),
+                    _ => Err(AmqpError::DecodeError)?,
+                }
+            }
         }
-    }
-}
 
-impl From<u8> for Primitive {
-    fn from(value: u8) -> Self {
-        Primitive::Ubyte(value)
-    }
-}
+        impl TryFrom<Primitive> for Option<$t> {
+            type Error = AppError;
 
-impl TryFrom<Primitive> for u8 {
-    type Error = AppError;
-
-    fn try_from(value: Primitive) -> Result<Self, Self::Error> {
-        match value {
-            Primitive::Ubyte(v) => Ok(v),
-            _ => Err(AmqpError::DecodeError)?,
+            fn try_from(value: Primitive) -> Result<Self, Self::Error> {
+                match value {
+                    Primitive::Null => Ok(None),
+                    $pattern(x) => Ok(Some(x)),
+                    _ => Err(AmqpError::DecodeError)?,
+                }
+            }
         }
-    }
+    };
 }
 
-impl From<u16> for Primitive {
-    fn from(value: u16) -> Self {
-        Primitive::Ushort(value)
-    }
-}
+impl_primitive_for!(bool, Primitive::Boolean);
+impl_primitive_for!(Timestamp, Primitive::Timestamp);
+impl_primitive_for!(u8, Primitive::Ubyte);
+impl_primitive_for!(u16, Primitive::Ushort);
+impl_primitive_for!(u32, Primitive::Uint);
+impl_primitive_for!(u64, Primitive::Ulong);
+impl_primitive_for!(i8, Primitive::Byte);
+impl_primitive_for!(i16, Primitive::Short);
+impl_primitive_for!(i32, Primitive::Int);
+impl_primitive_for!(i64, Primitive::Long);
+impl_primitive_for!(Float, Primitive::Float);
+impl_primitive_for!(Double, Primitive::Double);
+impl_primitive_for!(char, Primitive::Char);
+impl_primitive_for!(Uuid, Primitive::Uuid);
+impl_primitive_for!(Binary, Primitive::Binary);
+impl_primitive_for!(String, Primitive::String);
+impl_primitive_for!(Symbol, Primitive::Symbol);
+impl_primitive_for!(Decimal32, Primitive::Decimal32);
+impl_primitive_for!(Decimal64, Primitive::Decimal64);
+impl_primitive_for!(List, Primitive::List);
+impl_primitive_for!(Array, Primitive::Array);
+impl_primitive_for!(Map, Primitive::Map);
+impl_primitive_for!(Composite, Primitive::Composite);
 
-impl TryFrom<Primitive> for u16 {
-    type Error = AppError;
-
-    fn try_from(value: Primitive) -> Result<Self, Self::Error> {
-        match value {
-            Primitive::Ushort(v) => Ok(v),
-            _ => Err(AmqpError::DecodeError)?,
-        }
-    }
-}
-
-impl From<u32> for Primitive {
-    fn from(value: u32) -> Self {
-        Primitive::Uint(value)
-    }
-}
-
-impl TryFrom<Primitive> for u32 {
-    type Error = AppError;
-
-    fn try_from(value: Primitive) -> Result<Self, Self::Error> {
-        match value {
-            Primitive::Uint(v) => Ok(v),
-            _ => Err(AmqpError::DecodeError)?,
-        }
-    }
-}
-
-impl From<u64> for Primitive {
-    fn from(value: u64) -> Self {
-        Primitive::Ulong(value)
-    }
-}
-
-impl TryFrom<Primitive> for u64 {
-    type Error = AppError;
-
-    fn try_from(value: Primitive) -> Result<Self, Self::Error> {
-        match value {
-            Primitive::Ulong(v) => Ok(v),
-            _ => Err(AmqpError::DecodeError)?,
-        }
-    }
-}
-
-impl From<i8> for Primitive {
-    fn from(value: i8) -> Self {
-        Primitive::Byte(value)
-    }
-}
-
-impl TryFrom<Primitive> for i8 {
-    type Error = AppError;
-
-    fn try_from(value: Primitive) -> Result<Self, Self::Error> {
-        match value {
-            Primitive::Byte(v) => Ok(v),
-            _ => Err(AmqpError::DecodeError)?,
-        }
-    }
-}
-
-impl From<i16> for Primitive {
-    fn from(value: i16) -> Self {
-        Primitive::Short(value)
-    }
-}
-
-impl TryFrom<Primitive> for i16 {
-    type Error = AppError;
-
-    fn try_from(value: Primitive) -> Result<Self, Self::Error> {
-        match value {
-            Primitive::Short(v) => Ok(v),
-            _ => Err(AmqpError::DecodeError)?,
-        }
-    }
-}
-
-impl From<i32> for Primitive {
-    fn from(value: i32) -> Self {
-        Primitive::Int(value)
-    }
-}
-
-impl TryFrom<Primitive> for i32 {
-    type Error = AppError;
-
-    fn try_from(value: Primitive) -> Result<Self, Self::Error> {
-        match value {
-            Primitive::Int(v) => Ok(v),
-            _ => Err(AmqpError::DecodeError)?,
-        }
-    }
-}
-
-impl From<i64> for Primitive {
-    fn from(value: i64) -> Self {
-        Primitive::Long(value)
-    }
-}
-
-impl TryFrom<Primitive> for i64 {
-    type Error = AppError;
-
-    fn try_from(value: Primitive) -> Result<Self, Self::Error> {
-        match value {
-            Primitive::Long(v) => Ok(v),
-            _ => Err(AmqpError::DecodeError)?,
-        }
-    }
-}
-
-impl From<Float> for Primitive {
-    fn from(value: Float) -> Self {
-        Primitive::Float(value)
-    }
-}
-
-impl TryFrom<Primitive> for Float {
-    type Error = AppError;
-
-    fn try_from(value: Primitive) -> Result<Self, Self::Error> {
-        match value {
-            Primitive::Float(v) => Ok(v),
-            _ => Err(AmqpError::DecodeError)?,
-        }
-    }
-}
-
-impl From<Double> for Primitive {
-    fn from(value: Double) -> Self {
-        Primitive::Double(value)
-    }
-}
-
-impl TryFrom<Primitive> for Double {
-    type Error = AppError;
-
-    fn try_from(value: Primitive) -> Result<Self, Self::Error> {
-        match value {
-            Primitive::Double(v) => Ok(v),
-            _ => Err(AmqpError::DecodeError)?,
-        }
-    }
-}
-
-impl From<char> for Primitive {
-    fn from(value: char) -> Self {
-        Primitive::Char(value)
-    }
-}
-
-impl TryFrom<Primitive> for char {
-    type Error = AppError;
-
-    fn try_from(value: Primitive) -> Result<Self, Self::Error> {
-        match value {
-            Primitive::Char(v) => Ok(v),
-            _ => Err(AmqpError::DecodeError)?,
-        }
-    }
-}
-
-impl From<Uuid> for Primitive {
-    fn from(value: Uuid) -> Self {
-        Primitive::Uuid(value)
-    }
-}
-
-impl TryFrom<Primitive> for Uuid {
-    type Error = AppError;
-
-    fn try_from(value: Primitive) -> Result<Self, Self::Error> {
-        match value {
-            Primitive::Uuid(v) => Ok(v),
-            _ => Err(AmqpError::DecodeError)?,
-        }
-    }
-}
-
-impl From<Binary> for Primitive {
-    fn from(value: Binary) -> Self {
-        Primitive::Binary(value)
-    }
-}
-
-impl TryFrom<Primitive> for Binary {
-    type Error = AppError;
-
-    fn try_from(value: Primitive) -> Result<Self, Self::Error> {
-        match value {
-            Primitive::Binary(v) => Ok(v),
-            _ => Err(AmqpError::DecodeError)?,
-        }
-    }
-}
 
 impl From<&str> for Primitive {
     fn from(value: &str) -> Self {
         value.to_string().into()
-    }
-}
-
-impl From<String> for Primitive {
-    fn from(value: String) -> Self {
-        Primitive::String(value)
-    }
-}
-
-impl TryFrom<Primitive> for String {
-    type Error = AppError;
-
-    fn try_from(value: Primitive) -> Result<Self, Self::Error> {
-        match value {
-            Primitive::String(v) => Ok(v),
-            _ => Err(AmqpError::DecodeError)?,
-        }
-    }
-}
-
-impl From<Symbol> for Primitive {
-    fn from(value: Symbol) -> Self {
-        Primitive::Symbol(value)
-    }
-}
-
-impl TryFrom<Primitive> for Symbol {
-    type Error = AppError;
-
-    fn try_from(value: Primitive) -> Result<Self, Self::Error> {
-        match value {
-            Primitive::Symbol(v) => Ok(v),
-            _ => Err(AmqpError::DecodeError)?,
-        }
-    }
-}
-
-impl From<List> for Primitive {
-    fn from(value: List) -> Self {
-        Primitive::List(value)
-    }
-}
-
-impl TryFrom<Primitive> for List {
-    type Error = AppError;
-
-    fn try_from(value: Primitive) -> Result<Self, Self::Error> {
-        match value {
-            Primitive::List(v) => Ok(v),
-            _ => Err(AmqpError::DecodeError)?,
-        }
-    }
-}
-
-impl From<Map> for Primitive {
-    fn from(value: Map) -> Self {
-        Primitive::Map(value)
-    }
-}
-
-impl TryFrom<Primitive> for Map {
-    type Error = AppError;
-
-    fn try_from(value: Primitive) -> Result<Self, Self::Error> {
-        match value {
-            Primitive::Map(v) => Ok(v),
-            _ => Err(AmqpError::DecodeError)?,
-        }
-    }
-}
-
-impl From<Array> for Primitive {
-    fn from(value: Array) -> Self {
-        Primitive::Array(value)
-    }
-}
-
-impl TryFrom<Primitive> for Array {
-    type Error = AppError;
-
-    fn try_from(value: Primitive) -> Result<Self, Self::Error> {
-        match value {
-            Primitive::Array(v) => Ok(v),
-            _ => Err(AmqpError::DecodeError)?,
-        }
-    }
-}
-
-impl From<Decimal32> for Primitive {
-    fn from(value: Decimal32) -> Self {
-        Primitive::Decimal32(value)
-    }
-}
-
-impl TryFrom<Primitive> for Decimal32 {
-    type Error = AppError;
-
-    fn try_from(value: Primitive) -> Result<Self, Self::Error> {
-        match value {
-            Primitive::Decimal32(v) => Ok(v),
-            _ => Err(AmqpError::DecodeError)?,
-        }
-    }
-}
-
-impl From<Decimal64> for Primitive {
-    fn from(value: Decimal64) -> Self {
-        Primitive::Decimal64(value)
-    }
-}
-
-impl TryFrom<Primitive> for Decimal64 {
-    type Error = AppError;
-
-    fn try_from(value: Primitive) -> Result<Self, Self::Error> {
-        match value {
-            Primitive::Decimal64(v) => Ok(v),
-            _ => Err(AmqpError::DecodeError)?,
-        }
-    }
-}
-
-impl From<Decimal128> for Primitive {
-    fn from(value: Decimal128) -> Self {
-        Primitive::Decimal128(value)
-    }
-}
-
-impl TryFrom<Primitive> for Decimal128 {
-    type Error = AppError;
-
-    fn try_from(_value: Primitive) -> Result<Self, Self::Error> {
-        todo!("This is not implemented yet")
-    }
-}
-
-impl From<Composite> for Primitive {
-    fn from(value: Composite) -> Self {
-        Primitive::Composite(value)
     }
 }
 
@@ -584,6 +249,41 @@ where
                     _ => Err(AmqpError::DecodeError)?,
                 })
                 .collect(),
+            _ => Err(AmqpError::DecodeError)?,
+        }
+    }
+}
+
+impl<T> From<Vec<T>> for Primitive
+where T: Into<Primitive> {
+    fn from(value: Vec<T>) -> Self {
+        Primitive::List(List::from(value))
+    }
+}
+
+impl<T> TryFrom<Primitive> for Vec<T>
+where T: TryFrom<Primitive> {
+    type Error = AmqpError;
+    fn try_from(value: Primitive) -> Result<Self, Self::Error> {
+        match value {
+            Primitive::List(list) => {
+                list.into_inner()
+                    .into_iter()
+                    .map(|p|match T::try_from(p) {
+                        Ok(res) => Ok(res),
+                        _ => Err(AmqpError::DecodeError)?,
+                    })
+                    .collect()
+            }
+            Primitive::Array(array) => {
+                array.into_inner()
+                    .into_iter()
+                    .map(|p|match T::try_from(p) {
+                        Ok(res) => Ok(res),
+                        _ => Err(AmqpError::DecodeError)?,
+                    })
+                    .collect()
+            }
             _ => Err(AmqpError::DecodeError)?,
         }
     }
