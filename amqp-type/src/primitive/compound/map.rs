@@ -102,7 +102,7 @@ fn parse_to_index_map(
     count: usize,
 ) -> Result<IndexMap<Primitive, Primitive>, AppError> {
     if count % 2 != 0 {
-        return Err(AmqpError::InvalidField)?;
+        Err(AmqpError::InvalidField)?;
     }
     let mut buffer = read_bytes(stream, size)?.into_iter();
     let mut result = IndexMap::with_capacity(count);

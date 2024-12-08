@@ -13,7 +13,7 @@ use std::vec::IntoIter;
 /// ```
 /// A sequence-no encodes a serial number as defined in RFC-1982. The arithmetic, and operators for
 /// these numbers are defined by RFC-1982.
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, Default)]
 pub struct SequenceNumber(u32);
 
 const HALF_MAX: u32 = 1 << 30;
@@ -31,12 +31,6 @@ impl SequenceNumber {
 impl From<u32> for SequenceNumber {
     fn from(value: u32) -> Self {
         Self(value)
-    }
-}
-
-impl Default for SequenceNumber {
-    fn default() -> Self {
-        Self(0)
     }
 }
 

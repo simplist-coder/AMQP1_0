@@ -72,19 +72,19 @@ impl TryFrom<Primitive> for Open {
     }
 }
 
-impl Into<Primitive> for Open {
-    fn into(self) -> Primitive {
-        CompositeBuilder::new(self.descriptor())
-            .add(self.container_id.into())
-            .add(self.host_name.into())
-            .add(self.max_frame_size.into())
-            .add(self.channel_max.into())
-            .add(self.idle_timeout.into())
-            .add(self.outgoing_locales.into())
-            .add(self.incoming_locales.into())
-            .add(self.offered_capabilities.into())
-            .add(self.desired_capabilities.into())
-            .add(self.properties.into())
+impl From<Open> for Primitive {
+    fn from(value: Open) -> Self {
+        CompositeBuilder::new(value.descriptor())
+            .push(value.container_id.into())
+            .push(value.host_name.into())
+            .push(value.max_frame_size.into())
+            .push(value.channel_max.into())
+            .push(value.idle_timeout.into())
+            .push(value.outgoing_locales.into())
+            .push(value.incoming_locales.into())
+            .push(value.offered_capabilities.into())
+            .push(value.desired_capabilities.into())
+            .push(value.properties.into())
             .build()
             .into()
     }

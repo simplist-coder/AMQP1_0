@@ -40,7 +40,7 @@ impl IetfLanguageTag {
     }
 
     pub fn inner(&self) -> &str {
-        &self.0.inner()
+        self.0.inner()
     }
 
     pub fn into_inner(self) -> Symbol {
@@ -88,7 +88,7 @@ impl TryFrom<Primitive> for IetfLanguageTag {
     }
 }
 
-const VALID_LANGUAGE_CODES: [&'static str; 284] = [
+const VALID_LANGUAGE_CODES: [&str; 284] = [
     "aa", "ab", "ae", "af", "ak", "am", "an", "ar", "ar-ae", "ar-bh", "ar-dz", "ar-eg", "ar-iq",
     "ar-jo", "ar-kw", "ar-lb", "ar-ly", "ar-ma", "ar-om", "ar-qa", "ar-sa", "ar-sy", "ar-tn",
     "ar-ye", "as", "av", "ay", "az", "ba", "be", "bg", "bh", "bi", "bm", "bn", "bo", "br", "bs",

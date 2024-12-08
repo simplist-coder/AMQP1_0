@@ -67,7 +67,7 @@ impl Symbol {
     }
 
     pub fn with_ascii(string: &str) -> Self {
-        verify_ascii_char_set(&string).expect("String contains non ASCII characters");
+        verify_ascii_char_set(string).expect("String contains non ASCII characters");
         Symbol(string.to_owned())
     }
 

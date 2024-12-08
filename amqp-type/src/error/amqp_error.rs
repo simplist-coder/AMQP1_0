@@ -4,19 +4,19 @@ use crate::primitive::Primitive;
 use crate::restricted::fields::Fields;
 use std::fmt::{Display, Formatter};
 
-const AMQP_INTERNAL_ERROR: &'static str = "amqp:internal-error";
-const AMQP_NOT_FOUND: &'static str = "amqp:not-found";
-const AMQP_UNAUTHORIZED_ACCESS: &'static str = "amqp:unauthorized-access";
-const AMQP_DECODE_ERROR: &'static str = "amqp:decode-error";
-const AMQP_RESOURCE_LIMITED_EXCEEDED: &'static str = "amqp:resource-limited-exceeded";
-const AMQP_NOT_ALLOWED: &'static str = "amqp:not-allowed";
-const AMQP_INVALID_FIELD: &'static str = "amqp:invalid-field";
-const AMQP_NOT_IMPLEMENTED: &'static str = "amqp:not-implemented";
-const AMQP_RESOURCE_LOCKED: &'static str = "amqp:resource-locked";
-const AMQP_PRECONDITION_FAILED: &'static str = "amqp:precondition-failed";
-const AMQP_RESOURCE_DELETED: &'static str = "amqp:resource-deleted";
-const AMQP_ILLEGAL_STATE: &'static str = "amqp:illegal-state";
-const AMQP_FRAME_SIZE_TOO_SMALL: &'static str = "amqp:frame-size-too-small";
+const AMQP_INTERNAL_ERROR: &str = "amqp:internal-error";
+const AMQP_NOT_FOUND: &str = "amqp:not-found";
+const AMQP_UNAUTHORIZED_ACCESS: &str = "amqp:unauthorized-access";
+const AMQP_DECODE_ERROR: &str = "amqp:decode-error";
+const AMQP_RESOURCE_LIMITED_EXCEEDED: &str = "amqp:resource-limited-exceeded";
+const AMQP_NOT_ALLOWED: &str = "amqp:not-allowed";
+const AMQP_INVALID_FIELD: &str = "amqp:invalid-field";
+const AMQP_NOT_IMPLEMENTED: &str = "amqp:not-implemented";
+const AMQP_RESOURCE_LOCKED: &str = "amqp:resource-locked";
+const AMQP_PRECONDITION_FAILED: &str = "amqp:precondition-failed";
+const AMQP_RESOURCE_DELETED: &str = "amqp:resource-deleted";
+const AMQP_ILLEGAL_STATE: &str = "amqp:illegal-state";
+const AMQP_FRAME_SIZE_TOO_SMALL: &str = "amqp:frame-size-too-small";
 
 #[derive(Debug)]
 pub enum AmqpError {
@@ -35,7 +35,7 @@ pub enum AmqpError {
     FrameSizeTooSmall,
 }
 
-pub(crate) const TAGS: [&'static str; 13] = [
+pub(crate) const TAGS: [&str; 13] = [
     AMQP_INTERNAL_ERROR,
     AMQP_NOT_FOUND,
     AMQP_UNAUTHORIZED_ACCESS,

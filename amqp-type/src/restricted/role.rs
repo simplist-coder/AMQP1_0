@@ -68,8 +68,8 @@ mod tests {
     fn test_role_into_bool() {
         let value_true: bool = Role::new(true).into();
         let value_false: bool = Role::new(false).into();
-        assert_eq!(value_true, true);
-        assert_eq!(value_false, false);
+        assert!(value_true);
+        assert!(!value_false);
     }
 
     #[test]

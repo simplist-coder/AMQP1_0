@@ -40,7 +40,7 @@ mod tests {
 
     #[test]
     fn test_delivery_tag() {
-        let data = vec![1].repeat(32);
+        let data = [1].repeat(32);
         for i in 0..=32 {
             DeliveryTag::new(data[..i].to_vec()).unwrap();
         }
@@ -48,7 +48,7 @@ mod tests {
 
     #[test]
     fn test_delivery_tag_error() {
-        let data = vec![1].repeat(33);
+        let data = [1].repeat(33);
         assert!(matches!(
             DeliveryTag::new(data),
             Err(AppError::Amqp(AmqpError::InvalidField))
@@ -57,7 +57,7 @@ mod tests {
 
     #[test]
     fn test_delivery_tag_into_primitive() {
-        let data = vec![1].repeat(32);
+        let data = [1].repeat(32);
         assert_eq!(
             Primitive::from(DeliveryTag::new(data.clone()).unwrap()),
             Primitive::Binary(Binary::from(data))

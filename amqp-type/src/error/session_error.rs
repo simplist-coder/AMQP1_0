@@ -4,12 +4,12 @@ use crate::primitive::Primitive;
 use crate::restricted::fields::Fields;
 use std::fmt::{Display, Formatter};
 
-const AMQP_SESSION_WINDOW_VIOLATION: &'static str = "amqp:session:window-violation";
-const AMQP_SESSION_ERRANT_LINK: &'static str = "amqp:session:errant-link";
-const AMQP_SESSION_HANDLE_IN_USE: &'static str = "amqp:session:handle-in-use";
-const AMQP_SESSION_UNATTACHED_HANDLE: &'static str = "amqp:session:unattached-handle";
+const AMQP_SESSION_WINDOW_VIOLATION: &str = "amqp:session:window-violation";
+const AMQP_SESSION_ERRANT_LINK: &str = "amqp:session:errant-link";
+const AMQP_SESSION_HANDLE_IN_USE: &str = "amqp:session:handle-in-use";
+const AMQP_SESSION_UNATTACHED_HANDLE: &str = "amqp:session:unattached-handle";
 
-pub(crate) const TAGS: [&'static str; 4] = [
+pub(crate) const TAGS: [&str; 4] = [
     AMQP_SESSION_WINDOW_VIOLATION,
     AMQP_SESSION_ERRANT_LINK,
     AMQP_SESSION_HANDLE_IN_USE,

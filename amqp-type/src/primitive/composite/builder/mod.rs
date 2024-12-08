@@ -15,7 +15,7 @@ impl CompositeBuilder {
         }
     }
 
-    pub fn add(mut self, primitive: Primitive) -> Self {
+    pub fn push(mut self, primitive: Primitive) -> Self {
         self.list.push(primitive);
         self
     }
@@ -67,9 +67,9 @@ mod tests {
     impl From<TestStruct> for Primitive {
         fn from(value: TestStruct) -> Self {
             CompositeBuilder::new(value.descriptor())
-                .add(value.id.into())
-                .add(value.name.into())
-                .add(value.properties.into())
+                .push(value.id.into())
+                .push(value.name.into())
+                .push(value.properties.into())
                 .build()
                 .into()
         }
@@ -107,9 +107,9 @@ mod tests {
     impl From<NestedStruct> for Primitive {
         fn from(value: NestedStruct) -> Self {
             CompositeBuilder::new(value.descriptor())
-                .add(value.id.into())
-                .add(value.test_struct.into())
-                .add(value.test_enum.into())
+                .push(value.id.into())
+                .push(value.test_struct.into())
+                .push(value.test_enum.into())
                 .build()
                 .into()
         }
@@ -171,16 +171,16 @@ mod tests {
             match value {
                 TestEnum::Empty => {}
                 TestEnum::Value(x) => {
-                    builder = builder.add(x.into());
+                    builder = builder.push(x.into());
                 }
                 TestEnum::Many(a, b, c) => {
                     builder = builder
-                        .add(a.into())
-                        .add(b.into())
-                        .add(c.into());
+                        .push(a.into())
+                        .push(b.into())
+                        .push(c.into());
                 }
                 TestEnum::Nested(a) => {
-                    builder = builder.add(a.into());
+                    builder = builder.push(a.into());
                 }
             }
             builder.build().into()

@@ -6,9 +6,9 @@ use indexmap::IndexMap;
 use std::env;
 use std::fmt::{Display, Formatter};
 
-const AMQP_CONNECTION_FORCED: &'static str = "amqp:connection:forced";
-const AMQP_CONNECTION_FRAMING_ERROR: &'static str = "amqp:connection:framing-error";
-const AMQP_CONNECTION_REDIRECT: &'static str = "amqp:connection:redirect";
+const AMQP_CONNECTION_FORCED: &str = "amqp:connection:forced";
+const AMQP_CONNECTION_FRAMING_ERROR: &str = "amqp:connection:framing-error";
+const AMQP_CONNECTION_REDIRECT: &str = "amqp:connection:redirect";
 
 pub(crate) const TAGS: [&str; 3] = [
     AMQP_CONNECTION_FORCED,
@@ -36,9 +36,9 @@ impl Display for ConnectionError {
     }
 }
 
-const HOST_NAME: &'static str = "hostname";
-const NETWORK_HOST: &'static str = "network-host";
-const PORT: &'static str = "port";
+const HOST_NAME: &str = "hostname";
+const NETWORK_HOST: &str = "network-host";
+const PORT: &str = "port";
 
 impl ErrorCondition for ConnectionError {
     fn error_condition(&self) -> Symbol {
@@ -107,16 +107,13 @@ impl TryFrom<(Option<Primitive>, Option<Primitive>, Option<Primitive>)> for Conn
                     if let Some(Primitive::Map(mut info)) = info {
                         let port = info
                             .remove(Symbol::with_ascii(PORT))
-                            .map(|v| v.try_into().ok())
-                            .flatten();
+                            .and_then(|v| v.try_into().ok());
                         let network_host = info
                             .remove(Symbol::with_ascii(NETWORK_HOST))
-                            .map(|v| v.try_into().ok())
-                            .flatten();
+                            .and_then(|v| v.try_into().ok());
                         let host_name = info
                             .remove(Symbol::with_ascii(HOST_NAME))
-                            .map(|v| v.try_into().ok())
-                            .flatten();
+                            .and_then(|v| v.try_into().ok());
                         Err(ConnectionError::Redirect {
                             host_name,
                             network_host,

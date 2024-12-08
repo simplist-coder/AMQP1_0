@@ -6,13 +6,13 @@ use indexmap::IndexMap;
 use std::env;
 use std::fmt::{Display, Formatter};
 
-const AMQP_LINK_DETACH_FORCED: &'static str = "amqp:link:detach-forced";
-const AMQP_LINK_TRANSFER_LIMIT_EXCEEDED: &'static str = "amqp:link:transfer-limit-exceeded";
-const AMQP_LINK_MESSAGE_SIZE_EXCEEDED: &'static str = "amqp:link:message-size-exceeded";
-const AMQP_LINK_REDIRECT: &'static str = "amqp:link:redirect";
-const AMQP_LINK_STOLEN: &'static str = "amqp:link:stolen";
+const AMQP_LINK_DETACH_FORCED: &str = "amqp:link:detach-forced";
+const AMQP_LINK_TRANSFER_LIMIT_EXCEEDED: &str = "amqp:link:transfer-limit-exceeded";
+const AMQP_LINK_MESSAGE_SIZE_EXCEEDED: &str = "amqp:link:message-size-exceeded";
+const AMQP_LINK_REDIRECT: &str = "amqp:link:redirect";
+const AMQP_LINK_STOLEN: &str = "amqp:link:stolen";
 
-pub(crate) const TAGS: [&'static str; 5] = [
+pub(crate) const TAGS: [&str; 5] = [
     AMQP_LINK_DETACH_FORCED,
     AMQP_LINK_TRANSFER_LIMIT_EXCEEDED,
     AMQP_LINK_MESSAGE_SIZE_EXCEEDED,
@@ -46,10 +46,10 @@ impl Display for LinkError {
     }
 }
 
-const HOST_NAME: &'static str = "hostname";
-const NETWORK_HOST: &'static str = "network-host";
-const PORT: &'static str = "port";
-const ADDRESS: &'static str = "address";
+const HOST_NAME: &str = "hostname";
+const NETWORK_HOST: &str = "network-host";
+const PORT: &str = "port";
+const ADDRESS: &str = "address";
 
 impl ErrorCondition for LinkError {
     fn error_condition(&self) -> Symbol {
@@ -122,20 +122,16 @@ impl TryFrom<(Option<Primitive>, Option<Primitive>, Option<Primitive>)> for Link
                         let mut values = info.into_inner();
                         let address = values
                             .remove(&Primitive::Symbol(Symbol::with_ascii(ADDRESS)))
-                            .map(|v|v.try_into().ok())
-                            .flatten();
+                            .and_then(|v| v.try_into().ok());
                         let port = values
                             .remove(&Primitive::Symbol(Symbol::with_ascii(PORT)))
-                            .map(|v| v.try_into().ok())
-                            .flatten();
+                            .and_then(|v| v.try_into().ok());
                         let network_host = values
                             .remove(&Primitive::Symbol(Symbol::with_ascii(NETWORK_HOST)))
-                            .map(|v| v.try_into().ok())
-                            .flatten();
+                            .and_then(|v| v.try_into().ok());
                         let host_name = values
                             .remove(&Primitive::Symbol(Symbol::with_ascii(HOST_NAME)))
-                            .map(|v| v.try_into().ok())
-                            .flatten();
+                            .and_then(|v| v.try_into().ok());
                         Err(LinkError::Redirect {
                             host_name,
                             network_host,
@@ -243,7 +239,7 @@ mod tests {
         match LinkError::try_from(error) {
             Err(AppError::Link(LinkError::Redirect { host_name, network_host, port, address })) => {
                 assert_eq!(host_name, Some("localhost".to_string()));
-                assert_eq!(port, Some(9876_u16.into()));
+                assert_eq!(port, Some(9876_u16));
                 assert_eq!(address, Some("15".into()));
                 assert_eq!(network_host, Some("127.0.0.1".to_string()));
             }
@@ -258,10 +254,10 @@ mod tests {
         env::set_var("AMQP_LINK_REDIRECT_PORT", "9876");
         env::set_var("AMQP_LINK_REDIRECT_ADDRESS", "15");
         let expected = Fields::new([
-            (Symbol::with_ascii(HOST_NAME).into(), Primitive::from(Some("localhost".to_string()))),
-            (Symbol::with_ascii(NETWORK_HOST).into(), Some("127.0.0.1".to_string()).into()),
-            (Symbol::with_ascii(PORT).into(), Some(9876_u16).into()),
-            (Symbol::with_ascii(ADDRESS).into(), Some("15".to_string()).into()),
+            (Symbol::with_ascii(HOST_NAME), Primitive::from(Some("localhost".to_string()))),
+            (Symbol::with_ascii(NETWORK_HOST), Some("127.0.0.1".to_string()).into()),
+            (Symbol::with_ascii(PORT), Some(9876_u16).into()),
+            (Symbol::with_ascii(ADDRESS), Some("15".to_string()).into()),
         ].into());
 
         assert_eq!(LinkError::DetachForced.info(), None);
