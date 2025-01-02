@@ -1,7 +1,8 @@
-use proc_macro2::{Ident, TokenTree};
+use crate::parse_descriptor;
+use proc_macro2::Ident;
 use quote::{quote, quote_spanned};
 use syn::spanned::Spanned;
-use syn::{Data, DeriveInput, Fields, FieldsNamed, FieldsUnnamed, Index, Meta};
+use syn::{Data, DeriveInput, Fields, FieldsNamed, FieldsUnnamed, Index};
 
 /// should create the required impls for a struct
 /// should look something like this:
@@ -16,7 +17,7 @@ use syn::{Data, DeriveInput, Fields, FieldsNamed, FieldsUnnamed, Index, Meta};
 pub(crate) fn derive_for_struct(input: DeriveInput) -> syn::Result<proc_macro2::TokenStream> {
     let name = &input.ident;
     if let Data::Struct(ref st) = input.data {
-        let descriptor = parse_descriptor(&input)?;
+        let descriptor = parse_descriptor(input.span(), &input.attrs)?;
         match st.fields {
             Fields::Named(ref fields) => generate_named_impl(name, descriptor, fields),
             Fields::Unnamed(ref fields) => generate_unnamed_impl(name, descriptor, fields),
@@ -166,7 +167,7 @@ fn builder_push_unnamed_fields(fields: &FieldsUnnamed) -> proc_macro2::TokenStre
     });
 
     quote! {
-        #(#recurse),*
+        #(#recurse)*
     }
 }
 
@@ -180,45 +181,6 @@ fn builder_push_unnamed_fields(fields: &FieldsUnnamed) -> proc_macro2::TokenStre
 // todo: add better error messages
 // todo: add validation for only ascii text in descriptor with corresponding error message
 //
-fn parse_descriptor(input: &DeriveInput) -> syn::Result<String> {
-    for attr in &input.attrs {
-        if attr.path().is_ident("amqp") {
-            if let Meta::List(meta_list) = &attr.meta {
-                for token in meta_list.tokens.clone() {
-                    match token {
-                        TokenTree::Ident(desc) => {
-                            if desc != "descriptor" {
-                                let message = format!("found '{}' but expected 'descriptor'", desc);
-                                return Err(syn::Error::new_spanned(desc.clone(), message));
-                            }
-                        }
-                        TokenTree::Literal(lit) => {
-                            let value = lit.to_string();
-                            return if value.is_ascii() {
-                                if value.starts_with('"') && value.ends_with('"') {
-                                    Ok(value[1..value.len() - 1].to_string())
-                                } else {
-                                    Ok(value)
-                                }
-                            } else {
-                                Err(syn::Error::new_spanned(
-                                    lit.clone(),
-                                    "Descriptor literal must only contain ASCII Characters",
-                                ))
-                            };
-                        }
-                        _ => {}
-                    }
-                }
-            }
-        }
-    }
-
-    Err(syn::Error::new(
-        input.span(),
-        "Missing `amqp` attribute with `descriptor` key",
-    ))
-}
 
 #[cfg(test)]
 mod tests {
@@ -232,7 +194,7 @@ mod tests {
             struct TestStruct;
         };
 
-        let result = parse_descriptor(&input);
+        let result = parse_descriptor(input.span(), &input.attrs);
         assert_eq!(result.unwrap(), "my:teststruct");
     }
 
@@ -243,7 +205,7 @@ mod tests {
             struct TestStruct;
         };
 
-        let result = parse_descriptor(&input);
+        let result = parse_descriptor(input.span(), &input.attrs);
         assert!(result.is_err());
     }
 
@@ -253,7 +215,7 @@ mod tests {
             struct TestStruct;
         };
 
-        let result = parse_descriptor(&input);
+        let result = parse_descriptor(input.span(), &input.attrs);
         assert!(result.is_err());
     }
 
@@ -264,7 +226,7 @@ mod tests {
             struct TestStruct;
         };
 
-        let result = parse_descriptor(&input);
+        let result = parse_descriptor(input.span(), &input.attrs);
         assert_eq!(result.unwrap(), "123");
     }
 }
