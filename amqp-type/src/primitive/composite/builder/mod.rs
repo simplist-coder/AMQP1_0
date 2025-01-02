@@ -123,7 +123,7 @@ mod tests {
         Nested(TestStruct),
     }
 
-    impl TryFrom<Primitive> for TestEnum {
+    impl ::core::convert::TryFrom<Primitive> for TestEnum {
         type Error = AppError;
 
         fn try_from(value: Primitive) -> Result<Self, Self::Error> {

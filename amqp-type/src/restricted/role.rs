@@ -1,3 +1,5 @@
+use crate::error::amqp_error::AmqpError;
+use crate::error::AppError;
 use crate::primitive::Primitive;
 
 /// # Role
@@ -46,6 +48,17 @@ impl From<Role> for bool {
         match value {
             Role::Sender => false,
             Role::Receiver => true,
+        }
+    }
+}
+
+impl TryFrom<Primitive> for Role {
+    type Error = AppError;
+
+    fn try_from(value: Primitive) -> Result<Self, Self::Error> {
+        match value {
+            Primitive::Boolean(b) => Ok(Role::new(b)),
+            _ => Err(AmqpError::DecodeError)?,
         }
     }
 }

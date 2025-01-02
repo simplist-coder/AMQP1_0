@@ -1,0 +1,19 @@
+[package]
+name = "amqp-derive"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+proc-macro = true
+
+[dependencies]
+# internal
+amqp-type = {path = "../amqp-type"}
+
+# external
+proc-macro2 = "1.0.92"
+syn = "2.0.93"
+quote = "1.0.37"
+
+[lints]
+workspace = true

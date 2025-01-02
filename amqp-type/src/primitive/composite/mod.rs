@@ -8,7 +8,6 @@ use std::vec::IntoIter;
 use crate::error::amqp_error::AmqpError;
 use crate::primitive::Primitive;
 
-pub mod transport;
 pub mod builder;
 
 pub trait CompositeType: TryFrom<Primitive> + Into<Primitive> {

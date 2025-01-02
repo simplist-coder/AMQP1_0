@@ -47,6 +47,30 @@ impl From<ReceiverSettleMode> for Primitive {
     }
 }
 
+impl TryFrom<Primitive> for ReceiverSettleMode {
+    type Error = AppError;
+
+    fn try_from(value: Primitive) -> Result<Self, Self::Error> {
+        match value {
+            Primitive::Ubyte(x) => Ok(ReceiverSettleMode::new(x)?),
+            _ => Err(AmqpError::DecodeError)?
+        }
+    }
+}
+
+impl TryFrom<Primitive> for Option<ReceiverSettleMode> {
+    type Error = AppError;
+
+    fn try_from(value: Primitive) -> Result<Self, Self::Error> {
+        match value {
+            Primitive::Null => Ok(None),
+            Primitive::Ubyte(x) => Ok(Some(ReceiverSettleMode::new(x)?)),
+            _ => Err(AmqpError::DecodeError)?
+        }
+    }
+}
+
+
 #[cfg(test)]
 mod tests {
     use super::*;

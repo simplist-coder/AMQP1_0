@@ -5,13 +5,15 @@ use amqp_type::restricted::duration::Milliseconds;
 use amqp_type::restricted::fields::Fields;
 use amqp_type::restricted::ietf_language_tag::IetfLanguageTag;
 use std::vec::IntoIter;
+use amqp_derive::CompositeType;
 use amqp_type::error::amqp_error::AmqpError;
 use amqp_type::primitive::composite::builder::CompositeBuilder;
 use amqp_type::primitive::Primitive;
 use amqp_type::serde::encode::Encode;
 use crate::constants::PERFORMATIVE_SYMBOL_OPEN;
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, CompositeType)]
+#[amqp(descriptor = "amqp:open:list")]
 pub struct Open {
     container_id: String,
     host_name: Option<String>,
@@ -42,54 +44,6 @@ impl Open {
     }
 }
 
-impl CompositeType for Open {
-    fn descriptor(&self) -> Descriptor {
-        Symbol::with_ascii(PERFORMATIVE_SYMBOL_OPEN).into()
-    }
-}
-
-impl TryFrom<Primitive> for Open {
-    type Error = AppError;
-
-    fn try_from(value: Primitive) -> Result<Self, Self::Error> {
-        match value {
-            Primitive::Composite(mut c) => {
-                Ok(Open {
-                    container_id: c.pop_front().try_into()?,
-                    host_name: c.pop_front().try_into()?,
-                    max_frame_size: c.pop_front().try_into()?,
-                    channel_max: c.pop_front().try_into()?,
-                    idle_timeout: c.pop_front().try_into()?,
-                    outgoing_locales: c.pop_front().try_into()?,
-                    incoming_locales: c.pop_front().try_into()?,
-                    offered_capabilities: c.pop_front().try_into()?,
-                    desired_capabilities: c.pop_front().try_into()?,
-                    properties: c.pop_front().try_into()?,
-                })
-            }
-            _ => Err(AmqpError::DecodeError)?
-        }
-    }
-}
-
-impl From<Open> for Primitive {
-    fn from(value: Open) -> Self {
-        CompositeBuilder::new(value.descriptor())
-            .push(value.container_id.into())
-            .push(value.host_name.into())
-            .push(value.max_frame_size.into())
-            .push(value.channel_max.into())
-            .push(value.idle_timeout.into())
-            .push(value.outgoing_locales.into())
-            .push(value.incoming_locales.into())
-            .push(value.offered_capabilities.into())
-            .push(value.desired_capabilities.into())
-            .push(value.properties.into())
-            .build()
-            .into()
-    }
-}
-
 impl Open {
     pub fn encode(self) -> Vec<u8> {
         let primitive: Primitive = self.into();
@@ -101,6 +55,12 @@ impl Open {
     }
 }
 
+
+struct Test(u8, u8);
+
+fn t() {
+    Test(1, 1);
+}
 
 #[cfg(test)]
 mod tests {

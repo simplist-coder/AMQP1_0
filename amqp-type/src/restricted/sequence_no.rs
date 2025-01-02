@@ -5,6 +5,8 @@ use std::cmp::Ordering;
 use std::num::Wrapping;
 use std::ops::{Add, AddAssign};
 use std::vec::IntoIter;
+use crate::error::amqp_error::AmqpError;
+use crate::primitive::Primitive;
 
 /// # Sequence Number
 /// A 32-bit RFC-1982 serial number.
@@ -83,6 +85,28 @@ impl Decode for SequenceNumber {
         Self: Sized,
     {
         u32::try_decode(constructor, stream).map(Self)
+    }
+}
+
+impl TryFrom<Primitive> for SequenceNumber {
+    type Error = AppError;
+
+    fn try_from(value: Primitive) -> Result<Self, Self::Error> {
+        match value {
+            Primitive::Uint(x) => Ok(SequenceNumber::new(x)),
+            _ => Err(AmqpError::DecodeError)?
+        }
+    }
+}
+impl TryFrom<Primitive> for Option<SequenceNumber> {
+    type Error = AppError;
+
+    fn try_from(value: Primitive) -> Result<Self, Self::Error> {
+        match value {
+            Primitive::Null => Ok(None),
+            Primitive::Uint(x) => Ok(Some(SequenceNumber::new(x))),
+            _ => Err(AmqpError::DecodeError)?
+        }
     }
 }
 
