@@ -9,7 +9,7 @@ mod derive_for_enum;
 mod derive_for_struct;
 mod derive_for_union;
 
-#[proc_macro_derive(CompositeType, attributes(amqp))]
+#[proc_macro_derive(AmqpComposite, attributes(amqp))]
 pub fn derive(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as DeriveInput);
     let output = match &input.data {

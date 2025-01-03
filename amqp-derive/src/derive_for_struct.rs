@@ -38,33 +38,33 @@ fn generate_named_impl(
 ) -> syn::Result<proc_macro2::TokenStream> {
     let try_from_fields_expression = try_from_named_fields(fields);
     let builder_push_expression = builder_push_named_fields(fields);
-    Ok(quote! {
-        use amqp_type::primitive::composite::Descriptor;
+    let try_from_for_optional = try_from_primitive_for_optional(name);
 
-        impl amqp_type::primitive::composite::CompositeType for #name {
-            fn descriptor(&self) -> Descriptor {
-                amqp_type::primitive::variable_width::symbol::Symbol::with_ascii(#descriptor).into()
+    Ok(quote! {
+        impl crate::composite::CompositeType for #name {
+            fn descriptor(&self) -> crate::composite::Descriptor {
+                crate::primitive::variable_width::symbol::Symbol::with_ascii(#descriptor).into()
             }
         }
 
-        impl ::core::convert::TryFrom<amqp_type::primitive::Primitive> for #name {
-            type Error = amqp_type::error::AppError;
+        impl ::core::convert::TryFrom<crate::primitive::Primitive> for #name {
+            type Error = crate::error::AppError;
 
-            fn try_from(value: amqp_type::primitive::Primitive) -> Result<Self, Self::Error> {
+            fn try_from(value: crate::primitive::Primitive) -> Result<Self, Self::Error> {
                 match value {
-                    amqp_type::primitive::Primitive::Composite(mut comp) => {
+                    crate::primitive::Primitive::Composite(mut comp) => {
                         Ok(Self {
                             #try_from_fields_expression
                         })
                     }
-                    _ => Err(amqp_type::error::amqp_error::AmqpError::DecodeError)?
+                    _ => Err(crate::error::amqp_error::AmqpError::DecodeError)?
                 }
             }
         }
 
-        impl ::core::convert::From<#name> for amqp_type::primitive::Primitive {
+        impl ::core::convert::From<#name> for crate::primitive::Primitive {
             fn from(value: #name) -> Self {
-                amqp_type::primitive::composite::builder::CompositeBuilder::new(value.descriptor())
+                crate::composite::builder::CompositeBuilder::new(crate::composite::CompositeType::descriptor(&value))
 
                     #builder_push_expression
 
@@ -72,6 +72,9 @@ fn generate_named_impl(
                     .into()
             }
         }
+
+        #try_from_for_optional
+
     })
 }
 
@@ -82,34 +85,35 @@ fn generate_unnamed_impl(
 ) -> syn::Result<proc_macro2::TokenStream> {
     let try_from_fields_expression = try_from_unnamed_fields(fields);
     let builder_push_expression = builder_push_unnamed_fields(fields);
+    let try_from_for_optional = try_from_primitive_for_optional(name);
 
     Ok(quote! {
-        use amqp_type::primitive::composite::Descriptor;
 
-        impl amqp_type::primitive::composite::CompositeType for #name {
-            fn descriptor(&self) -> Descriptor {
-                amqp_type::primitive::variable_width::symbol::Symbol::with_ascii(#descriptor).into()
+        impl crate::composite::CompositeType for #name {
+
+            fn descriptor(&self) -> crate::composite::Descriptor {
+                crate::primitive::variable_width::symbol::Symbol::with_ascii(#descriptor).into()
             }
         }
 
-        impl ::core::convert::TryFrom<amqp_type::primitive::Primitive> for #name {
-            type Error = amqp_type::error::AppError;
+        impl ::core::convert::TryFrom<crate::primitive::Primitive> for #name {
+            type Error = crate::error::AppError;
 
-            fn try_from(value: amqp_type::primitive::Primitive) -> Result<Self, Self::Error> {
+            fn try_from(value: crate::primitive::Primitive) -> Result<Self, Self::Error> {
                 match value {
-                    amqp_type::primitive::Primitive::Composite(mut comp) => {
+                    crate::primitive::Primitive::Composite(mut comp) => {
                         Ok(Self (
                             #try_from_fields_expression
                         ))
                     }
-                    _ => Err(amqp_type::error::amqp_error::AmqpError::DecodeError)?
+                    _ => Err(crate::error::amqp_error::AmqpError::DecodeError)?
                 }
             }
         }
 
-        impl ::core::convert::From<#name> for amqp_type::primitive::Primitive {
+        impl ::core::convert::From<#name> for crate::primitive::Primitive {
             fn from(value: #name) -> Self {
-                amqp_type::primitive::composite::builder::CompositeBuilder::new(value.descriptor())
+                crate::composite::builder::CompositeBuilder::new(crate::composite::CompositeType::descriptor(&value))
 
                     #builder_push_expression
 
@@ -117,7 +121,31 @@ fn generate_unnamed_impl(
                     .into()
             }
         }
+
+        #try_from_for_optional
     })
+}
+
+fn try_from_primitive_for_optional(name: &Ident) -> proc_macro2::TokenStream {
+    quote! {
+        impl ::core::convert::TryFrom<crate::primitive::Primitive> for std::option::Option<#name> {
+            type Error = crate::error::AppError;
+
+            fn try_from(value: crate::primitive::Primitive) -> Result<Self, Self::Error> {
+                match value {
+                    crate::primitive::Primitive::Null => Ok(None),
+                    crate::primitive::Primitive::Composite(c) => {
+                        let source = #name::try_from(crate::primitive::Primitive::from(c));
+                        match source {
+                            Ok(s)=> Ok(Some(s)),
+                            Err(_) => Ok(None),
+                        }
+                    }
+                    _ => Err(crate::error::amqp_error::AmqpError::DecodeError)?
+                }
+            }
+        }
+    }
 }
 
 fn try_from_named_fields(fields: &FieldsNamed) -> proc_macro2::TokenStream {

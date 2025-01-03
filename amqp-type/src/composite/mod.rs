@@ -9,6 +9,10 @@ use crate::error::amqp_error::AmqpError;
 use crate::primitive::Primitive;
 
 pub mod builder;
+pub mod transport;
+pub mod transaction;
+pub mod security;
+pub mod messaging;
 
 pub trait CompositeType: TryFrom<Primitive> + Into<Primitive> {
     fn descriptor(&self) -> Descriptor;

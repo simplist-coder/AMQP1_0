@@ -1,5 +1,5 @@
 use crate::constants::AMQP_FRAME;
-use crate::frame::performative::Performative;
+use amqp_type::composite::transport::frame::performative::Performative;
 use amqp_type::error::AppError;
 use amqp_type::utils::sync_util::read_bytes_2;
 use amqp_type::utils::vec::VecExt;

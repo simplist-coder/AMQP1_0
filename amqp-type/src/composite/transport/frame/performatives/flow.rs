@@ -1,11 +1,11 @@
-use amqp_type::error::AppError;
-use amqp_type::primitive::composite::Composite;
+use crate::error::AppError;
+use crate::composite::Composite;
 use std::vec::IntoIter;
 
 #[derive(Debug, Copy, Clone, PartialEq)]
-pub struct Disposition {}
+pub struct Flow {}
 
-impl Disposition {
+impl Flow {
     pub fn encode(self) -> Vec<u8> {
         todo!()
     }

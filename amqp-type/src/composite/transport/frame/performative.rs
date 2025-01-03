@@ -6,19 +6,19 @@ use crate::constants::{
     PERFORMATIVE_SYMBOL_DETACH, PERFORMATIVE_SYMBOL_DISPOSITION, PERFORMATIVE_SYMBOL_END,
     PERFORMATIVE_SYMBOL_FLOW, PERFORMATIVE_SYMBOL_OPEN, PERFORMATIVE_SYMBOL_TRANSFER,
 };
-use crate::frame::performatives::attach::Attach;
-use crate::frame::performatives::begin::Begin;
-use crate::frame::performatives::close::Close;
-use crate::frame::performatives::detach::Detach;
-use crate::frame::performatives::disposition::Disposition;
-use crate::frame::performatives::end::End;
-use crate::frame::performatives::flow::Flow;
-use crate::frame::performatives::open::Open;
-use crate::frame::performatives::transfer::Transfer;
-use amqp_type::error::AppError;
-use amqp_type::primitive::composite::{Composite, Descriptor};
+use crate::error::AppError;
+use crate::composite::{Composite, Descriptor};
 use std::vec::IntoIter;
-use amqp_type::error::amqp_error::AmqpError;
+use crate::composite::transport::frame::performatives::attach::Attach;
+use crate::composite::transport::frame::performatives::begin::Begin;
+use crate::composite::transport::frame::performatives::close::Close;
+use crate::composite::transport::frame::performatives::detach::Detach;
+use crate::composite::transport::frame::performatives::disposition::Disposition;
+use crate::composite::transport::frame::performatives::end::End;
+use crate::composite::transport::frame::performatives::flow::Flow;
+use crate::composite::transport::frame::performatives::open::Open;
+use crate::composite::transport::frame::performatives::transfer::Transfer;
+use crate::error::amqp_error::AmqpError;
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Performative {

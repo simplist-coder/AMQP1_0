@@ -2,13 +2,13 @@
 name = "amqp-derive"
 version = "0.1.0"
 edition = "2021"
+description = "A Proc Macro for use in the AMQP-Type crate. No Other! Generates Conversion impls for arbitrary structs into and from amqp_type::primitive::Primitive"
 
 [lib]
 proc-macro = true
 
 [dependencies]
 # internal
-amqp-type = {path = "../amqp-type"}
 
 # external
 proc-macro2 = "1.0.92"

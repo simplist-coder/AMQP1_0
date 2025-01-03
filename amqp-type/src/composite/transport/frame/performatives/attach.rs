@@ -1,24 +1,21 @@
-use amqp_type::error::AppError;
-use crate::transport::source::Source;
-use crate::transport::target::Target;
-use amqp_type::primitive::composite::{Composite, CompositeType, Descriptor};
-use amqp_type::primitive::compound::map::Map;
-use amqp_type::primitive::variable_width::symbol::Symbol;
-use amqp_type::restricted::fields::Fields;
-use amqp_type::restricted::handle::Handle;
-use amqp_type::restricted::receiver_settle_mode::ReceiverSettleMode;
-use amqp_type::restricted::role::Role;
-use amqp_type::restricted::sender_settle_mode::SenderSettleMode;
-use amqp_type::restricted::sequence_no::SequenceNumber;
+use crate::error::AppError;
+use crate::composite::Composite;
+use crate::primitive::compound::map::Map;
+use crate::primitive::variable_width::symbol::Symbol;
+use crate::primitive::Primitive;
+use crate::restricted::fields::Fields;
+use crate::restricted::handle::Handle;
+use crate::restricted::receiver_settle_mode::ReceiverSettleMode;
+use crate::restricted::role::Role;
+use crate::restricted::sender_settle_mode::SenderSettleMode;
+use crate::restricted::sequence_no::SequenceNumber;
+use crate::serde::encode::Encode;
 use std::vec::IntoIter;
-use amqp_derive::CompositeType;
-use amqp_type::error::amqp_error::AmqpError;
-use amqp_type::primitive::composite::builder::CompositeBuilder;
-use amqp_type::primitive::Primitive;
-use amqp_type::serde::encode::Encode;
-use crate::constants::PERFORMATIVE_SYMBOL_ATTACH;
+use amqp_derive::AmqpComposite;
+use crate::composite::transport::transport::source::Source;
+use crate::composite::transport::transport::target::Target;
 
-#[derive(Debug, Clone, PartialEq, CompositeType)]
+#[derive(Debug, Clone, PartialEq, AmqpComposite)]
 #[amqp(descriptor = "amqp:attach:list")]
 pub struct Attach {
     name: String,
@@ -72,8 +69,8 @@ impl Attach {
 
 #[cfg(test)]
 mod tests {
-    use crate::frame::performative::Performative;
     use super::*;
+    use crate::composite::transport::frame::performative::Performative;
 
     #[test]
     fn test_encode_decode_round_trip_empty() {

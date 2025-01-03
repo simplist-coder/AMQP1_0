@@ -1,18 +1,15 @@
-use amqp_type::error::AppError;
-use amqp_type::primitive::composite::{Composite, CompositeType, Descriptor};
-use amqp_type::primitive::variable_width::symbol::Symbol;
-use amqp_type::restricted::duration::Milliseconds;
-use amqp_type::restricted::fields::Fields;
-use amqp_type::restricted::ietf_language_tag::IetfLanguageTag;
+use crate::error::AppError;
+use crate::composite::Composite;
+use crate::primitive::variable_width::symbol::Symbol;
+use crate::primitive::Primitive;
+use crate::restricted::duration::Milliseconds;
+use crate::restricted::fields::Fields;
+use crate::restricted::ietf_language_tag::IetfLanguageTag;
+use crate::serde::encode::Encode;
 use std::vec::IntoIter;
-use amqp_derive::CompositeType;
-use amqp_type::error::amqp_error::AmqpError;
-use amqp_type::primitive::composite::builder::CompositeBuilder;
-use amqp_type::primitive::Primitive;
-use amqp_type::serde::encode::Encode;
-use crate::constants::PERFORMATIVE_SYMBOL_OPEN;
+use amqp_derive::AmqpComposite;
 
-#[derive(Debug, Clone, PartialEq, CompositeType)]
+#[derive(Debug, Clone, PartialEq, AmqpComposite)]
 #[amqp(descriptor = "amqp:open:list")]
 pub struct Open {
     container_id: String,
@@ -56,17 +53,12 @@ impl Open {
 }
 
 
-struct Test(u8, u8);
-
-fn t() {
-    Test(1, 1);
-}
 
 #[cfg(test)]
 mod tests {
-    use amqp_type::primitive::compound::map::Map;
-    use crate::frame::performative::Performative;
     use super::*;
+    use crate::composite::transport::frame::performative::Performative;
+    use crate::primitive::compound::map::Map;
 
     #[test]
     fn test_encode_decode_round_trip_empty() {

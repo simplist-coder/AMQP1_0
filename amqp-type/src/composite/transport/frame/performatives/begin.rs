@@ -1,9 +1,9 @@
-use amqp_type::error::AppError;
-use amqp_type::primitive::composite::Composite;
-use amqp_type::primitive::variable_width::symbol::Symbol;
-use amqp_type::restricted::fields::Fields;
-use amqp_type::restricted::handle::Handle;
-use amqp_type::restricted::transfer_number::TransferNumber;
+use crate::error::AppError;
+use crate::composite::Composite;
+use crate::primitive::variable_width::symbol::Symbol;
+use crate::restricted::fields::Fields;
+use crate::restricted::handle::Handle;
+use crate::restricted::transfer_number::TransferNumber;
 use std::vec::IntoIter;
 
 #[derive(Debug, Clone, PartialEq)]

@@ -1,4 +1,3 @@
-pub mod composite;
 pub mod compound;
 pub mod fixed_width;
 pub mod variable_width;
@@ -13,7 +12,7 @@ use crate::constants::{
 };
 use crate::error::amqp_error::AmqpError;
 use crate::error::AppError;
-use crate::primitive::composite::Composite;
+use crate::composite::Composite;
 use crate::primitive::compound::array::Array;
 use crate::primitive::compound::list::List;
 use crate::primitive::compound::map::Map;
@@ -159,7 +158,7 @@ where
 
 
 macro_rules! impl_primitive_for {
-    ($t:ty, $pattern:path) => {
+    ($t:ty => $pattern:path) => {
         impl From<$t> for Primitive {
             fn from(value: $t) -> Self {
                 $pattern(value)
@@ -191,29 +190,29 @@ macro_rules! impl_primitive_for {
     };
 }
 
-impl_primitive_for!(bool, Primitive::Boolean);
-impl_primitive_for!(Timestamp, Primitive::Timestamp);
-impl_primitive_for!(u8, Primitive::Ubyte);
-impl_primitive_for!(u16, Primitive::Ushort);
-impl_primitive_for!(u32, Primitive::Uint);
-impl_primitive_for!(u64, Primitive::Ulong);
-impl_primitive_for!(i8, Primitive::Byte);
-impl_primitive_for!(i16, Primitive::Short);
-impl_primitive_for!(i32, Primitive::Int);
-impl_primitive_for!(i64, Primitive::Long);
-impl_primitive_for!(Float, Primitive::Float);
-impl_primitive_for!(Double, Primitive::Double);
-impl_primitive_for!(char, Primitive::Char);
-impl_primitive_for!(Uuid, Primitive::Uuid);
-impl_primitive_for!(Binary, Primitive::Binary);
-impl_primitive_for!(String, Primitive::String);
-impl_primitive_for!(Symbol, Primitive::Symbol);
-impl_primitive_for!(Decimal32, Primitive::Decimal32);
-impl_primitive_for!(Decimal64, Primitive::Decimal64);
-impl_primitive_for!(List, Primitive::List);
-impl_primitive_for!(Array, Primitive::Array);
-impl_primitive_for!(Map, Primitive::Map);
-impl_primitive_for!(Composite, Primitive::Composite);
+impl_primitive_for!(bool        => Primitive::Boolean);
+impl_primitive_for!(Timestamp   => Primitive::Timestamp);
+impl_primitive_for!(u8          => Primitive::Ubyte);
+impl_primitive_for!(u16         => Primitive::Ushort);
+impl_primitive_for!(u32         => Primitive::Uint);
+impl_primitive_for!(u64         => Primitive::Ulong);
+impl_primitive_for!(i8          => Primitive::Byte);
+impl_primitive_for!(i16         => Primitive::Short);
+impl_primitive_for!(i32         => Primitive::Int);
+impl_primitive_for!(i64         => Primitive::Long);
+impl_primitive_for!(Float       => Primitive::Float);
+impl_primitive_for!(Double      => Primitive::Double);
+impl_primitive_for!(char        => Primitive::Char);
+impl_primitive_for!(Uuid        => Primitive::Uuid);
+impl_primitive_for!(Binary      => Primitive::Binary);
+impl_primitive_for!(String      => Primitive::String);
+impl_primitive_for!(Symbol      => Primitive::Symbol);
+impl_primitive_for!(Decimal32   => Primitive::Decimal32);
+impl_primitive_for!(Decimal64   => Primitive::Decimal64);
+impl_primitive_for!(List        => Primitive::List);
+impl_primitive_for!(Array       => Primitive::Array);
+impl_primitive_for!(Map         => Primitive::Map);
+impl_primitive_for!(Composite   => Primitive::Composite);
 
 
 impl From<&str> for Primitive {

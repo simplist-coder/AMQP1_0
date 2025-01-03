@@ -110,6 +110,12 @@ impl TryFrom<Primitive> for Option<SequenceNumber> {
     }
 }
 
+impl From<SequenceNumber> for Primitive {
+    fn from(value: SequenceNumber) -> Self {
+        Primitive::Uint(value.0)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

@@ -1,4 +1,4 @@
-use crate::primitive::composite::{Composite, Descriptor};
+use crate::composite::{Composite, Descriptor};
 use crate::primitive::compound::list::List;
 use crate::primitive::Primitive;
 
@@ -29,8 +29,8 @@ impl CompositeBuilder {
 mod tests {
     use crate::error::amqp_error::AmqpError;
     use crate::error::AppError;
-    use crate::primitive::composite::builder::CompositeBuilder;
-    use crate::primitive::composite::{CompositeType, Descriptor};
+    use crate::composite::builder::CompositeBuilder;
+    use crate::composite::{CompositeType, Descriptor};
     use crate::primitive::variable_width::symbol::Symbol;
     use crate::primitive::Primitive;
     use crate::serde::encode::Encode;
