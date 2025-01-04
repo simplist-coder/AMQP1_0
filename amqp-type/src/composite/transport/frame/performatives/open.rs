@@ -10,7 +10,7 @@ use std::vec::IntoIter;
 use amqp_derive::AmqpComposite;
 
 #[derive(Debug, Clone, PartialEq, AmqpComposite)]
-#[amqp(descriptor = "amqp:open:list")]
+#[amqp(name = "amqp:open:list", code = 0x10)]
 pub struct Open {
     container_id: String,
     host_name: Option<String>,

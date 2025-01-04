@@ -9,24 +9,24 @@ use crate::restricted::receiver_settle_mode::ReceiverSettleMode;
 use crate::restricted::role::Role;
 use crate::restricted::sender_settle_mode::SenderSettleMode;
 use crate::restricted::sequence_no::SequenceNumber;
-use crate::serde::encode::Encode;
 use std::vec::IntoIter;
 use amqp_derive::AmqpComposite;
 use crate::composite::transport::transport::source::Source;
 use crate::composite::transport::transport::target::Target;
+use crate::serde::encode::Encode;
 
 #[derive(Debug, Clone, PartialEq, AmqpComposite)]
-#[amqp(descriptor = "amqp:attach:list")]
+#[amqp(name = "amqp:attach:list", code = 0x12)]
 pub struct Attach {
     name: String,
     handle: Handle,
     role: Role,
-    snd_settle_mode: Option<SenderSettleMode>,
-    rcv_settle_mode: Option<ReceiverSettleMode>,
+    snd_settle_mode: Option<SenderSettleMode>, // default: mixed
+    rcv_settle_mode: Option<ReceiverSettleMode>, // default: first
     source: Option<Source>,
     target: Option<Target>,
     unsettled: Option<Map>,
-    incomplete_unsettled: Option<bool>,
+    incomplete_unsettled: Option<bool>, // default. false
     initial_delivery_count: Option<SequenceNumber>,
     max_message_size: Option<u64>,
     offered_capabilities: Vec<Symbol>,

@@ -10,6 +10,8 @@ use crate::error::AppError;
 /// <type name="delivery-tag" class="restricted" source="binary"/>
 /// ```
 /// A delivery-tag may be up to 32 octets of binary data.
+
+#[derive(Debug, Clone, PartialEq)]
 pub struct DeliveryTag(Binary);
 
 impl DeliveryTag {
@@ -17,6 +19,29 @@ impl DeliveryTag {
         match bytes.len() {
             0..=32 => Ok(Self(Binary::from(bytes))),
             _ => Err(AmqpError::InvalidField)?,
+        }
+    }
+}
+
+impl TryFrom<Primitive> for DeliveryTag {
+    type Error = AppError;
+
+    fn try_from(value: Primitive) -> Result<Self, Self::Error> {
+        match value {
+            Primitive::Binary(b) => Ok(DeliveryTag::new(b.into())?),
+            _ => Err(AmqpError::DecodeError)?
+        }
+    }
+}
+
+impl TryFrom<Primitive> for Option<DeliveryTag> {
+    type Error = AppError;
+
+    fn try_from(value: Primitive) -> Result<Self, Self::Error> {
+        match &value {
+            Primitive::Null => Ok(None),
+            Primitive::Binary(_) => Ok(Some(value.try_into()?)),
+            _ => Err(AmqpError::DecodeError)?
         }
     }
 }

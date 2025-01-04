@@ -49,6 +49,12 @@ impl From<Vec<u8>> for Binary {
     }
 }
 
+impl From<Binary> for Vec<u8> {
+    fn from(value: Binary) -> Self {
+        value.0
+    }
+}
+
 #[cfg(test)]
 mod test {
     use super::*;

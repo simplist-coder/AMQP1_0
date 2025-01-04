@@ -1,5 +1,5 @@
 use amqp_derive::AmqpComposite;
 
 #[derive(Debug, Clone, PartialEq, Default, AmqpComposite)]
-#[amqp(descriptor = "amqp:target:list")]
+#[amqp(name = "amqp:target:list", code = 0x29)]
 pub struct Target {}

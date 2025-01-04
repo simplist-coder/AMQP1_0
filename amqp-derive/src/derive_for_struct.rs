@@ -1,4 +1,4 @@
-use crate::parse_descriptor;
+use crate::{parse_descriptor, Descriptors};
 use proc_macro2::Ident;
 use quote::{quote, quote_spanned};
 use syn::spanned::Spanned;
@@ -11,9 +11,9 @@ use syn::{Data, DeriveInput, Fields, FieldsNamed, FieldsUnnamed, Index};
 ///
 ///
 /// #[derive(CompositeType)]
-/// #[amqp(descriptor = "my:teststruct")]
+/// #[amqp(name = "my:teststruct", code = 123)]
 /// struct TestStruct { }
-///
+
 pub(crate) fn derive_for_struct(input: DeriveInput) -> syn::Result<proc_macro2::TokenStream> {
     let name = &input.ident;
     if let Data::Struct(ref st) = input.data {
@@ -33,17 +33,26 @@ pub(crate) fn derive_for_struct(input: DeriveInput) -> syn::Result<proc_macro2::
 
 fn generate_named_impl(
     name: &Ident,
-    descriptor: String,
+    descriptor: Descriptors,
     fields: &FieldsNamed,
 ) -> syn::Result<proc_macro2::TokenStream> {
     let try_from_fields_expression = try_from_named_fields(fields);
     let builder_push_expression = builder_push_named_fields(fields);
     let try_from_for_optional = try_from_primitive_for_optional(name);
 
+    let name_value = descriptor.name_value()?;
+    let code_value = descriptor.code_value()?;
+
     Ok(quote! {
+        impl #name {
+            pub const NAME: &'static str = #name_value;
+            pub const CODE: u64 = #code_value;
+        }
+
+
         impl crate::composite::CompositeType for #name {
             fn descriptor(&self) -> crate::composite::Descriptor {
-                crate::primitive::variable_width::symbol::Symbol::with_ascii(#descriptor).into()
+                crate::primitive::variable_width::symbol::Symbol::with_ascii(#name_value).into()
             }
         }
 
@@ -80,19 +89,27 @@ fn generate_named_impl(
 
 fn generate_unnamed_impl(
     name: &Ident,
-    descriptor: String,
+    descriptor: Descriptors,
     fields: &FieldsUnnamed,
 ) -> syn::Result<proc_macro2::TokenStream> {
     let try_from_fields_expression = try_from_unnamed_fields(fields);
     let builder_push_expression = builder_push_unnamed_fields(fields);
     let try_from_for_optional = try_from_primitive_for_optional(name);
 
+    let name_value = descriptor.name_value()?;
+    let code_value = descriptor.code_value()?;
+
     Ok(quote! {
+
+        impl #name {
+            pub const NAME: &'static str = #name_value;
+            pub const CODE: u64 = #code_value;
+        }
 
         impl crate::composite::CompositeType for #name {
 
             fn descriptor(&self) -> crate::composite::Descriptor {
-                crate::primitive::variable_width::symbol::Symbol::with_ascii(#descriptor).into()
+                crate::primitive::variable_width::symbol::Symbol::with_ascii(#name_value).into()
             }
         }
 
@@ -218,12 +235,13 @@ mod tests {
     #[test]
     fn test_parse_descriptor_valid() {
         let input: DeriveInput = parse_quote! {
-            #[amqp(descriptor="my:teststruct")]
+            #[amqp(name = "my:teststruct", code = 123)]
             struct TestStruct;
         };
 
-        let result = parse_descriptor(input.span(), &input.attrs);
-        assert_eq!(result.unwrap(), "my:teststruct");
+        let result = parse_descriptor(input.span(), &input.attrs).unwrap();
+        assert_eq!(result.name_value().unwrap(), "my:teststruct");
+        assert_eq!(result.code_value().unwrap().to_string(), "123");
     }
 
     #[test]
@@ -250,11 +268,11 @@ mod tests {
     #[test]
     fn test_parse_descriptor_invalid_literal() {
         let input: DeriveInput = parse_quote! {
-            #[amqp(descriptor = 123)]
+            #[amqp(name = 123)]
             struct TestStruct;
         };
 
         let result = parse_descriptor(input.span(), &input.attrs);
-        assert_eq!(result.unwrap(), "123");
+        assert!(result.is_err());
     }
 }

@@ -27,6 +27,42 @@ pub enum Descriptor {
     Code(u64),
 }
 
+impl PartialEq<str> for Descriptor {
+    fn eq(&self, other: &str) -> bool {
+        match self {
+            Descriptor::Symbol(s) => s.inner() == other,
+            Descriptor::Code(_) => false
+        }
+    }
+}
+
+impl PartialEq<str> for &Descriptor {
+    fn eq(&self, other: &str) -> bool {
+        match self {
+            Descriptor::Symbol(s) => s.inner() == other,
+            Descriptor::Code(_) => false
+        }
+    }
+}
+
+impl PartialEq<u64> for Descriptor {
+    fn eq(&self, other: &u64) -> bool {
+        match self {
+            Descriptor::Symbol(_) => false,
+            Descriptor::Code(c) => c == other
+        }
+    }
+}
+
+impl PartialEq<u64> for &Descriptor {
+    fn eq(&self, other: &u64) -> bool {
+        match self {
+            Descriptor::Symbol(_) => false,
+            Descriptor::Code(c) => c == other
+        }
+    }
+}
+
 impl Encode for Descriptor {
     fn encode(self) -> Encoded {
         match self {
@@ -35,6 +71,7 @@ impl Encode for Descriptor {
         }
     }
 }
+
 
 impl Decode for Descriptor {
     fn try_decode(constructor: u8, stream: &mut IntoIter<u8>) -> Result<Self, AppError>
